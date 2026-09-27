@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "modelreceipts"
-version = "0.0.1"
-description = "Dry-run collector for ModelReceipts: evidence-first task-run records from Claude Code Stop hooks (pre-alpha, no network)."
+version = "0.0.2"
+description = "Dry-run collector for ModelReceipts: evidence-first task-run records from Claude Code Stop hooks (pre-alpha; preview by default, opt-in submit)."
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "Apache-2.0" }

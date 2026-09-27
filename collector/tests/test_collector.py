@@ -1,4 +1,4 @@
-"""Tests for the dry-run collector. Run from repo root:
+"""Tests for the collector (dry-run hook + opt-in submit). Run from repo root:
 
     python3 -m unittest discover -s collector/tests -v
 """
@@ -11,9 +11,11 @@ import json
 import shutil
 import sys
 import tempfile
+import threading
 import unittest
 from contextlib import redirect_stderr, redirect_stdout
 from datetime import datetime, timezone
+from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 
 COLLECTOR = Path(__file__).resolve().parents[1]
@@ -23,6 +25,7 @@ from modelreceipts import DEFAULT_SCHEMA_PATH  # noqa: E402
 from modelreceipts.classify import classify  # noqa: E402
 from modelreceipts.hook import main as hook_main  # noqa: E402
 from modelreceipts.hook import run  # noqa: E402
+from modelreceipts.submit import main as submit_main  # noqa: E402
 from modelreceipts.record import build_record, detect_route  # noqa: E402
 from modelreceipts.transcript import TurnSummary, summarize_file, summarize_last_turn  # noqa: E402
 from modelreceipts.validate import load_validator  # noqa: E402
@@ -187,21 +190,169 @@ class HookCliTest(unittest.TestCase):
 
 
 class NoNetworkTest(unittest.TestCase):
+    """The default path (hook / preview) must never send. Only submit.py may network, and only on --endpoint."""
+
     FORBIDDEN = {"socket", "ssl", "http", "urllib", "urllib3", "requests", "httpx", "aiohttp",
                  "ftplib", "smtplib", "telnetlib", "xmlrpc", "subprocess", "asyncio"}
+    NETWORK_MODULE = "submit.py"
 
-    def test_collector_imports_no_network_or_process_modules(self):
+    @staticmethod
+    def _imports(py: Path, top_level_only: bool = False):
+        tree = ast.parse(py.read_text(encoding="utf-8"))
+        nodes = tree.body if top_level_only else ast.walk(tree)
+        for node in nodes:
+            if isinstance(node, ast.Import):
+                yield from (a.name for a in node.names)
+            elif isinstance(node, ast.ImportFrom) and node.module:
+                yield ("." * node.level) + node.module
+
+    def test_only_submit_module_imports_network_code(self):
         for py in sorted((COLLECTOR / "modelreceipts").glob("*.py")):
-            tree = ast.parse(py.read_text(encoding="utf-8"))
-            for node in ast.walk(tree):
-                names = []
-                if isinstance(node, ast.Import):
-                    names = [a.name for a in node.names]
-                elif isinstance(node, ast.ImportFrom) and node.module and node.level == 0:
-                    names = [node.module]
-                for name in names:
-                    with self.subTest(file=py.name, module=name):
-                        self.assertNotIn(name.split(".")[0], self.FORBIDDEN)
+            if py.name == self.NETWORK_MODULE:
+                continue
+            for name in self._imports(py):
+                with self.subTest(file=py.name, module=name):
+                    self.assertNotIn(name.lstrip(".").split(".")[0], self.FORBIDDEN)
+
+    def test_submit_module_imports_network_lazily_and_never_spawns_processes(self):
+        py = COLLECTOR / "modelreceipts" / self.NETWORK_MODULE
+        top = {n.split(".")[0] for n in self._imports(py, top_level_only=True)}
+        self.assertFalse(top & (self.FORBIDDEN - {"urllib"}), top)  # urllib.parse (no I/O) is fine
+        self.assertNotIn("urllib.request", set(self._imports(py, top_level_only=True)))
+        self.assertNotIn("subprocess", {n.split(".")[0] for n in self._imports(py)})
+
+    def test_hook_never_imports_submit(self):
+        names = set(self._imports(COLLECTOR / "modelreceipts" / "hook.py"))
+        self.assertFalse({n for n in names if "submit" in n}, names)
+
+    def test_default_hook_path_loads_no_network_modules_at_runtime(self):
+        import subprocess  # test-only: a fresh interpreter shows what the hook really loads
+        payload = json.dumps(load_payload())
+        code = (
+            "import sys, io, json, socket\n"
+            "def boom(*a, **k): raise AssertionError('network used')\n"
+            "socket.socket.connect = boom; socket.create_connection = boom\n"
+            "del sys.modules['socket']\n"
+            f"sys.path.insert(0, {str(COLLECTOR)!r})\n"
+            "from modelreceipts.__main__ import main\n"
+            "sys.stdin = io.StringIO(sys.argv[1])\n"
+            "rc = main(['hook'])\n"
+            "bad = sorted(m for m in sys.modules if m in {'socket','ssl','http.client','urllib.request','modelreceipts.submit'})\n"
+            "print(json.dumps({'rc': rc, 'bad': bad}), file=sys.stderr)\n"
+        )
+        proc = subprocess.run([sys.executable, "-c", code, payload], capture_output=True, text=True, timeout=60)
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        result = json.loads(proc.stderr.strip().splitlines()[-1])
+        self.assertEqual(result, {"rc": 0, "bad": []})
+        self.assertIn('"schema_version": "0.1.0"', proc.stdout)
+
+
+class _Capture(BaseHTTPRequestHandler):
+    received: list = []
+
+    def do_POST(self):
+        body = self.rfile.read(int(self.headers["Content-Length"]))
+        type(self).received.append((self.path, self.headers, json.loads(body)))
+        out = json.dumps({"status": "stored"}).encode()
+        self.send_response(201)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(out)))
+        self.end_headers()
+        self.wfile.write(out)
+
+    def log_message(self, *args):
+        pass
+
+
+class SubmitTest(unittest.TestCase):
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp())
+        self.record_file = self.tmp / "record.json"
+        self.record_file.write_text((DEFAULT_SCHEMA_PATH.parent / "examples" / "01-stop-hook-bugfix-tests-passed.json")
+                                    .read_text(encoding="utf-8"), encoding="utf-8")
+        self.id_file = self.tmp / "state" / "install_id"
+        self.calls = []
+        import socket
+        import urllib.request
+        self._patches = [(socket.socket, "connect", socket.socket.connect),
+                         (urllib.request, "urlopen", urllib.request.urlopen)]
+
+    def tearDown(self):
+        for obj, name, orig in self._patches:
+            setattr(obj, name, orig)
+        shutil.rmtree(self.tmp)
+
+    def _block_network(self):
+        def boom(*a, **k):
+            self.calls.append(a)
+            raise AssertionError("network used")
+        for obj, name, _ in self._patches:
+            setattr(obj, name, boom)
+
+    def _run(self, *extra):
+        out, err = io.StringIO(), io.StringIO()
+        with redirect_stdout(out), redirect_stderr(err):
+            code = submit_main(["--record", str(self.record_file), "--install-id-file", str(self.id_file), *extra])
+        return code, out.getvalue(), err.getvalue()
+
+    def test_without_endpoint_it_previews_and_sends_nothing(self):
+        self._block_network()
+        code, out, err = self._run()
+        self.assertEqual(code, 0)
+        self.assertIn("PREVIEW", err)
+        self.assertIn("not sent", err)
+        self.assertEqual(json.loads(out)["record_id"], "5b1f7c2e-9a41-4d3e-8c0a-2f6b9e1d4a10")
+        self.assertEqual(self.calls, [])
+        self.assertFalse(self.id_file.exists())
+
+    def test_payload_path_previews_without_endpoint(self):
+        self._block_network()
+        payload_file = self.tmp / "payload.json"
+        payload_file.write_text(json.dumps(load_payload()), encoding="utf-8")
+        out, err = io.StringIO(), io.StringIO()
+        with redirect_stdout(out), redirect_stderr(err):
+            code = submit_main(["--payload", str(payload_file)])
+        self.assertEqual(code, 0)
+        self.assertEqual(json.loads(out.getvalue())["task"]["l2"], "coding.bugfix")
+        self.assertEqual(self.calls, [])
+
+    def test_non_loopback_endpoint_is_refused_by_default(self):
+        self._block_network()
+        for url in ("https://example.com", "http://10.0.0.5:8787", "ftp://127.0.0.1"):
+            with self.subTest(url=url):
+                code, _, err = self._run("--endpoint", url)
+                self.assertEqual(code, 2)
+                self.assertIn("not sent", err)
+        self.assertEqual(self.calls, [])
+        self.assertFalse(self.id_file.exists())
+
+    def test_invalid_record_is_never_sent(self):
+        self._block_network()
+        bad = json.loads(self.record_file.read_text(encoding="utf-8"))
+        bad["prompt"] = "leak"
+        self.record_file.write_text(json.dumps(bad), encoding="utf-8")
+        code, _, err = self._run("--endpoint", "http://127.0.0.1:9")
+        self.assertEqual(code, 1)
+        self.assertIn("not sending", err)
+        self.assertEqual(self.calls, [])
+
+    def test_with_endpoint_it_sends_exactly_the_preview_once(self):
+        _Capture.received = []
+        httpd = HTTPServer(("127.0.0.1", 0), _Capture)
+        t = threading.Thread(target=httpd.serve_forever, daemon=True)
+        t.start()
+        try:
+            code, out, err = self._run("--endpoint", f"http://127.0.0.1:{httpd.server_address[1]}")
+        finally:
+            httpd.shutdown()
+            httpd.server_close()
+        self.assertEqual(code, 0, err)
+        self.assertEqual(len(_Capture.received), 1)
+        path, headers, body = _Capture.received[0]
+        self.assertEqual(path, "/v1/records")
+        self.assertEqual(body, json.loads(out))
+        self.assertEqual(headers.get("X-ModelReceipts-Install"), self.id_file.read_text().strip())
+        self.assertIn("-> 201", err)
 
 
 class SchemaExamplesTest(unittest.TestCase):

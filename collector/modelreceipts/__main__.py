@@ -1,4 +1,4 @@
-"""``python3 -m modelreceipts {hook,validate} ...``"""
+"""``python3 -m modelreceipts {hook,submit,validate,version} ...``"""
 
 import sys
 
@@ -8,6 +8,7 @@ USAGE = """usage: python3 -m modelreceipts <command> [options]
 
 commands:
   hook       build a record from a Claude Code Stop-hook payload and PREVIEW it (dry run, no network)
+  submit     preview a record; send it ONLY if --endpoint URL is given (opt-in, loopback-only by default)
   validate   validate record JSON files against schema/record.v0.1.schema.json
   version    print the collector version
 """
@@ -21,6 +22,9 @@ def main(argv: list[str]) -> int:
     if cmd == "hook":
         from .hook import main as hook_main
         return hook_main(rest)
+    if cmd == "submit":
+        from .submit import main as submit_main  # the only module that may use the network
+        return submit_main(rest)
     if cmd == "validate":
         from .validate import main as validate_main
         return validate_main(rest)

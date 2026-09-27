@@ -1,12 +1,13 @@
 """ModelReceipts collector (pre-alpha).
 
-Dry-run only: builds a task-run record from a Claude Code ``Stop`` hook payload
-and prints it locally. Nothing is sent over the network in this version.
+Builds a task-run record from a Claude Code ``Stop`` hook payload and previews
+it locally. The ``hook`` command never sends anything. Sending is a separate,
+explicit command (``submit --endpoint URL``) implemented only in ``submit.py``.
 """
 
 from pathlib import Path
 
-__version__ = "0.0.1"
+__version__ = "0.0.2"
 
 SCHEMA_VERSION = "0.1.0"
 TAXONOMY_VERSION = "t0.1"

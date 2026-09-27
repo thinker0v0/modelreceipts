@@ -2,7 +2,7 @@
 
 Reads the hook payload (JSON) from stdin, parses ``transcript_path``, builds a
 record, validates it and shows a local preview. This module performs no
-network I/O; there is no submit path in v0.1.
+network I/O and never imports ``submit`` (the separate, opt-in send command).
 
 Hook safety: in ``--hook`` mode the command always exits 0 and never writes
 hook-control JSON to stdout, so it cannot block or alter the agent's session.
