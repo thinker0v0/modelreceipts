@@ -11,13 +11,18 @@ ModelReceipts는 pre-alpha 단계다. 스키마와 분류 체계가 자주 바�
 ## 규칙
 
 - **실제 transcript, 프롬프트, 코드, 경로, 자격증명을 이슈·PR·fixture에 넣지 않는다.** 테스트 fixture는 합성 데이터로 만든다.
-- 수집기에 네트워크 전송 코드를 추가하는 변경은 opt-in, 전송 전 미리보기, 끄기 스위치 설계가 합의된 뒤에만 받는다.
-- Python 코드는 표준 라이브러리만 쓴다. 의존성이 꼭 필요하면 이슈에서 먼저 논의한다.
+- 수집기의 네트워크 코드는 `collector/modelreceipts/submit.py`에만 둔다. 기본 `hook` 경로에서 전송하게 만드는 변경은 받지 않는다(테스트가 막는다).
+- 런타임 Python 코드는 표준 라이브러리만 쓴다. `requirements-dev.txt`는 테스트 교차 검증 전용이다. 의존성이 꼭 필요하면 이슈에서 먼저 논의한다.
+- 새 시드 소스는 라이선스·고정 커밋(또는 스냅샷 날짜)·sha256을 `SOURCE.json`에 기록한다. Artificial Analysis와 LMSYS-Chat-1M은 받지 않는다.
 - PR 전에 실행:
 
   ```bash
   python3 -m unittest discover -s collector/tests -v
+  python3 -m unittest discover -s server/tests -v
+  python3 -m unittest discover -s seeds/tests -v
   PYTHONPATH=collector python3 -m modelreceipts validate schema/examples/*.json
+  # 서버 집계 로직이나 시드를 바꿨다면 샘플을 재생성해 커밋한다 (CI가 차이를 검사)
+  PYTHONPATH=server python3 -m modelreceipts_server make-sample
   ```
 
 - 스키마를 바꾸면 `schema_version`과 예시, 검증기 테스트를 함께 갱신한다.

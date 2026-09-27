@@ -1,7 +1,9 @@
-# modelreceipts collector (dry run)
+# modelreceipts collector
 
-Claude Code `Stop` 훅 payload를 받아 레코드 하나를 만들고 **로컬에서 미리보기만** 한다.
-v0.1에는 전송 코드가 없다. `socket`/`urllib`/`http`/`subprocess` 등을 import하지 않는다는 것을 테스트가 확인한다.
+Claude Code `Stop` 훅 payload를 받아 레코드 하나를 만들고 **로컬에서 미리보기만** 한다(`hook`, 기본 경로).
+전송은 별도 명령 `submit --endpoint URL`을 명시적으로 줄 때만 한다. 네트워크 코드는 `submit.py` 한 곳에만 있고,
+테스트가 (1) 다른 모듈은 `socket`/`urllib`/`http`/`subprocess` 등을 import하지 않음, (2) `hook`은 `submit`을 import하지 않음,
+(3) 새 인터프리터에서 `hook`을 돌려도 네트워크 모듈이 로드되지 않음, (4) `--endpoint` 없는 `submit`은 연결 0회임을 확인한다.
 
 - Python 3.10+, 표준 라이브러리만 사용 (테스트의 `jsonschema` 교차 검증은 설치돼 있을 때만 실행)
 - 소스 체크아웃에서 실행한다. 스키마 파일을 `../schema/`에서 읽으므로 pip 배포는 아직 지원하지 않는다.
@@ -33,6 +35,21 @@ sed "s|REPLACED_AT_TEST_TIME|$PWD/collector/tests/fixtures/synthetic_transcript.
 PYTHONPATH=collector python3 -m modelreceipts validate schema/examples/*.json
 ```
 
+## opt-in 제출 (`submit`)
+
+```bash
+# 미리보기만 (전송 없음)
+PYTHONPATH=collector python3 -m modelreceipts submit --record PREVIEW_DIR/<record_id>.json
+# 로컬 서버로 전송 — 미리보기를 먼저 출력하고, 그 JSON 그대로 POST /v1/records
+PYTHONPATH=collector python3 -m modelreceipts submit --record PREVIEW_DIR/<record_id>.json --endpoint http://127.0.0.1:8787
+```
+
+- 입력: `--payload`(Stop payload, 레코드를 새로 만든다) 또는 `--record`(이미 미리본 레코드 파일).
+- `--endpoint`가 없으면 절대 보내지 않는다. 스키마 위반 레코드도 보내지 않는다.
+- pre-alpha 안전장치: `127.0.0.1`/`::1`/`localhost`만 허용. 다른 주소는 `--allow-non-loopback`을 함께 줘야 한다(공개 서버는 아직 없다).
+- 기여자 수(k) 계산용으로 무작위 설치 id를 `--install-id-file`(기본 `~/.local/state/modelreceipts/install_id`)에 만들어 `X-ModelReceipts-Install` 헤더로 보낸다. 실제로 보낼 때만 파일을 만든다. `--anonymous`는 id를 보내지 않는다(모든 익명 레코드가 기여자 1명으로 묶임).
+- 훅 설정에 `submit`을 걸지 않는다. 자동 제출은 조직 단위 끄기 스위치와 설치 키 서명이 생긴 뒤에 다룬다.
+
 ## 훅 설치 방법 (문서만 — 이 저장소는 사용자 설정을 건드리지 않는다)
 
 직접 설치하려면 **사용자 설정** `~/.claude/settings.json`의 `hooks`에 아래 항목을 손으로 추가한다.
@@ -57,7 +74,7 @@ PYTHONPATH=collector python3 -m modelreceipts validate schema/examples/*.json
 ```
 
 - `--hook`: 항상 exit 0, stdout은 비워 둔다. Claude Code는 Stop 훅의 stdout JSON을 훅 제어(`decision` 등)로 해석할 수 있으므로 미리보기는 파일 또는 stderr로만 낸다.
-- `--preview-dir`: 턴마다 `<record_id>.json`을 로컬에 쓴다. 이 폴더 밖으로 나가는 것은 없다.
+- `--preview-dir`: 턴마다 `<record_id>.json`을 로컬에 쓴다. `hook`은 이 폴더 밖으로 아무것도 보내지 않는다.
 - 제거: 추가한 항목을 지우면 끝이다. 미리보기 폴더는 직접 삭제한다.
 - 레포 로컬 `.claude/settings.json`보다 사용자 설정을 권장한다(연구 노트: OTel 보강 변수는 사용자 설정에서만 적용).
 
