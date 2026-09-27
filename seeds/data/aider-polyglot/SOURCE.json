@@ -1,0 +1,17 @@
+{
+  "source_id": "aider-polyglot@cb6a152",
+  "name": "Aider polyglot coding leaderboard",
+  "source_type": "benchmark",
+  "repo": "https://github.com/Aider-AI/aider",
+  "path": "aider/website/_data/polyglot_leaderboard.yml",
+  "url": "https://github.com/Aider-AI/aider/blob/cb6a152e5ee27fbc77ac499d5e628ccd74a5fa2a/aider/website/_data/polyglot_leaderboard.yml",
+  "raw_url": "https://raw.githubusercontent.com/Aider-AI/aider/cb6a152e5ee27fbc77ac499d5e628ccd74a5fa2a/aider/website/_data/polyglot_leaderboard.yml",
+  "commit": "cb6a152e5ee27fbc77ac499d5e628ccd74a5fa2a",
+  "commit_date": "2025-10-04T09:14:08Z",
+  "retrieved_at": "2026-09-27",
+  "file": "polyglot_leaderboard.yml",
+  "sha256": "85a50b25953512d18ba4bb0c23c0b8e626fcf9a5b52d287644b8a0b44b9535de",
+  "license": "Apache-2.0",
+  "license_note": "The file is part of the Aider repository, licensed Apache-2.0 (LICENSE.txt at the same commit). It is redistributed here unmodified with this attribution. Derived records keep this source_id; no Aider benchmark prompts or model outputs are included.",
+  "fetch_command": "curl -fsSL -o polyglot_leaderboard.yml https://raw.githubusercontent.com/Aider-AI/aider/cb6a152e5ee27fbc77ac499d5e628ccd74a5fa2a/aider/website/_data/polyglot_leaderboard.yml"
+}
