@@ -1,0 +1,3 @@
+# Optional, test-only cross-checks. Runtime code (collector, server, seeds) uses the standard library only.
+jsonschema==4.26.0   # cross-checks the stdlib schema validator
+PyYAML==6.0.3        # cross-checks the stdlib mini-YAML parser on the Aider snapshot
