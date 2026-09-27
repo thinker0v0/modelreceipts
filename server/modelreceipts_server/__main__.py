@@ -81,8 +81,8 @@ def main(argv: list[str]) -> int:
             print(f"error: {exc}", file=sys.stderr)
             return 2
         host, port = httpd.server_address[:2]
-        print(f"[modelreceipts-server] listening on http://{host}:{port}  db={a.db}  records={store.count()}")
-        print(f"[modelreceipts-server] thresholds={json.dumps(_thresholds(a).as_json())}")
+        print(f"[modelreceipts-server] listening on http://{host}:{port}  db={a.db}  records={store.count()}", flush=True)
+        print(f"[modelreceipts-server] thresholds={json.dumps(_thresholds(a).as_json())}", flush=True)
         try:
             httpd.serve_forever()
         except KeyboardInterrupt:

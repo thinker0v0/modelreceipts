@@ -45,7 +45,7 @@ def make_handler(store: Store, thresholds: Thresholds, dashboard_dir: Path = DAS
         # -- helpers -------------------------------------------------------
         def log_message(self, fmt, *args):  # no client address in logs
             if not quiet:
-                print(f"[modelreceipts-server] {self.command} {urlsplit(self.path).path} -> {args[1] if len(args) > 1 else ''}")
+                print(f"[modelreceipts-server] {self.command} {urlsplit(self.path).path} -> {args[1] if len(args) > 1 else ''}", flush=True)
 
         def _send(self, status: int, body: bytes, ctype: str, extra: dict | None = None):
             self.send_response(status)
