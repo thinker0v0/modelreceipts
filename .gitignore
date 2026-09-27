@@ -30,3 +30,9 @@ collector/out/
 .idea/
 .vscode/
 *.swp
+
+# Local server database and seed exports
+server/var/
+*.sqlite3
+*.sqlite3-*
+seeds/out/
