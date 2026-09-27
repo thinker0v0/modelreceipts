@@ -1,0 +1,257 @@
+"""Tests for the dry-run collector. Run from repo root:
+
+    python3 -m unittest discover -s collector/tests -v
+"""
+
+from __future__ import annotations
+
+import ast
+import io
+import json
+import shutil
+import sys
+import tempfile
+import unittest
+from contextlib import redirect_stderr, redirect_stdout
+from datetime import datetime, timezone
+from pathlib import Path
+
+COLLECTOR = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(COLLECTOR))
+
+from modelreceipts import DEFAULT_SCHEMA_PATH  # noqa: E402
+from modelreceipts.classify import classify  # noqa: E402
+from modelreceipts.hook import main as hook_main  # noqa: E402
+from modelreceipts.hook import run  # noqa: E402
+from modelreceipts.record import build_record, detect_route  # noqa: E402
+from modelreceipts.transcript import TurnSummary, summarize_file, summarize_last_turn  # noqa: E402
+from modelreceipts.validate import load_validator  # noqa: E402
+
+FIXTURES = Path(__file__).resolve().parent / "fixtures"
+TRANSCRIPT = FIXTURES / "synthetic_transcript.jsonl"
+FIXED_NOW = datetime(2026, 9, 27, 9, 1, tzinfo=timezone.utc)
+FIXED_ID = "11111111-2222-4333-8444-555555555555"
+
+
+def load_payload() -> dict:
+    payload = json.loads((FIXTURES / "stop_payload.json").read_text(encoding="utf-8"))
+    payload["transcript_path"] = str(TRANSCRIPT)
+    return payload
+
+
+class TranscriptParsingTest(unittest.TestCase):
+    def setUp(self):
+        self.s = summarize_file(str(TRANSCRIPT))
+
+    def test_only_last_turn_is_counted(self):
+        self.assertEqual(self.s.prior_prompts, 1)
+        self.assertIn("로그인 테스트가 실패해", self.s.prompt_text)
+        self.assertNotIn("claude-sidechain-model", self.s.models)  # sidechain ignored
+
+    def test_usage_dedupes_streamed_message_lines(self):
+        self.assertEqual(self.s.api_calls, 7)
+        self.assertEqual(self.s.input_tokens, 40)
+        self.assertEqual(self.s.output_tokens, 940)  # msg_A counted once, with its final 120
+        self.assertEqual(self.s.cache_read_tokens, 164700)
+        self.assertEqual(self.s.cache_write_tokens, 5150)
+        self.assertEqual(self.s.context_tokens, 23010)
+
+    def test_evidence_signals(self):
+        self.assertEqual(len(self.s.test_calls), 2)
+        self.assertTrue(self.s.tests_passed)  # last test run passed
+        self.assertTrue(self.s.committed)
+        self.assertEqual(self.s.tool_error_count, 1)
+        self.assertEqual(self.s.files_touched, 2)
+        self.assertEqual(self.s.latency_ms, 42000)
+        self.assertEqual(self.s.tools_used, ["Bash", "Edit", "Read"])
+
+    def test_failed_last_test_run_and_failed_commit(self):
+        lines = [
+            json.dumps({"type": "user", "message": {"role": "user", "content": "fix the bug"}}),
+            json.dumps({"type": "assistant", "message": {"id": "m1", "model": "claude-x", "usage": {"output_tokens": 1},
+                        "content": [{"type": "tool_use", "id": "a", "name": "Bash", "input": {"command": "npm test"}},
+                                    {"type": "tool_use", "id": "b", "name": "Bash", "input": {"command": "git commit -m x"}}]}}),
+            json.dumps({"type": "user", "message": {"role": "user", "content": [
+                {"type": "tool_result", "tool_use_id": "a", "is_error": True, "content": "1 failing"},
+                {"type": "tool_result", "tool_use_id": "b", "is_error": True, "content": "nothing to commit"}]}}),
+        ]
+        s = summarize_last_turn(lines)
+        self.assertIs(s.tests_passed, False)
+        self.assertFalse(s.committed)
+        self.assertEqual(s.tool_error_count, 2)
+
+    def test_no_tests_means_unknown_not_false(self):
+        s = summarize_last_turn([json.dumps({"type": "user", "message": {"role": "user", "content": "hi"}})])
+        self.assertIsNone(s.tests_passed)
+        self.assertEqual(s.api_calls, 0)
+
+
+class ClassifierTest(unittest.TestCase):
+    def _cls(self, prompt, edited=True):
+        s = TurnSummary(prompt_text=prompt)
+        if edited:
+            from modelreceipts.transcript import ToolCall
+            s.tool_calls = [ToolCall(name="Edit", file_path="x.py")]
+        return classify(s)
+
+    def test_rules(self):
+        cases = {
+            "로그인 버그 고쳐줘": "coding.bugfix",
+            "Fix the failing CI job": "coding.bugfix",
+            "Write unit tests for the parser": "coding.test",
+            "이 모듈 리팩토링해줘": "coding.refactor",
+            "Add a CSV export endpoint": "coding.feature",
+            "Update the README": "coding.docs",
+            "성능 최적화 해줘": "coding.performance",
+            "Dockerfile 만들고 배포 파이프라인 구성": "coding.config_devops",
+        }
+        for prompt, expected in cases.items():
+            with self.subTest(prompt=prompt):
+                self.assertEqual(self._cls(prompt), ("coding", expected))
+
+    def test_readonly_explain_and_review(self):
+        self.assertEqual(self._cls("Explain how this function works", edited=False), ("coding", "coding.explain"))
+        self.assertEqual(self._cls("코드 리뷰해 줘", edited=False), ("coding", "coding.review"))
+
+    def test_non_coding_has_null_l2(self):
+        self.assertEqual(self._cls("이 이메일 번역해 줘", edited=False), ("writing", None))
+        self.assertEqual(self._cls("hello there", edited=False), ("other", None))
+
+
+class RecordTest(unittest.TestCase):
+    def setUp(self):
+        self.payload = load_payload()
+        self.record = build_record(self.payload, summarize_file(str(TRANSCRIPT)), env={}, now=FIXED_NOW, record_id=FIXED_ID)
+
+    def test_record_is_schema_valid(self):
+        self.assertEqual(load_validator().errors(self.record), [])
+
+    def test_record_content(self):
+        r = self.record
+        self.assertEqual((r["task"]["l1"], r["task"]["l2"]), ("coding", "coding.bugfix"))
+        self.assertEqual(r["model"], {"provider": "anthropic", "id": "claude-opus-5-5", "route": "direct", "effort": "high"})
+        self.assertEqual(r["source"]["client_version"], "2.1.200")
+        self.assertEqual(r["usage"]["turns"], 7)
+        ev = r["outcome"]["evidence"]
+        self.assertEqual((ev["test_runs"], ev["tests_passed"], ev["committed"]), (2, True, True))
+        self.assertIsNone(r["outcome"]["self_assessment"])
+        self.assertEqual(r["submitted_at"], "2026-09-27T09:01:00Z")
+
+    def test_no_text_paths_or_identifiers_leak(self):
+        blob = json.dumps(self.record, ensure_ascii=False)
+        for secret in ["CANARY", "alice", "secret-repo", "login.py", "로그인", "Everything works",
+                       self.payload["session_id"], "pytest", "git commit"]:
+            with self.subTest(secret=secret):
+                self.assertNotIn(secret, blob)
+
+    def test_route_detection(self):
+        self.assertEqual(detect_route({}), "direct")
+        self.assertEqual(detect_route({"CLAUDE_CODE_USE_BEDROCK": "1"}), "bedrock")
+        self.assertEqual(detect_route({"ANTHROPIC_BASE_URL": "https://openrouter.ai/api"}), "openrouter")
+        self.assertEqual(detect_route({"ANTHROPIC_BASE_URL": "http://localhost:4000"}), "proxy")
+
+
+class HookCliTest(unittest.TestCase):
+    def test_hook_run_end_to_end(self):
+        record, errors = run(load_payload(), env={})
+        self.assertEqual(errors, [])
+        self.assertEqual(record["source"]["collector"], "stop-hook")
+
+    def test_hook_mode_keeps_stdout_empty_and_exits_zero(self):
+        tmp = Path(tempfile.mkdtemp())
+        try:
+            payload_file = tmp / "payload.json"
+            payload_file.write_text(json.dumps(load_payload()), encoding="utf-8")
+            out, err = io.StringIO(), io.StringIO()
+            with redirect_stdout(out), redirect_stderr(err):
+                code = hook_main(["--hook", "--payload", str(payload_file), "--preview-dir", str(tmp / "prev")])
+            self.assertEqual(code, 0)
+            self.assertEqual(out.getvalue(), "")
+            self.assertIn("DRY RUN", err.getvalue())
+            written = list((tmp / "prev").glob("*.json"))
+            self.assertEqual(len(written), 1)
+            self.assertEqual(load_validator().errors(json.loads(written[0].read_text(encoding="utf-8"))), [])
+        finally:
+            shutil.rmtree(tmp)
+
+    def test_hook_mode_never_fails_on_bad_payload(self):
+        tmp = Path(tempfile.mkdtemp())
+        try:
+            bad = tmp / "bad.json"
+            bad.write_text('{"transcript_path": "/nonexistent/x.jsonl"}', encoding="utf-8")
+            with redirect_stdout(io.StringIO()) as out, redirect_stderr(io.StringIO()):
+                self.assertEqual(hook_main(["--hook", "--payload", str(bad)]), 0)
+            self.assertEqual(out.getvalue(), "")
+        finally:
+            shutil.rmtree(tmp)
+
+
+class NoNetworkTest(unittest.TestCase):
+    FORBIDDEN = {"socket", "ssl", "http", "urllib", "urllib3", "requests", "httpx", "aiohttp",
+                 "ftplib", "smtplib", "telnetlib", "xmlrpc", "subprocess", "asyncio"}
+
+    def test_collector_imports_no_network_or_process_modules(self):
+        for py in sorted((COLLECTOR / "modelreceipts").glob("*.py")):
+            tree = ast.parse(py.read_text(encoding="utf-8"))
+            for node in ast.walk(tree):
+                names = []
+                if isinstance(node, ast.Import):
+                    names = [a.name for a in node.names]
+                elif isinstance(node, ast.ImportFrom) and node.module and node.level == 0:
+                    names = [node.module]
+                for name in names:
+                    with self.subTest(file=py.name, module=name):
+                        self.assertNotIn(name.split(".")[0], self.FORBIDDEN)
+
+
+class SchemaExamplesTest(unittest.TestCase):
+    EXAMPLES = sorted((DEFAULT_SCHEMA_PATH.parent / "examples").glob("*.json"))
+
+    def _mutations(self, base: dict):
+        def m(fn):
+            r = json.loads(json.dumps(base))
+            fn(r)
+            return r
+        yield "extra top-level prompt field", m(lambda r: r.__setitem__("prompt", "hello"))
+        yield "content_included true", m(lambda r: r["privacy"].__setitem__("content_included", True))
+        yield "non-coding L1 with coding L2", m(lambda r: r["task"].__setitem__("l1", "writing"))
+        yield "unknown L2", m(lambda r: r["task"].__setitem__("l2", "coding.vibes"))
+        yield "missing evidence", m(lambda r: r["outcome"].pop("evidence"))
+        yield "self score > 1", m(lambda r: r["outcome"].__setitem__("self_assessment", {"score": 1.5, "rater": "self_llm", "judge_model": None}))
+        yield "bad uuid", m(lambda r: r.__setitem__("record_id", "not-a-uuid"))
+        yield "bool as token count", m(lambda r: r["usage"].__setitem__("turns", True))
+        yield "path in tools_used", m(lambda r: r["method"].__setitem__("tools_used", ["/home/alice/x"]))
+
+    def test_examples_exist_and_are_valid(self):
+        self.assertGreaterEqual(len(self.EXAMPLES), 2)
+        v = load_validator()
+        for path in self.EXAMPLES:
+            with self.subTest(example=path.name):
+                self.assertEqual(v.errors(json.loads(path.read_text(encoding="utf-8"))), [])
+
+    def test_invalid_mutations_are_rejected(self):
+        v = load_validator()
+        base = json.loads(self.EXAMPLES[0].read_text(encoding="utf-8"))
+        for label, bad in self._mutations(base):
+            with self.subTest(mutation=label):
+                self.assertTrue(v.errors(bad), f"should be invalid: {label}")
+
+    def test_agrees_with_reference_jsonschema_if_installed(self):
+        try:
+            import jsonschema
+        except ImportError:
+            self.skipTest("jsonschema not installed (optional cross-check)")
+        schema = json.loads(DEFAULT_SCHEMA_PATH.read_text(encoding="utf-8"))
+        jsonschema.Draft202012Validator.check_schema(schema)
+        ref = jsonschema.Draft202012Validator(schema, format_checker=jsonschema.FormatChecker())
+        mine = load_validator()
+        base = json.loads(self.EXAMPLES[0].read_text(encoding="utf-8"))
+        samples = [(p.name, json.loads(p.read_text(encoding="utf-8"))) for p in self.EXAMPLES]
+        samples += list(self._mutations(base))
+        for label, inst in samples:
+            with self.subTest(sample=label):
+                self.assertEqual(bool(mine.errors(inst)), any(True for _ in ref.iter_errors(inst)))
+
+
+if __name__ == "__main__":
+    unittest.main()
