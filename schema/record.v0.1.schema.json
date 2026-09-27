@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/thigner1/modelreceipts/schema/record.v0.1.schema.json",
+  "$id": "https://github.com/thinker0v0/modelreceipts/schema/record.v0.1.schema.json",
   "title": "ModelReceipts task-run record v0.1",
   "description": "One agent task run: closed task codes, model, method (harness), usage/cost and verifiable outcome evidence. Contains NO prompt text, model output, file paths, repository names or user identifiers. Self-assessment is stored in an isolated sub-object and is excluded from default rankings.",
   "type": "object",

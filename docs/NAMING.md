@@ -22,5 +22,5 @@
 
 ## 결정 필요
 
-- 공개 저장소 이름 (예: `thigner1/modelreceipts`) 및 공개/비공개 여부.
+- 공개 저장소 이름 (예: `thinker0v0/modelreceipts`) 및 공개/비공개 여부.
 - 이름 충돌 조사 후 확정 또는 대안으로 교체. 교체 시 README 제목, `collector/pyproject.toml`, `collector/modelreceipts/` 패키지명, 대시보드 제목을 함께 바꾼다.

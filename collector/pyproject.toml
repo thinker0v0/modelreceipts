@@ -9,7 +9,7 @@ description = "Dry-run collector for ModelReceipts: evidence-first task-run reco
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "Apache-2.0" }
-authors = [{ name = "thigner1" }]
+authors = [{ name = "thinker0v0" }]
 dependencies = []  # stdlib only
 classifiers = [
   "Development Status :: 2 - Pre-Alpha",
