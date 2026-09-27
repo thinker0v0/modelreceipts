@@ -1,6 +1,6 @@
 # ModelReceipts
 
-[![ci](https://github.com/thigner1/modelreceipts/actions/workflows/ci.yml/badge.svg)](.github/workflows/ci.yml)
+[![ci](https://github.com/thinker0v0/modelreceipts/actions/workflows/ci.yml/badge.svg)](.github/workflows/ci.yml)
 ![status](https://img.shields.io/badge/status-pre--alpha%20~10%25-orange)
 ![python](https://img.shields.io/badge/python-3.10%2B%2C%20stdlib%20only-blue)
 ![license](https://img.shields.io/badge/license-Apache--2.0-lightgrey)
