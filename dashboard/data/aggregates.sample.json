@@ -1,0 +1,2956 @@
+{
+ "api": "modelreceipts.aggregates/v0.1",
+ "generated_at": "2026-09-27T00:00:00Z",
+ "level": "l2",
+ "filters": {
+  "source_type": null,
+  "l1": null,
+  "l2": null
+ },
+ "thresholds": {
+  "field_report": {
+   "min_contributors": 5,
+   "min_records": 30
+  },
+  "benchmark": {
+   "min_contributors": 1,
+   "min_records": 30
+  },
+  "preference": {
+   "min_contributors": 1,
+   "min_records": 30
+  },
+  "usage": {
+   "min_contributors": 1,
+   "min_records": 30
+  }
+ },
+ "method_dimension": "method.harness",
+ "ranking_signal": "outcome.evidence (tests.pass_rate); self_assessment is excluded_from_ranking",
+ "totals": {
+  "records_by_source_type": {
+   "field_report": 2017,
+   "benchmark": 15518,
+   "preference": 0,
+   "usage": 0
+  }
+ },
+ "sources": [
+  {
+   "source_id": "aider-polyglot@cb6a152",
+   "source_type": "benchmark",
+   "name": "Aider polyglot coding leaderboard",
+   "url": "https://github.com/Aider-AI/aider/blob/cb6a152e5ee27fbc77ac499d5e628ccd74a5fa2a/aider/website/_data/polyglot_leaderboard.yml",
+   "commit_sha": "cb6a152e5ee27fbc77ac499d5e628ccd74a5fa2a",
+   "commit_date": "2025-10-04T09:14:08Z",
+   "sha256": "85a50b25953512d18ba4bb0c23c0b8e626fcf9a5b52d287644b8a0b44b9535de",
+   "license": "Apache-2.0",
+   "license_note": "The file is part of the Aider repository, licensed Apache-2.0 (LICENSE.txt at the same commit). It is redistributed here unmodified with this attribution. Derived records keep this source_id; no Aider benchmark prompts or model outputs are included."
+  }
+ ],
+ "cells": [
+  {
+   "source_type": "benchmark",
+   "l1": "coding",
+   "l2": "coding.feature",
+   "model": "chatgpt-4o-latest-2025-02-15",
+   "method": "aider-diff",
+   "n": 223,
+   "k": 1,
+   "tests": {
+    "tested": 223,
+    "passed": 61,
+    "pass_rate": 0.2735,
+    "ci95": [
+     0.2192,
+     0.3355
+    ],
+    "tested_share": 1.0
+   },
+   "cost_usd_per_task": {
+    "client_mean": 0.064441,
+    "server_mean": null,
+    "reported": 223
+   },
+   "cost_usd_per_success": 0.235616,
+   "latency_ms_median": 12400,
+   "commit_rate": null,
+   "tool_errors_mean": null,
+   "self_assessment": null
+  },
+  {
+   "source_type": "benchmark",
+   "l1": "coding",
+   "l2": "coding.feature",
+   "model": "chatgpt-4o-latest-2025-03-29",
+   "method": "aider-diff",
+   "n": 225,
+   "k": 1,
+   "tests": {
+    "tested": 225,
+    "passed": 102,
+    "pass_rate": 0.4533,
+    "ci95": [
+     0.3896,
+     0.5186
+    ],
+    "tested_share": 1.0
+   },
+   "cost_usd_per_task": {
+    "client_mean": 0.08774,
+    "server_mean": null,
+    "reported": 225
+   },
+   "cost_usd_per_success": 0.193558,
+   "latency_ms_median": 10300,
+   "commit_rate": null,
+   "tool_errors_mean": null,
+   "self_assessment": null
+  },
+  {
+   "source_type": "benchmark",
+   "l1": "coding",
+   "l2": "coding.feature",
+   "model": "claude-3-5-haiku-20241022",
+   "method": "aider-diff",
+   "n": 225,
+   "k": 1,
+   "tests": {
+    "tested": 225,
+    "passed": 63,
+    "pass_rate": 0.28,
+    "ci95": [
+     0.2254,
+     0.342
+    ],
+    "tested_share": 1.0
+   },
+   "cost_usd_per_task": {
+    "client_mean": 0.026926,
+    "server_mean": null,
+    "reported": 225
+   },
+   "cost_usd_per_success": 0.096164,
+   "latency_ms_median": 31800,
+   "commit_rate": null,
+   "tool_errors_mean": null,
+   "self_assessment": null
+  },
+  {
+   "source_type": "benchmark",
+   "l1": "coding",
+   "l2": "coding.feature",
+   "model": "claude-3-5-sonnet-20241022",
+   "method": "aider-diff",
+   "n": 225,
+   "k": 1,
+   "tests": {
+    "tested": 225,
+    "passed": 116,
+    "pass_rate": 0.5156,
+    "ci95": [
+     0.4505,
+     0.58
+    ],
+    "tested_share": 1.0
+   },
+   "cost_usd_per_task": {
+    "client_mean": 0.064028,
+    "server_mean": null,
+    "reported": 225
+   },
+   "cost_usd_per_success": 0.124182,
+   "latency_ms_median": 21400,
+   "commit_rate": null,
+   "tool_errors_mean": null,
+   "self_assessment": null
+  },
+  {
+   "source_type": "benchmark",
+   "l1": "coding",
+   "l2": "coding.feature",
+   "model": "claude-3-7-sonnet-20250219-32k-thinking-tokens",
+   "method": "aider-diff",
+   "n": 225,
+   "k": 1,
+   "tests": {
+    "tested": 225,
+    "passed": 146,
+    "pass_rate": 0.6489,
+    "ci95": [
+     0.5845,
+     0.7083
+    ],
+    "tested_share": 1.0
+   },
+   "cost_usd_per_task": {
+    "client_mean": 0.163708,
+    "server_mean": null,
+    "reported": 225
+   },
+   "cost_usd_per_success": 0.252285,
+   "latency_ms_median": 105200,
+   "commit_rate": null,
+   "tool_errors_mean": null,
+   "self_assessment": null
+  },
+  {
+   "source_type": "benchmark",
+   "l1": "coding",
+   "l2": "coding.feature",
+   "model": "claude-3-7-sonnet-20250219-no-thinking",
+   "method": "aider-diff",
+   "n": 225,
+   "k": 1,
+   "tests": {
+    "tested": 225,
+    "passed": 136,
+    "pass_rate": 0.6044,
+    "ci95": [
+     0.5393,
+     0.6661
+    ],
+    "tested_share": 1.0
+   },
+   "cost_usd_per_task": {
+    "client_mean": 0.078752,
+    "server_mean": null,
+    "reported": 225
+   },
+   "cost_usd_per_success": 0.130298,
+   "latency_ms_median": 28300,
+   "commit_rate": null,
+   "tool_errors_mean": null,
+   "self_assessment": null
+  },
+  {
+   "source_type": "benchmark",
+   "l1": "coding",
+   "l2": "coding.feature",
+   "model": "claude-opus-4-20250514-32k-thinking",
+   "method": "aider-diff",
+   "n": 225,
+   "k": 1,
+   "tests": {
+    "tested": 225,
+    "passed": 162,
+    "pass_rate": 0.72,
+    "ci95": [
+     0.658,
+     0.7746
+    ],
+    "tested_share": 1.0
+   },
+   "cost_usd_per_task": {
+    "client_mean": 0.292215,
+    "server_mean": null,
+    "reported": 225
+   },
+   "cost_usd_per_success": 0.405854,
+   "latency_ms_median": 44100,
+   "commit_rate": null,
+   "tool_errors_mean": null,
+   "self_assessment": null
+  },
+  {
+   "source_type": "benchmark",
+   "l1": "coding",
+   "l2": "coding.feature",
+   "model": "claude-opus-4-20250514-no-think",
+   "method": "aider-diff",
+   "n": 225,
+   "k": 1,
+   "tests": {
+    "tested": 225,
+    "passed": 159,
+    "pass_rate": 0.7067,
+    "ci95": [
+     0.6441,
+     0.7623
+    ],
+    "tested_share": 1.0
+   },
+   "cost_usd_per_task": {
+    "client_mean": 0.305001,
+    "server_mean": null,
+    "reported": 225
+   },
+   "cost_usd_per_success": 0.431585,
+   "latency_ms_median": 42500,
+   "commit_rate": null,
+   "tool_errors_mean": null,
+   "self_assessment": null
+  },
+  {
+   "source_type": "benchmark",
+   "l1": "coding",
+   "l2": "coding.feature",
+   "model": "claude-sonnet-4-20250514-32k-thinking",
+   "method": "aider-diff",
+   "n": 225,
+   "k": 1,
+   "tests": {
+    "tested": 225,
+    "passed": 138,
+    "pass_rate": 0.6133,
+    "ci95": [
+     0.5483,
+     0.6746
+    ],
+    "tested_share": 1.0
+   },
+   "cost_usd_per_task": {
+    "client_mean": 0.118113,
+    "server_mean": null,
+    "reported": 225
+   },
+   "cost_usd_per_success": 0.192586,
+   "latency_ms_median": 79900,
+   "commit_rate": null,
+   "tool_errors_mean": null,
+   "self_assessment": null
+  },
+  {
+   "source_type": "benchmark",
+   "l1": "coding",
+   "l2": "coding.feature",
+   "model": "claude-sonnet-4-20250514-no-thinking",
+   "method": "aider-diff",
+   "n": 225,
+   "k": 1,
+   "tests": {
+    "tested": 225,
+    "passed": 127,
+    "pass_rate": 0.5644,
+    "ci95": [
+     0.4991,
+     0.6276
+    ],
+    "tested_share": 1.0
+   },
+   "cost_usd_per_task": {
+    "client_mean": 0.070291,
+    "server_mean": null,
+    "reported": 225
+   },
+   "cost_usd_per_success": 0.124541,
+   "latency_ms_median": 29800,
+   "commit_rate": null,
+   "tool_errors_mean": null,
+   "self_assessment": null
+  },
+  {
+   "source_type": "benchmark",
+   "l1": "coding",
+   "l2": "coding.feature",
+   "model": "codestral-25.01",
+   "method": "aider-whole",
+   "n": 225,
+   "k": 1,
+   "tests": {
+    "tested": 225,
+    "passed": 25,
+    "pass_rate": 0.1111,
+    "ci95": [
+     0.0764,
+     0.1589
+    ],
+    "tested_share": 1.0
+   },
+   "cost_usd_per_task": {
+    "client_mean": 0.008815,
+    "server_mean": null,
+    "reported": 225
+   },
+   "cost_usd_per_success": 0.079343,
+   "latency_ms_median": 9300,
+   "commit_rate": null,
+   "tool_errors_mean": null,
+   "self_assessment": null
+  },
+  {
+   "source_type": "benchmark",
+   "l1": "coding",
+   "l2": "coding.feature",
+   "model": "command-a-03-2025-quality",
+   "method": "aider-whole",
+   "n": 225,
+   "k": 1,
+   "tests": {
+    "tested": 225,
+    "passed": 27,
+    "pass_rate": 0.12,
+    "ci95": [
+     0.0838,
+     0.169
+    ],
+    "tested_share": 1.0
+   },
+   "cost_usd_per_task": {
+    "client_mean": null,
+    "server_mean": null,
+    "reported": 0
+   },
+   "cost_usd_per_success": null,
+   "latency_ms_median": 85100,
+   "commit_rate": null,
+   "tool_errors_mean": null,
+   "self_assessment": null
+  },
+  {
+   "source_type": "benchmark",
+   "l1": "coding",
+   "l2": "coding.feature",
+   "model": "deepseek-chat-v2.5",
+   "method": "aider-diff",
+   "n": 225,
+   "k": 1,
+   "tests": {
+    "tested": 225,
+    "passed": 40,
+    "pass_rate": 0.1778,
+    "ci95": [
+     0.1334,
+     0.233
+    ],
+    "tested_share": 1.0
+   },
+   "cost_usd_per_task": {
+    "client_mean": 0.002267,
+    "server_mean": null,
+    "reported": 225
+   },
+   "cost_usd_per_success": 0.01275,
+   "latency_ms_median": 184000,
+   "commit_rate": null,
+   "tool_errors_mean": null,
+   "self_assessment": null
+  },
+  {
+   "source_type": "benchmark",
+   "l1": "coding",
+   "l2": "coding.feature",
+   "model": "deepseek-chat-v3-prev",
+   "method": "aider-diff",
+   "n": 225,
+   "k": 1,
+   "tests": {
+    "tested": 225,
+    "passed": 109,
+    "pass_rate": 0.4844,
+    "ci95": [
+     0.42,
+     0.5495
+    ],
+    "tested_share": 1.0
+   },
+   "cost_usd_per_task": {
+    "client_mean": 0.001497,
+    "server_mean": null,
+    "reported": 225
+   },
+   "cost_usd_per_success": 0.00309,
+   "latency_ms_median": 34800,
+   "commit_rate": null,
+   "tool_errors_mean": null,
+   "self_assessment": null
+  },
+  {
+   "source_type": "benchmark",
+   "l1": "coding",
+   "l2": "coding.feature",
+   "model": "deepseek-r1",
+   "method": "aider-diff",
+   "n": 225,
+   "k": 1,
+   "tests": {
+    "tested": 225,
+    "passed": 128,
+    "pass_rate": 0.5689,
+    "ci95": [
+     0.5036,
+     0.6319
+    ],
+    "tested_share": 1.0
+   },
+   "cost_usd_per_task": {
+    "client_mean": 0.024086,
+    "server_mean": null,
+    "reported": 225
+   },
+   "cost_usd_per_success": 0.042338,
+   "latency_ms_median": 113700,
+   "commit_rate": null,
+   "tool_errors_mean": null,
+   "self_assessment": null
+  },
+  {
+   "source_type": "benchmark",
+   "l1": "coding",
+   "l2": "coding.feature",
+   "model": "deepseek-r1-0528",
+   "method": "aider-diff",
+   "n": 224,
+   "k": 1,
+   "tests": {
+    "tested": 224,
+    "passed": 160,
+    "pass_rate": 0.7143,
+    "ci95": [
+     0.6519,
+     0.7694
+    ],
+    "tested_share": 1.0
+   },
+   "cost_usd_per_task": {
+    "client_mean": 0.021436,
+    "server_mean": null,
+    "reported": 224
+   },
+   "cost_usd_per_success": 0.03001,
+   "latency_ms_median": 716600.0,
+   "commit_rate": null,
+   "tool_errors_mean": null,
+   "self_assessment": null
+  },
+  {
+   "source_type": "benchmark",
+   "l1": "coding",
+   "l2": "coding.feature",
+   "model": "deepseek-r1-claude-3-5-sonnet-20241022",
+   "method": "aider-architect",
+   "n": 225,
+   "k": 1,
+   "tests": {
+    "tested": 225,
+    "passed": 144,
+    "pass_rate": 0.64,
+    "ci95": [
+     0.5754,
+     0.6999
+    ],
+    "tested_share": 1.0
+   },
+   "cost_usd_per_task": {
+    "client_mean": 0.059081,
+    "server_mean": null,
+    "reported": 225
+   },
+   "cost_usd_per_success": 0.092314,
+   "latency_ms_median": 251600,
+   "commit_rate": null,
+   "tool_errors_mean": null,
+   "self_assessment": null
+  },
+  {
+   "source_type": "benchmark",
+   "l1": "coding",
+   "l2": "coding.feature",
+   "model": "deepseek-v3-0324",
+   "method": "aider-diff",
+   "n": 225,
+   "k": 1,
+   "tests": {
+    "tested": 225,
+    "passed": 124,
+    "pass_rate": 0.5511,
+    "ci95": [
+     0.4858,
+     0.6147
+    ],
+    "tested_share": 1.0
+   },
+   "cost_usd_per_task": {
+    "client_mean": 0.004962,
+    "server_mean": null,
+    "reported": 225
+   },
+   "cost_usd_per_success": 0.009004,
+   "latency_ms_median": 290000,
+   "commit_rate": null,
+   "tool_errors_mean": null,
+   "self_assessment": null
+  },
+  {
+   "source_type": "benchmark",
+   "l1": "coding",
+   "l2": "coding.feature",
+   "model": "deepseek-v3.2-exp-chat",
+   "method": "aider-diff",
+   "n": 225,
+   "k": 1,
+   "tests": {
+    "tested": 225,
+    "passed": 158,
+    "pass_rate": 0.7022,
+    "ci95": [
+     0.6395,
+     0.7582
+    ],
+    "tested_share": 1.0
+   },
+   "cost_usd_per_task": {
+    "client_mean": 0.003892,
+    "server_mean": null,
+    "reported": 225
+   },
+   "cost_usd_per_success": 0.005543,
+   "latency_ms_median": 104000,
+   "commit_rate": null,
+   "tool_errors_mean": null,
+   "self_assessment": null
+  },
+  {
+   "source_type": "benchmark",
+   "l1": "coding",
+   "l2": "coding.feature",
+   "model": "deepseek-v3.2-exp-reasoner",
+   "method": "aider-diff",
+   "n": 225,
+   "k": 1,
+   "tests": {
+    "tested": 225,
+    "passed": 167,
+    "pass_rate": 0.7422,
+    "ci95": [
+     0.6813,
+     0.795
+    ],
+    "tested_share": 1.0
+   },
+   "cost_usd_per_task": {
+    "client_mean": 0.005798,
+    "server_mean": null,
+    "reported": 225
+   },
+   "cost_usd_per_success": 0.007812,
+   "latency_ms_median": 291200,
+   "commit_rate": null,
+   "tool_errors_mean": null,
+   "self_assessment": null
+  },
+  {
+   "source_type": "benchmark",
+   "l1": "coding",
+   "l2": "coding.feature",
+   "model": "gemini-2.0-flash-exp",
+   "method": "aider-whole",
+   "n": 225,
+   "k": 1,
+   "tests": {
+    "tested": 225,
+    "passed": 50,
+    "pass_rate": 0.2222,
+    "ci95": [
+     0.1728,
+     0.281
+    ],
+    "tested_share": 1.0
+   },
+   "cost_usd_per_task": {
+    "client_mean": null,
+    "server_mean": null,
+    "reported": 0
+   },
+   "cost_usd_per_success": null,
+   "latency_ms_median": 12200,
+   "commit_rate": null,
+   "tool_errors_mean": null,
+   "self_assessment": null
+  },
+  {
+   "source_type": "benchmark",
+   "l1": "coding",
+   "l2": "coding.feature",
+   "model": "gemini-2.0-flash-thinking-exp-01-21",
+   "method": "aider-diff",
+   "n": 225,
+   "k": 1,
+   "tests": {
+    "tested": 225,
+    "passed": 41,
+    "pass_rate": 0.1822,
+    "ci95": [
+     0.1373,
+     0.2379
+    ],
+    "tested_share": 1.0
+   },
+   "cost_usd_per_task": {
+    "client_mean": null,
+    "server_mean": null,
+    "reported": 0
+   },
+   "cost_usd_per_success": null,
+   "latency_ms_median": 24200,
+   "commit_rate": null,
+   "tool_errors_mean": null,
+   "self_assessment": null
+  },
+  {
+   "source_type": "benchmark",
+   "l1": "coding",
+   "l2": "coding.feature",
+   "model": "gemini-2.0-pro-exp-02-05",
+   "method": "aider-whole",
+   "n": 225,
+   "k": 1,
+   "tests": {
+    "tested": 225,
+    "passed": 80,
+    "pass_rate": 0.3556,
+    "ci95": [
+     0.2959,
+     0.42
+    ],
+    "tested_share": 1.0
+   },
+   "cost_usd_per_task": {
+    "client_mean": null,
+    "server_mean": null,
+    "reported": 0
+   },
+   "cost_usd_per_success": null,
+   "latency_ms_median": 34800,
+   "commit_rate": null,
+   "tool_errors_mean": null,
+   "self_assessment": null
+  },
+  {
+   "source_type": "benchmark",
+   "l1": "coding",
+   "l2": "coding.feature",
+   "model": "gemini-2.5-flash-preview-04-17-default",
+   "method": "aider-diff",
+   "n": 225,
+   "k": 1,
+   "tests": {
+    "tested": 225,
+    "passed": 106,
+    "pass_rate": 0.4711,
+    "ci95": [
+     0.4069,
+     0.5363
+    ],
+    "tested_share": 1.0
+   },
+   "cost_usd_per_task": {
+    "client_mean": 0.0082,
+    "server_mean": null,
+    "reported": 225
+   },
+   "cost_usd_per_success": 0.017406,
+   "latency_ms_median": 50100,
+   "commit_rate": null,
+   "tool_errors_mean": null,
+   "self_assessment": null
+  },
+  {
+   "source_type": "benchmark",
+   "l1": "coding",
+   "l2": "coding.feature",
+   "model": "gemini-2.5-flash-preview-05-20-24k-think",
+   "method": "aider-diff",
+   "n": 225,
+   "k": 1,
+   "tests": {
+    "tested": 225,
+    "passed": 124,
+    "pass_rate": 0.5511,
+    "ci95": [
+     0.4858,
+     0.6147
+    ],
+    "tested_share": 1.0
+   },
+   "cost_usd_per_task": {
+    "client_mean": 0.038056,
+    "server_mean": null,
+    "reported": 225
+   },
+   "cost_usd_per_success": 0.069055,
+   "latency_ms_median": 53900,
+   "commit_rate": null,
+   "tool_errors_mean": null,
+   "self_assessment": null
+  },
+  {
+   "source_type": "benchmark",
+   "l1": "coding",
+   "l2": "coding.feature",
+   "model": "gemini-2.5-flash-preview-05-20-no-think",
+   "method": "aider-diff",
+   "n": 225,
+   "k": 1,
+   "tests": {
+    "tested": 225,
+    "passed": 99,
+    "pass_rate": 0.44,
+    "ci95": [
+     0.3767,
+     0.5053
+    ],
+    "tested_share": 1.0
+   },
+   "cost_usd_per_task": {
+    "client_mean": 0.005046,
+    "server_mean": null,
+    "reported": 225
+   },
+   "cost_usd_per_success": 0.011468,
+   "latency_ms_median": 12200,
+   "commit_rate": null,
+   "tool_errors_mean": null,
+   "self_assessment": null
+  },
+  {
+   "source_type": "benchmark",
+   "l1": "coding",
+   "l2": "coding.feature",
+   "model": "gemini-2.5-pro-preview-03-25",
+   "method": "aider-diff-fenced",
+   "n": 225,
+   "k": 1,
+   "tests": {
+    "tested": 225,
+    "passed": 164,
+    "pass_rate": 0.7289,
+    "ci95": [
+     0.6673,
+     0.7828
+    ],
+    "tested_share": 1.0
+   },
+   "cost_usd_per_task": {
+    "client_mean": null,
+    "server_mean": null,
+    "reported": 0
+   },
+   "cost_usd_per_success": null,
+   "latency_ms_median": 45300,
+   "commit_rate": null,
+   "tool_errors_mean": null,
+   "self_assessment": null
+  },
+  {
+   "source_type": "benchmark",
+   "l1": "coding",
+   "l2": "coding.feature",
+   "model": "gemini-2.5-pro-preview-05-06",
+   "method": "aider-diff-fenced",
+   "n": 225,
+   "k": 1,
+   "tests": {
+    "tested": 225,
+    "passed": 173,
+    "pass_rate": 0.7689,
+    "ci95": [
+     0.7096,
+     0.8192
+    ],
+    "tested_share": 1.0
+   },
+   "cost_usd_per_task": {
+    "client_mean": 0.166268,
+    "server_mean": null,
+    "reported": 225
+   },
+   "cost_usd_per_success": 0.216241,
+   "latency_ms_median": 165300,
+   "commit_rate": null,
+   "tool_errors_mean": null,
+   "self_assessment": null
+  },
+  {
+   "source_type": "benchmark",
+   "l1": "coding",
+   "l2": "coding.feature",
+   "model": "gemini-2.5-pro-preview-06-05-32k-think",
+   "method": "aider-diff-fenced",
+   "n": 225,
+   "k": 1,
+   "tests": {
+    "tested": 225,
+    "passed": 187,
+    "pass_rate": 0.8311,
+    "ci95": [
+     0.7767,
+     0.8744
+    ],
+    "tested_share": 1.0
+   },
+   "cost_usd_per_task": {
+    "client_mean": 0.221699,
+    "server_mean": null,
+    "reported": 225
+   },
+   "cost_usd_per_success": 0.266754,
+   "latency_ms_median": 200300,
+   "commit_rate": null,
+   "tool_errors_mean": null,
+   "self_assessment": null
+  },
+  {
+   "source_type": "benchmark",
+   "l1": "coding",
+   "l2": "coding.feature",
+   "model": "gemini-2.5-pro-preview-06-05-default-think",
+   "method": "aider-diff-fenced",
+   "n": 225,
+   "k": 1,
+   "tests": {
+    "tested": 225,
+    "passed": 178,
+    "pass_rate": 0.7911,
+    "ci95": [
+     0.7333,
+     0.8391
+    ],
+    "tested_share": 1.0
+   },
+   "cost_usd_per_task": {
+    "client_mean": 0.202649,
+    "server_mean": null,
+    "reported": 225
+   },
+   "cost_usd_per_success": 0.256161,
+   "latency_ms_median": 175200,
+   "commit_rate": null,
+   "tool_errors_mean": null,
+   "self_assessment": null
+  },
+  {
+   "source_type": "benchmark",
+   "l1": "coding",
+   "l2": "coding.feature",
+   "model": "gemini-exp-1206",
+   "method": "aider-whole",
+   "n": 225,
+   "k": 1,
+   "tests": {
+    "tested": 225,
+    "passed": 86,
+    "pass_rate": 0.3822,
+    "ci95": [
+     0.3212,
+     0.4472
+    ],
+    "tested_share": 1.0
+   },
+   "cost_usd_per_task": {
+    "client_mean": null,
+    "server_mean": null,
+    "reported": 0
+   },
+   "cost_usd_per_success": null,
+   "latency_ms_median": 45500,
+   "commit_rate": null,
+   "tool_errors_mean": null,
+   "self_assessment": null
+  },
+  {
+   "source_type": "benchmark",
+   "l1": "coding",
+   "l2": "coding.feature",
+   "model": "gemma-3-27b-it",
+   "method": "aider-whole",
+   "n": 225,
+   "k": 1,
+   "tests": {
+    "tested": 225,
+    "passed": 11,
+    "pass_rate": 0.0489,
+    "ci95": [
+     0.0275,
+     0.0854
+    ],
+    "tested_share": 1.0
+   },
+   "cost_usd_per_task": {
+    "client_mean": null,
+    "server_mean": null,
+    "reported": 0
+   },
+   "cost_usd_per_success": null,
+   "latency_ms_median": 79700,
+   "commit_rate": null,
+   "tool_errors_mean": null,
+   "self_assessment": null
+  },
+  {
+   "source_type": "benchmark",
+   "l1": "coding",
+   "l2": "coding.feature",
+   "model": "gpt-4.1",
+   "method": "aider-diff",
+   "n": 225,
+   "k": 1,
+   "tests": {
+    "tested": 225,
+    "passed": 118,
+    "pass_rate": 0.5244,
+    "ci95": [
+     0.4593,
+     0.5887
+    ],
+    "tested_share": 1.0
+   },
+   "cost_usd_per_task": {
+    "client_mean": 0.043803,
+    "server_mean": null,
+    "reported": 225
+   },
+   "cost_usd_per_success": 0.08353,
+   "latency_ms_median": 20500,
+   "commit_rate": null,
+   "tool_errors_mean": null,
+   "self_assessment": null
+  },
+  {
+   "source_type": "benchmark",
+   "l1": "coding",
+   "l2": "coding.feature",
+   "model": "gpt-4.1-mini",
+   "method": "aider-diff",
+   "n": 225,
+   "k": 1,
+   "tests": {
+    "tested": 225,
+    "passed": 73,
+    "pass_rate": 0.3244,
+    "ci95": [
+     0.2667,
+     0.3881
+    ],
+    "tested_share": 1.0
+   },
+   "cost_usd_per_task": {
+    "client_mean": 0.008852,
+    "server_mean": null,
+    "reported": 225
+   },
+   "cost_usd_per_success": 0.027287,
+   "latency_ms_median": 19500,
+   "commit_rate": null,
+   "tool_errors_mean": null,
+   "self_assessment": null
+  },
+  {
+   "source_type": "benchmark",
+   "l1": "coding",
+   "l2": "coding.feature",
+   "model": "gpt-4.1-nano",
+   "method": "aider-whole",
+   "n": 225,
+   "k": 1,
+   "tests": {
+    "tested": 225,
+    "passed": 20,
+    "pass_rate": 0.0889,
+    "ci95": [
+     0.0583,
+     0.1333
+    ],
+    "tested_share": 1.0
+   },
+   "cost_usd_per_task": {
+    "client_mean": 0.001903,
+    "server_mean": null,
+    "reported": 225
+   },
+   "cost_usd_per_success": 0.021406,
+   "latency_ms_median": 12000,
+   "commit_rate": null,
+   "tool_errors_mean": null,
+   "self_assessment": null
+  },
+  {
+   "source_type": "benchmark",
+   "l1": "coding",
+   "l2": "coding.feature",
+   "model": "gpt-4.5-preview",
+   "method": "aider-diff",
+   "n": 224,
+   "k": 1,
+   "tests": {
+    "tested": 224,
+    "passed": 101,
+    "pass_rate": 0.4509,
+    "ci95": [
+     0.3871,
+     0.5163
+    ],
+    "tested_share": 1.0
+   },
+   "cost_usd_per_task": {
+    "client_mean": 0.817769,
+    "server_mean": null,
+    "reported": 224
+   },
+   "cost_usd_per_success": 1.813637,
+   "latency_ms_median": 113500.0,
+   "commit_rate": null,
+   "tool_errors_mean": null,
+   "self_assessment": null
+  },
+  {
+   "source_type": "benchmark",
+   "l1": "coding",
+   "l2": "coding.feature",
+   "model": "gpt-4o-2024-08-06",
+   "method": "aider-diff",
+   "n": 225,
+   "k": 1,
+   "tests": {
+    "tested": 225,
+    "passed": 52,
+    "pass_rate": 0.2311,
+    "ci95": [
+     0.1808,
+     0.2904
+    ],
+    "tested_share": 1.0
+   },
+   "cost_usd_per_task": {
+    "client_mean": 0.031238,
+    "server_mean": null,
+    "reported": 225
+   },
+   "cost_usd_per_success": 0.135171,
+   "latency_ms_median": 16000,
+   "commit_rate": null,
+   "tool_errors_mean": null,
+   "self_assessment": null
+  },
+  {
+   "source_type": "benchmark",
+   "l1": "coding",
+   "l2": "coding.feature",
+   "model": "gpt-4o-2024-11-20",
+   "method": "aider-diff",
+   "n": 225,
+   "k": 1,
+   "tests": {
+    "tested": 225,
+    "passed": 41,
+    "pass_rate": 0.1822,
+    "ci95": [
+     0.1373,
+     0.2379
+    ],
+    "tested_share": 1.0
+   },
+   "cost_usd_per_task": {
+    "client_mean": 0.029934,
+    "server_mean": null,
+    "reported": 225
+   },
+   "cost_usd_per_success": 0.164292,
+   "latency_ms_median": 12100,
+   "commit_rate": null,
+   "tool_errors_mean": null,
+   "self_assessment": null
+  },
+  {
+   "source_type": "benchmark",
+   "l1": "coding",
+   "l2": "coding.feature",
+   "model": "gpt-4o-mini-2024-07-18",
+   "method": "aider-whole",
+   "n": 225,
+   "k": 1,
+   "tests": {
+    "tested": 225,
+    "passed": 8,
+    "pass_rate": 0.0356,
+    "ci95": [
+     0.0181,
+     0.0686
+    ],
+    "tested_share": 1.0
+   },
+   "cost_usd_per_task": {
+    "client_mean": 0.001438,
+    "server_mean": null,
+    "reported": 225
+   },
+   "cost_usd_per_success": 0.040393,
+   "latency_ms_median": 17300,
+   "commit_rate": null,
+   "tool_errors_mean": null,
+   "self_assessment": null
+  },
+  {
+   "source_type": "benchmark",
+   "l1": "coding",
+   "l2": "coding.feature",
+   "model": "gpt-5-high",
+   "method": "aider-diff",
+   "n": 225,
+   "k": 1,
+   "tests": {
+    "tested": 225,
+    "passed": 198,
+    "pass_rate": 0.88,
+    "ci95": [
+     0.831,
+     0.9162
+    ],
+    "tested_share": 1.0
+   },
+   "cost_usd_per_task": {
+    "client_mean": 0.129257,
+    "server_mean": null,
+    "reported": 225
+   },
+   "cost_usd_per_success": 0.146883,
+   "latency_ms_median": 194000,
+   "commit_rate": null,
+   "tool_errors_mean": null,
+   "self_assessment": null
+  },
+  {
+   "source_type": "benchmark",
+   "l1": "coding",
+   "l2": "coding.feature",
+   "model": "gpt-5-low",
+   "method": "aider-diff",
+   "n": 225,
+   "k": 1,
+   "tests": {
+    "tested": 225,
+    "passed": 183,
+    "pass_rate": 0.8133,
+    "ci95": [
+     0.7573,
+     0.8588
+    ],
+    "tested_share": 1.0
+   },
+   "cost_usd_per_task": {
+    "client_mean": 0.046095,
+    "server_mean": null,
+    "reported": 225
+   },
+   "cost_usd_per_success": 0.056677,
+   "latency_ms_median": 62400,
+   "commit_rate": null,
+   "tool_errors_mean": null,
+   "self_assessment": null
+  },
+  {
+   "source_type": "benchmark",
+   "l1": "coding",
+   "l2": "coding.feature",
+   "model": "gpt-5-medium",
+   "method": "aider-diff",
+   "n": 225,
+   "k": 1,
+   "tests": {
+    "tested": 225,
+    "passed": 195,
+    "pass_rate": 0.8667,
+    "ci95": [
+     0.816,
+     0.905
+    ],
+    "tested_share": 1.0
+   },
+   "cost_usd_per_task": {
+    "client_mean": 0.078636,
+    "server_mean": null,
+    "reported": 225
+   },
+   "cost_usd_per_success": 0.09073,
+   "latency_ms_median": 118700,
+   "commit_rate": null,
+   "tool_errors_mean": null,
+   "self_assessment": null
+  },
+  {
+   "source_type": "benchmark",
+   "l1": "coding",
+   "l2": "coding.feature",
+   "model": "gpt-oss-120b-high",
+   "method": "aider-diff",
+   "n": 225,
+   "k": 1,
+   "tests": {
+    "tested": 225,
+    "passed": 94,
+    "pass_rate": 0.4178,
+    "ci95": [
+     0.3552,
+     0.4831
+    ],
+    "tested_share": 1.0
+   },
+   "cost_usd_per_task": {
+    "client_mean": 0.003292,
+    "server_mean": null,
+    "reported": 225
+   },
+   "cost_usd_per_success": 0.007879,
+   "latency_ms_median": 35500,
+   "commit_rate": null,
+   "tool_errors_mean": null,
+   "self_assessment": null
+  },
+  {
+   "source_type": "benchmark",
+   "l1": "coding",
+   "l2": "coding.feature",
+   "model": "grok-3-beta",
+   "method": "aider-diff",
+   "n": 225,
+   "k": 1,
+   "tests": {
+    "tested": 225,
+    "passed": 120,
+    "pass_rate": 0.5333,
+    "ci95": [
+     0.4681,
+     0.5974
+    ],
+    "tested_share": 1.0
+   },
+   "cost_usd_per_task": {
+    "client_mean": 0.049039,
+    "server_mean": null,
+    "reported": 225
+   },
+   "cost_usd_per_success": 0.091954,
+   "latency_ms_median": 15300,
+   "commit_rate": null,
+   "tool_errors_mean": null,
+   "self_assessment": null
+  },
+  {
+   "source_type": "benchmark",
+   "l1": "coding",
+   "l2": "coding.feature",
+   "model": "grok-3-mini-beta-high",
+   "method": "aider-whole",
+   "n": 225,
+   "k": 1,
+   "tests": {
+    "tested": 225,
+    "passed": 111,
+    "pass_rate": 0.4933,
+    "ci95": [
+     0.4287,
+     0.5582
+    ],
+    "tested_share": 1.0
+   },
+   "cost_usd_per_task": {
+    "client_mean": 0.003265,
+    "server_mean": null,
+    "reported": 225
+   },
+   "cost_usd_per_success": 0.006619,
+   "latency_ms_median": 79100,
+   "commit_rate": null,
+   "tool_errors_mean": null,
+   "self_assessment": null
+  },
+  {
+   "source_type": "benchmark",
+   "l1": "coding",
+   "l2": "coding.feature",
+   "model": "grok-3-mini-beta-low",
+   "method": "aider-whole",
+   "n": 225,
+   "k": 1,
+   "tests": {
+    "tested": 225,
+    "passed": 78,
+    "pass_rate": 0.3467,
+    "ci95": [
+     0.2875,
+     0.411
+    ],
+    "tested_share": 1.0
+   },
+   "cost_usd_per_task": {
+    "client_mean": 0.003492,
+    "server_mean": null,
+    "reported": 225
+   },
+   "cost_usd_per_success": 0.010072,
+   "latency_ms_median": 35100,
+   "commit_rate": null,
+   "tool_errors_mean": null,
+   "self_assessment": null
+  },
+  {
+   "source_type": "benchmark",
+   "l1": "coding",
+   "l2": "coding.feature",
+   "model": "grok-4-high",
+   "method": "aider-diff",
+   "n": 225,
+   "k": 1,
+   "tests": {
+    "tested": 225,
+    "passed": 179,
+    "pass_rate": 0.7956,
+    "ci95": [
+     0.7381,
+     0.8431
+    ],
+    "tested_share": 1.0
+   },
+   "cost_usd_per_task": {
+    "client_mean": 0.26497,
+    "server_mean": null,
+    "reported": 225
+   },
+   "cost_usd_per_success": 0.333044,
+   "latency_ms_median": 403200,
+   "commit_rate": null,
+   "tool_errors_mean": null,
+   "self_assessment": null
+  },
+  {
+   "source_type": "benchmark",
+   "l1": "coding",
+   "l2": "coding.feature",
+   "model": "kimi-k2",
+   "method": "aider-diff",
+   "n": 225,
+   "k": 1,
+   "tests": {
+    "tested": 225,
+    "passed": 133,
+    "pass_rate": 0.5911,
+    "ci95": [
+     0.5259,
+     0.6533
+    ],
+    "tested_share": 1.0
+   },
+   "cost_usd_per_task": {
+    "client_mean": 0.005492,
+    "server_mean": null,
+    "reported": 225
+   },
+   "cost_usd_per_success": 0.009291,
+   "latency_ms_median": 67600,
+   "commit_rate": null,
+   "tool_errors_mean": null,
+   "self_assessment": null
+  },
+  {
+   "source_type": "benchmark",
+   "l1": "coding",
+   "l2": "coding.feature",
+   "model": "llama-4-maverick",
+   "method": "aider-whole",
+   "n": 225,
+   "k": 1,
+   "tests": {
+    "tested": 225,
+    "passed": 35,
+    "pass_rate": 0.1556,
+    "ci95": [
+     0.114,
+     0.2087
+    ],
+    "tested_share": 1.0
+   },
+   "cost_usd_per_task": {
+    "client_mean": null,
+    "server_mean": null,
+    "reported": 0
+   },
+   "cost_usd_per_success": null,
+   "latency_ms_median": 20500,
+   "commit_rate": null,
+   "tool_errors_mean": null,
+   "self_assessment": null
+  },
+  {
+   "source_type": "benchmark",
+   "l1": "coding",
+   "l2": "coding.feature",
+   "model": "o1-2024-12-17-high",
+   "method": "aider-diff",
+   "n": 224,
+   "k": 1,
+   "tests": {
+    "tested": 224,
+    "passed": 139,
+    "pass_rate": 0.6205,
+    "ci95": [
+     0.5555,
+     0.6815
+    ],
+    "tested_share": 1.0
+   },
+   "cost_usd_per_task": {
+    "client_mean": 0.832571,
+    "server_mean": null,
+    "reported": 224
+   },
+   "cost_usd_per_success": 1.341774,
+   "latency_ms_median": 133200.0,
+   "commit_rate": null,
+   "tool_errors_mean": null,
+   "self_assessment": null
+  },
+  {
+   "source_type": "benchmark",
+   "l1": "coding",
+   "l2": "coding.feature",
+   "model": "o1-mini-2024-09-12",
+   "method": "aider-whole",
+   "n": 225,
+   "k": 1,
+   "tests": {
+    "tested": 225,
+    "passed": 74,
+    "pass_rate": 0.3289,
+    "ci95": [
+     0.2708,
+     0.3927
+    ],
+    "tested_share": 1.0
+   },
+   "cost_usd_per_task": {
+    "client_mean": 0.082564,
+    "server_mean": null,
+    "reported": 225
+   },
+   "cost_usd_per_success": 0.251031,
+   "latency_ms_median": 34700,
+   "commit_rate": null,
+   "tool_errors_mean": null,
+   "self_assessment": null
+  },
+  {
+   "source_type": "benchmark",
+   "l1": "coding",
+   "l2": "coding.feature",
+   "model": "o3",
+   "method": "aider-diff",
+   "n": 225,
+   "k": 1,
+   "tests": {
+    "tested": 225,
+    "passed": 173,
+    "pass_rate": 0.7689,
+    "ci95": [
+     0.7096,
+     0.8192
+    ],
+    "tested_share": 1.0
+   },
+   "cost_usd_per_task": {
+    "client_mean": 0.061119,
+    "server_mean": null,
+    "reported": 225
+   },
+   "cost_usd_per_success": 0.079489,
+   "latency_ms_median": 101700,
+   "commit_rate": null,
+   "tool_errors_mean": null,
+   "self_assessment": null
+  },
+  {
+   "source_type": "benchmark",
+   "l1": "coding",
+   "l2": "coding.feature",
+   "model": "o3-high",
+   "method": "aider-diff",
+   "n": 225,
+   "k": 1,
+   "tests": {
+    "tested": 225,
+    "passed": 183,
+    "pass_rate": 0.8133,
+    "ci95": [
+     0.7573,
+     0.8588
+    ],
+    "tested_share": 1.0
+   },
+   "cost_usd_per_task": {
+    "client_mean": 0.094337,
+    "server_mean": null,
+    "reported": 225
+   },
+   "cost_usd_per_success": 0.115993,
+   "latency_ms_median": 197300,
+   "commit_rate": null,
+   "tool_errors_mean": null,
+   "self_assessment": null
+  },
+  {
+   "source_type": "benchmark",
+   "l1": "coding",
+   "l2": "coding.feature",
+   "model": "o3-high-gpt-4.1",
+   "method": "aider-architect",
+   "n": 224,
+   "k": 1,
+   "tests": {
+    "tested": 224,
+    "passed": 176,
+    "pass_rate": 0.7857,
+    "ci95": [
+     0.7274,
+     0.8344
+    ],
+    "tested_share": 1.0
+   },
+   "cost_usd_per_task": {
+    "client_mean": 0.078356,
+    "server_mean": null,
+    "reported": 224
+   },
+   "cost_usd_per_success": 0.099728,
+   "latency_ms_median": 121800.0,
+   "commit_rate": null,
+   "tool_errors_mean": null,
+   "self_assessment": null
+  },
+  {
+   "source_type": "benchmark",
+   "l1": "coding",
+   "l2": "coding.feature",
+   "model": "o3-mini-high",
+   "method": "aider-diff",
+   "n": 224,
+   "k": 1,
+   "tests": {
+    "tested": 224,
+    "passed": 136,
+    "pass_rate": 0.6071,
+    "ci95": [
+     0.5419,
+     0.6688
+    ],
+    "tested_share": 1.0
+   },
+   "cost_usd_per_task": {
+    "client_mean": 0.081064,
+    "server_mean": null,
+    "reported": 224
+   },
+   "cost_usd_per_success": 0.133527,
+   "latency_ms_median": 124600.0,
+   "commit_rate": null,
+   "tool_errors_mean": null,
+   "self_assessment": null
+  },
+  {
+   "source_type": "benchmark",
+   "l1": "coding",
+   "l2": "coding.feature",
+   "model": "o3-mini-medium",
+   "method": "aider-diff",
+   "n": 225,
+   "k": 1,
+   "tests": {
+    "tested": 225,
+    "passed": 121,
+    "pass_rate": 0.5378,
+    "ci95": [
+     0.4725,
+     0.6017
+    ],
+    "tested_share": 1.0
+   },
+   "cost_usd_per_task": {
+    "client_mean": 0.039377,
+    "server_mean": null,
+    "reported": 225
+   },
+   "cost_usd_per_success": 0.073219,
+   "latency_ms_median": 47200,
+   "commit_rate": null,
+   "tool_errors_mean": null,
+   "self_assessment": null
+  },
+  {
+   "source_type": "benchmark",
+   "l1": "coding",
+   "l2": "coding.feature",
+   "model": "o3-pro-high",
+   "method": "aider-diff",
+   "n": 225,
+   "k": 1,
+   "tests": {
+    "tested": 225,
+    "passed": 191,
+    "pass_rate": 0.8489,
+    "ci95": [
+     0.7963,
+     0.8898
+    ],
+    "tested_share": 1.0
+   },
+   "cost_usd_per_task": {
+    "client_mean": 0.650333,
+    "server_mean": null,
+    "reported": 225
+   },
+   "cost_usd_per_success": 0.766089,
+   "latency_ms_median": 449000,
+   "commit_rate": null,
+   "tool_errors_mean": null,
+   "self_assessment": null
+  },
+  {
+   "source_type": "benchmark",
+   "l1": "coding",
+   "l2": "coding.feature",
+   "model": "o4-mini-high",
+   "method": "aider-diff",
+   "n": 225,
+   "k": 1,
+   "tests": {
+    "tested": 225,
+    "passed": 162,
+    "pass_rate": 0.72,
+    "ci95": [
+     0.658,
+     0.7746
+    ],
+    "tested_share": 1.0
+   },
+   "cost_usd_per_task": {
+    "client_mean": 0.087288,
+    "server_mean": null,
+    "reported": 225
+   },
+   "cost_usd_per_success": 0.121233,
+   "latency_ms_median": 176500,
+   "commit_rate": null,
+   "tool_errors_mean": null,
+   "self_assessment": null
+  },
+  {
+   "source_type": "benchmark",
+   "l1": "coding",
+   "l2": "coding.feature",
+   "model": "openhands-lm-32b-v0.1",
+   "method": "aider-whole",
+   "n": 225,
+   "k": 1,
+   "tests": {
+    "tested": 225,
+    "passed": 23,
+    "pass_rate": 0.1022,
+    "ci95": [
+     0.0691,
+     0.1487
+    ],
+    "tested_share": 1.0
+   },
+   "cost_usd_per_task": {
+    "client_mean": null,
+    "server_mean": null,
+    "reported": 0
+   },
+   "cost_usd_per_success": null,
+   "latency_ms_median": 195600,
+   "commit_rate": null,
+   "tool_errors_mean": null,
+   "self_assessment": null
+  },
+  {
+   "source_type": "benchmark",
+   "l1": "coding",
+   "l2": "coding.feature",
+   "model": "optimus-alpha",
+   "method": "aider-diff",
+   "n": 225,
+   "k": 1,
+   "tests": {
+    "tested": 225,
+    "passed": 119,
+    "pass_rate": 0.5289,
+    "ci95": [
+     0.4637,
+     0.5931
+    ],
+    "tested_share": 1.0
+   },
+   "cost_usd_per_task": {
+    "client_mean": null,
+    "server_mean": null,
+    "reported": 0
+   },
+   "cost_usd_per_success": null,
+   "latency_ms_median": 18400,
+   "commit_rate": null,
+   "tool_errors_mean": null,
+   "self_assessment": null
+  },
+  {
+   "source_type": "benchmark",
+   "l1": "coding",
+   "l2": "coding.feature",
+   "model": "quasar-alpha",
+   "method": "aider-diff",
+   "n": 225,
+   "k": 1,
+   "tests": {
+    "tested": 225,
+    "passed": 123,
+    "pass_rate": 0.5467,
+    "ci95": [
+     0.4814,
+     0.6104
+    ],
+    "tested_share": 1.0
+   },
+   "cost_usd_per_task": {
+    "client_mean": null,
+    "server_mean": null,
+    "reported": 0
+   },
+   "cost_usd_per_success": null,
+   "latency_ms_median": 14800,
+   "commit_rate": null,
+   "tool_errors_mean": null,
+   "self_assessment": null
+  },
+  {
+   "source_type": "benchmark",
+   "l1": "coding",
+   "l2": "coding.feature",
+   "model": "qwen-max-2025-01-25",
+   "method": "aider-diff",
+   "n": 225,
+   "k": 1,
+   "tests": {
+    "tested": 225,
+    "passed": 49,
+    "pass_rate": 0.2178,
+    "ci95": [
+     0.1688,
+     0.2762
+    ],
+    "tested_share": 1.0
+   },
+   "cost_usd_per_task": {
+    "client_mean": null,
+    "server_mean": null,
+    "reported": 0
+   },
+   "cost_usd_per_success": null,
+   "latency_ms_median": 39500,
+   "commit_rate": null,
+   "tool_errors_mean": null,
+   "self_assessment": null
+  },
+  {
+   "source_type": "benchmark",
+   "l1": "coding",
+   "l2": "coding.feature",
+   "model": "qwen2.5-coder-32b-instruct",
+   "method": "aider-diff",
+   "n": 225,
+   "k": 1,
+   "tests": {
+    "tested": 225,
+    "passed": 18,
+    "pass_rate": 0.08,
+    "ci95": [
+     0.0512,
+     0.1229
+    ],
+    "tested_share": 1.0
+   },
+   "cost_usd_per_task": {
+    "client_mean": null,
+    "server_mean": null,
+    "reported": 0
+   },
+   "cost_usd_per_success": null,
+   "latency_ms_median": 84400,
+   "commit_rate": null,
+   "tool_errors_mean": null,
+   "self_assessment": null
+  },
+  {
+   "source_type": "benchmark",
+   "l1": "coding",
+   "l2": "coding.feature",
+   "model": "qwen2.5-coder-32b-instruct",
+   "method": "aider-whole",
+   "n": 225,
+   "k": 1,
+   "tests": {
+    "tested": 225,
+    "passed": 37,
+    "pass_rate": 0.1644,
+    "ci95": [
+     0.1217,
+     0.2184
+    ],
+    "tested_share": 1.0
+   },
+   "cost_usd_per_task": {
+    "client_mean": null,
+    "server_mean": null,
+    "reported": 0
+   },
+   "cost_usd_per_success": null,
+   "latency_ms_median": 42000,
+   "commit_rate": null,
+   "tool_errors_mean": null,
+   "self_assessment": null
+  },
+  {
+   "source_type": "benchmark",
+   "l1": "coding",
+   "l2": "coding.feature",
+   "model": "qwen3-235b-a22b-diff-no-think-alibaba-api",
+   "method": "aider-diff",
+   "n": 225,
+   "k": 1,
+   "tests": {
+    "tested": 225,
+    "passed": 134,
+    "pass_rate": 0.5956,
+    "ci95": [
+     0.5303,
+     0.6576
+    ],
+    "tested_share": 1.0
+   },
+   "cost_usd_per_task": {
+    "client_mean": null,
+    "server_mean": null,
+    "reported": 0
+   },
+   "cost_usd_per_success": null,
+   "latency_ms_median": 45400,
+   "commit_rate": null,
+   "tool_errors_mean": null,
+   "self_assessment": null
+  },
+  {
+   "source_type": "benchmark",
+   "l1": "coding",
+   "l2": "coding.feature",
+   "model": "qwen3-32b",
+   "method": "aider-diff",
+   "n": 225,
+   "k": 1,
+   "tests": {
+    "tested": 225,
+    "passed": 90,
+    "pass_rate": 0.4,
+    "ci95": [
+     0.3382,
+     0.4652
+    ],
+    "tested_share": 1.0
+   },
+   "cost_usd_per_task": {
+    "client_mean": 0.003379,
+    "server_mean": null,
+    "reported": 225
+   },
+   "cost_usd_per_success": 0.008448,
+   "latency_ms_median": 372200,
+   "commit_rate": null,
+   "tool_errors_mean": null,
+   "self_assessment": null
+  },
+  {
+   "source_type": "benchmark",
+   "l1": "coding",
+   "l2": "coding.feature",
+   "model": "qwq-32b",
+   "method": "aider-diff",
+   "n": 225,
+   "k": 1,
+   "tests": {
+    "tested": 225,
+    "passed": 47,
+    "pass_rate": 0.2089,
+    "ci95": [
+     0.1609,
+     0.2667
+    ],
+    "tested_share": 1.0
+   },
+   "cost_usd_per_task": {
+    "client_mean": null,
+    "server_mean": null,
+    "reported": 0
+   },
+   "cost_usd_per_success": null,
+   "latency_ms_median": 228600,
+   "commit_rate": null,
+   "tool_errors_mean": null,
+   "self_assessment": null
+  },
+  {
+   "source_type": "benchmark",
+   "l1": "coding",
+   "l2": "coding.feature",
+   "model": "qwq-32b-qwen-2.5-coder-instruct",
+   "method": "aider-architect",
+   "n": 225,
+   "k": 1,
+   "tests": {
+    "tested": 225,
+    "passed": 59,
+    "pass_rate": 0.2622,
+    "ci95": [
+     0.2091,
+     0.3233
+    ],
+    "tested_share": 1.0
+   },
+   "cost_usd_per_task": {
+    "client_mean": null,
+    "server_mean": null,
+    "reported": 0
+   },
+   "cost_usd_per_success": null,
+   "latency_ms_median": 137400,
+   "commit_rate": null,
+   "tool_errors_mean": null,
+   "self_assessment": null
+  },
+  {
+   "source_type": "benchmark",
+   "l1": "coding",
+   "l2": "coding.feature",
+   "model": "yi-lightning",
+   "method": "aider-whole",
+   "n": 225,
+   "k": 1,
+   "tests": {
+    "tested": 225,
+    "passed": 29,
+    "pass_rate": 0.1289,
+    "ci95": [
+     0.0913,
+     0.179
+    ],
+    "tested_share": 1.0
+   },
+   "cost_usd_per_task": {
+    "client_mean": null,
+    "server_mean": null,
+    "reported": 0
+   },
+   "cost_usd_per_success": null,
+   "latency_ms_median": 146700,
+   "commit_rate": null,
+   "tool_errors_mean": null,
+   "self_assessment": null
+  },
+  {
+   "source_type": "field_report",
+   "l1": "coding",
+   "l2": "coding.bugfix",
+   "model": "example-model-a",
+   "method": "example-harness-b",
+   "n": 67,
+   "k": 9,
+   "tests": {
+    "tested": 57,
+    "passed": 33,
+    "pass_rate": 0.5789,
+    "ci95": [
+     0.4498,
+     0.6981
+    ],
+    "tested_share": 0.8507
+   },
+   "cost_usd_per_task": {
+    "client_mean": 0.167754,
+    "server_mean": null,
+    "reported": 67
+   },
+   "cost_usd_per_success": 0.289781,
+   "latency_ms_median": 128720,
+   "commit_rate": 0.6269,
+   "tool_errors_mean": 1.149254,
+   "self_assessment": {
+    "n": 67,
+    "mean": 0.891433,
+    "excluded_from_ranking": true
+   }
+  },
+  {
+   "source_type": "field_report",
+   "l1": "coding",
+   "l2": "coding.bugfix",
+   "model": "example-model-b",
+   "method": "example-harness-a",
+   "n": 58,
+   "k": 11,
+   "tests": {
+    "tested": 51,
+    "passed": 38,
+    "pass_rate": 0.7451,
+    "ci95": [
+     0.6113,
+     0.8445
+    ],
+    "tested_share": 0.8793
+   },
+   "cost_usd_per_task": {
+    "client_mean": 0.199502,
+    "server_mean": null,
+    "reported": 58
+   },
+   "cost_usd_per_success": 0.267752,
+   "latency_ms_median": 131391.5,
+   "commit_rate": 0.6207,
+   "tool_errors_mean": 1.724138,
+   "self_assessment": {
+    "n": 58,
+    "mean": 0.755259,
+    "excluded_from_ranking": true
+   }
+  },
+  {
+   "source_type": "field_report",
+   "l1": "coding",
+   "l2": "coding.bugfix",
+   "model": "example-model-c",
+   "method": "example-harness-a",
+   "n": 64,
+   "k": 6,
+   "tests": {
+    "tested": 54,
+    "passed": 28,
+    "pass_rate": 0.5185,
+    "ci95": [
+     0.3885,
+     0.6461
+    ],
+    "tested_share": 0.8438
+   },
+   "cost_usd_per_task": {
+    "client_mean": 0.059939,
+    "server_mean": null,
+    "reported": 64
+   },
+   "cost_usd_per_success": 0.115601,
+   "latency_ms_median": 133765.0,
+   "commit_rate": 0.4375,
+   "tool_errors_mean": 1.515625,
+   "self_assessment": {
+    "n": 64,
+    "mean": 0.886984,
+    "excluded_from_ranking": true
+   }
+  },
+  {
+   "source_type": "field_report",
+   "l1": "coding",
+   "l2": "coding.bugfix",
+   "model": "example-model-c",
+   "method": "example-harness-b",
+   "n": 63,
+   "k": 10,
+   "tests": {
+    "tested": 57,
+    "passed": 27,
+    "pass_rate": 0.4737,
+    "ci95": [
+     0.3499,
+     0.6008
+    ],
+    "tested_share": 0.9048
+   },
+   "cost_usd_per_task": {
+    "client_mean": 0.084829,
+    "server_mean": null,
+    "reported": 63
+   },
+   "cost_usd_per_success": 0.179077,
+   "latency_ms_median": 122955,
+   "commit_rate": 0.4762,
+   "tool_errors_mean": 1.539683,
+   "self_assessment": {
+    "n": 63,
+    "mean": 0.886794,
+    "excluded_from_ranking": true
+   }
+  },
+  {
+   "source_type": "field_report",
+   "l1": "coding",
+   "l2": "coding.bugfix",
+   "model": "example-model-d",
+   "method": "example-harness-b",
+   "n": 41,
+   "k": 5,
+   "tests": {
+    "tested": 39,
+    "passed": 30,
+    "pass_rate": 0.7692,
+    "ci95": [
+     0.6166,
+     0.8735
+    ],
+    "tested_share": 0.9512
+   },
+   "cost_usd_per_task": {
+    "client_mean": 0.150095,
+    "server_mean": null,
+    "reported": 41
+   },
+   "cost_usd_per_success": 0.195131,
+   "latency_ms_median": 123243,
+   "commit_rate": 0.6585,
+   "tool_errors_mean": 1.463415,
+   "self_assessment": {
+    "n": 41,
+    "mean": 0.783,
+    "excluded_from_ranking": true
+   }
+  },
+  {
+   "source_type": "field_report",
+   "l1": "coding",
+   "l2": "coding.bugfix",
+   "model": "example-model-e",
+   "method": "example-harness-b",
+   "n": 48,
+   "k": 6,
+   "tests": {
+    "tested": 39,
+    "passed": 17,
+    "pass_rate": 0.4359,
+    "ci95": [
+     0.293,
+     0.5902
+    ],
+    "tested_share": 0.8125
+   },
+   "cost_usd_per_task": {
+    "client_mean": 0.040817,
+    "server_mean": null,
+    "reported": 48
+   },
+   "cost_usd_per_success": 0.093638,
+   "latency_ms_median": 133595.5,
+   "commit_rate": 0.4167,
+   "tool_errors_mean": 1.166667,
+   "self_assessment": {
+    "n": 48,
+    "mean": 0.510042,
+    "excluded_from_ranking": true
+   }
+  },
+  {
+   "source_type": "field_report",
+   "l1": "coding",
+   "l2": "coding.feature",
+   "model": "example-model-a",
+   "method": "example-harness-a",
+   "n": 47,
+   "k": 11,
+   "tests": {
+    "tested": 40,
+    "passed": 22,
+    "pass_rate": 0.55,
+    "ci95": [
+     0.3983,
+     0.6929
+    ],
+    "tested_share": 0.8511
+   },
+   "cost_usd_per_task": {
+    "client_mean": 0.122443,
+    "server_mean": null,
+    "reported": 47
+   },
+   "cost_usd_per_success": 0.222624,
+   "latency_ms_median": 125538,
+   "commit_rate": 0.2553,
+   "tool_errors_mean": 1.446809,
+   "self_assessment": {
+    "n": 47,
+    "mean": 0.894447,
+    "excluded_from_ranking": true
+   }
+  },
+  {
+   "source_type": "field_report",
+   "l1": "coding",
+   "l2": "coding.feature",
+   "model": "example-model-a",
+   "method": "example-harness-b",
+   "n": 57,
+   "k": 8,
+   "tests": {
+    "tested": 47,
+    "passed": 29,
+    "pass_rate": 0.617,
+    "ci95": [
+     0.4743,
+     0.7421
+    ],
+    "tested_share": 0.8246
+   },
+   "cost_usd_per_task": {
+    "client_mean": 0.168595,
+    "server_mean": null,
+    "reported": 57
+   },
+   "cost_usd_per_success": 0.27325,
+   "latency_ms_median": 130860,
+   "commit_rate": 0.6491,
+   "tool_errors_mean": 1.508772,
+   "self_assessment": {
+    "n": 57,
+    "mean": 0.923561,
+    "excluded_from_ranking": true
+   }
+  },
+  {
+   "source_type": "field_report",
+   "l1": "coding",
+   "l2": "coding.feature",
+   "model": "example-model-c",
+   "method": "example-harness-a",
+   "n": 64,
+   "k": 6,
+   "tests": {
+    "tested": 53,
+    "passed": 20,
+    "pass_rate": 0.3774,
+    "ci95": [
+     0.2594,
+     0.5119
+    ],
+    "tested_share": 0.8281
+   },
+   "cost_usd_per_task": {
+    "client_mean": 0.059067,
+    "server_mean": null,
+    "reported": 64
+   },
+   "cost_usd_per_success": 0.15651,
+   "latency_ms_median": 124960.0,
+   "commit_rate": 0.3594,
+   "tool_errors_mean": 1.375,
+   "self_assessment": {
+    "n": 64,
+    "mean": 0.880563,
+    "excluded_from_ranking": true
+   }
+  },
+  {
+   "source_type": "field_report",
+   "l1": "coding",
+   "l2": "coding.feature",
+   "model": "example-model-c",
+   "method": "example-harness-b",
+   "n": 51,
+   "k": 8,
+   "tests": {
+    "tested": 44,
+    "passed": 25,
+    "pass_rate": 0.5682,
+    "ci95": [
+     0.4222,
+     0.7032
+    ],
+    "tested_share": 0.8627
+   },
+   "cost_usd_per_task": {
+    "client_mean": 0.083537,
+    "server_mean": null,
+    "reported": 51
+   },
+   "cost_usd_per_success": 0.14702,
+   "latency_ms_median": 136518,
+   "commit_rate": 0.5294,
+   "tool_errors_mean": 1.54902,
+   "self_assessment": {
+    "n": 51,
+    "mean": 0.893804,
+    "excluded_from_ranking": true
+   }
+  },
+  {
+   "source_type": "field_report",
+   "l1": "coding",
+   "l2": "coding.feature",
+   "model": "example-model-d",
+   "method": "example-harness-a",
+   "n": 60,
+   "k": 11,
+   "tests": {
+    "tested": 49,
+    "passed": 28,
+    "pass_rate": 0.5714,
+    "ci95": [
+     0.4327,
+     0.6998
+    ],
+    "tested_share": 0.8167
+   },
+   "cost_usd_per_task": {
+    "client_mean": 0.106927,
+    "server_mean": null,
+    "reported": 60
+   },
+   "cost_usd_per_success": 0.187132,
+   "latency_ms_median": 118847.0,
+   "commit_rate": 0.5333,
+   "tool_errors_mean": 1.233333,
+   "self_assessment": {
+    "n": 60,
+    "mean": 0.778383,
+    "excluded_from_ranking": true
+   }
+  },
+  {
+   "source_type": "field_report",
+   "l1": "coding",
+   "l2": "coding.feature",
+   "model": "example-model-d",
+   "method": "example-harness-b",
+   "n": 66,
+   "k": 5,
+   "tests": {
+    "tested": 56,
+    "passed": 37,
+    "pass_rate": 0.6607,
+    "ci95": [
+     0.53,
+     0.7708
+    ],
+    "tested_share": 0.8485
+   },
+   "cost_usd_per_task": {
+    "client_mean": 0.151164,
+    "server_mean": null,
+    "reported": 66
+   },
+   "cost_usd_per_success": 0.228794,
+   "latency_ms_median": 150553.0,
+   "commit_rate": 0.5758,
+   "tool_errors_mean": 1.69697,
+   "self_assessment": {
+    "n": 66,
+    "mean": 0.785061,
+    "excluded_from_ranking": true
+   }
+  },
+  {
+   "source_type": "field_report",
+   "l1": "coding",
+   "l2": "coding.feature",
+   "model": "example-model-e",
+   "method": "example-harness-b",
+   "n": 59,
+   "k": 8,
+   "tests": {
+    "tested": 41,
+    "passed": 20,
+    "pass_rate": 0.4878,
+    "ci95": [
+     0.3425,
+     0.6352
+    ],
+    "tested_share": 0.6949
+   },
+   "cost_usd_per_task": {
+    "client_mean": 0.042281,
+    "server_mean": null,
+    "reported": 59
+   },
+   "cost_usd_per_success": 0.086677,
+   "latency_ms_median": 146371,
+   "commit_rate": 0.4407,
+   "tool_errors_mean": 1.576271,
+   "self_assessment": {
+    "n": 59,
+    "mean": 0.520034,
+    "excluded_from_ranking": true
+   }
+  },
+  {
+   "source_type": "field_report",
+   "l1": "coding",
+   "l2": "coding.refactor",
+   "model": "example-model-a",
+   "method": "example-harness-a",
+   "n": 52,
+   "k": 10,
+   "tests": {
+    "tested": 48,
+    "passed": 31,
+    "pass_rate": 0.6458,
+    "ci95": [
+     0.5044,
+     0.7657
+    ],
+    "tested_share": 0.9231
+   },
+   "cost_usd_per_task": {
+    "client_mean": 0.120373,
+    "server_mean": null,
+    "reported": 52
+   },
+   "cost_usd_per_success": 0.186394,
+   "latency_ms_median": 112898.0,
+   "commit_rate": 0.7692,
+   "tool_errors_mean": 1.673077,
+   "self_assessment": {
+    "n": 52,
+    "mean": 0.897558,
+    "excluded_from_ranking": true
+   }
+  },
+  {
+   "source_type": "field_report",
+   "l1": "coding",
+   "l2": "coding.refactor",
+   "model": "example-model-c",
+   "method": "example-harness-a",
+   "n": 45,
+   "k": 11,
+   "tests": {
+    "tested": 39,
+    "passed": 24,
+    "pass_rate": 0.6154,
+    "ci95": [
+     0.459,
+     0.7511
+    ],
+    "tested_share": 0.8667
+   },
+   "cost_usd_per_task": {
+    "client_mean": 0.061738,
+    "server_mean": null,
+    "reported": 45
+   },
+   "cost_usd_per_success": 0.100322,
+   "latency_ms_median": 122318,
+   "commit_rate": 0.4444,
+   "tool_errors_mean": 1.6,
+   "self_assessment": {
+    "n": 45,
+    "mean": 0.887444,
+    "excluded_from_ranking": true
+   }
+  },
+  {
+   "source_type": "field_report",
+   "l1": "coding",
+   "l2": "coding.refactor",
+   "model": "example-model-d",
+   "method": "example-harness-a",
+   "n": 42,
+   "k": 10,
+   "tests": {
+    "tested": 34,
+    "passed": 24,
+    "pass_rate": 0.7059,
+    "ci95": [
+     0.5383,
+     0.8317
+    ],
+    "tested_share": 0.8095
+   },
+   "cost_usd_per_task": {
+    "client_mean": 0.105821,
+    "server_mean": null,
+    "reported": 42
+   },
+   "cost_usd_per_success": 0.149909,
+   "latency_ms_median": 133527.5,
+   "commit_rate": 0.7143,
+   "tool_errors_mean": 1.857143,
+   "self_assessment": {
+    "n": 42,
+    "mean": 0.783571,
+    "excluded_from_ranking": true
+   }
+  },
+  {
+   "source_type": "field_report",
+   "l1": "coding",
+   "l2": "coding.refactor",
+   "model": "example-model-d",
+   "method": "example-harness-b",
+   "n": 35,
+   "k": 10,
+   "tests": {
+    "tested": 30,
+    "passed": 17,
+    "pass_rate": 0.5667,
+    "ci95": [
+     0.392,
+     0.7262
+    ],
+    "tested_share": 0.8571
+   },
+   "cost_usd_per_task": {
+    "client_mean": 0.156757,
+    "server_mean": null,
+    "reported": 35
+   },
+   "cost_usd_per_success": 0.276614,
+   "latency_ms_median": 162262,
+   "commit_rate": 0.6857,
+   "tool_errors_mean": 1.285714,
+   "self_assessment": {
+    "n": 35,
+    "mean": 0.813686,
+    "excluded_from_ranking": true
+   }
+  },
+  {
+   "source_type": "field_report",
+   "l1": "coding",
+   "l2": "coding.refactor",
+   "model": "example-model-e",
+   "method": "example-harness-b",
+   "n": 44,
+   "k": 6,
+   "tests": {
+    "tested": 40,
+    "passed": 20,
+    "pass_rate": 0.5,
+    "ci95": [
+     0.352,
+     0.648
+    ],
+    "tested_share": 0.9091
+   },
+   "cost_usd_per_task": {
+    "client_mean": 0.044275,
+    "server_mean": null,
+    "reported": 44
+   },
+   "cost_usd_per_success": 0.08855,
+   "latency_ms_median": 126312.5,
+   "commit_rate": 0.4318,
+   "tool_errors_mean": 1.590909,
+   "self_assessment": {
+    "n": 44,
+    "mean": 0.512955,
+    "excluded_from_ranking": true
+   }
+  },
+  {
+   "source_type": "field_report",
+   "l1": "coding",
+   "l2": "coding.test",
+   "model": "example-model-a",
+   "method": "example-harness-b",
+   "n": 41,
+   "k": 12,
+   "tests": {
+    "tested": 36,
+    "passed": 22,
+    "pass_rate": 0.6111,
+    "ci95": [
+     0.4486,
+     0.7522
+    ],
+    "tested_share": 0.878
+   },
+   "cost_usd_per_task": {
+    "client_mean": 0.166393,
+    "server_mean": null,
+    "reported": 41
+   },
+   "cost_usd_per_success": 0.272284,
+   "latency_ms_median": 138623,
+   "commit_rate": 0.7073,
+   "tool_errors_mean": 1.609756,
+   "self_assessment": {
+    "n": 41,
+    "mean": 0.881195,
+    "excluded_from_ranking": true
+   }
+  },
+  {
+   "source_type": "field_report",
+   "l1": "coding",
+   "l2": "coding.test",
+   "model": "example-model-c",
+   "method": "example-harness-a",
+   "n": 47,
+   "k": 12,
+   "tests": {
+    "tested": 43,
+    "passed": 28,
+    "pass_rate": 0.6512,
+    "ci95": [
+     0.5017,
+     0.7758
+    ],
+    "tested_share": 0.9149
+   },
+   "cost_usd_per_task": {
+    "client_mean": 0.058994,
+    "server_mean": null,
+    "reported": 47
+   },
+   "cost_usd_per_success": 0.090593,
+   "latency_ms_median": 143606,
+   "commit_rate": 0.5319,
+   "tool_errors_mean": 1.340426,
+   "self_assessment": {
+    "n": 47,
+    "mean": 0.876979,
+    "excluded_from_ranking": true
+   }
+  },
+  {
+   "source_type": "field_report",
+   "l1": "coding",
+   "l2": "coding.test",
+   "model": "example-model-c",
+   "method": "example-harness-b",
+   "n": 47,
+   "k": 9,
+   "tests": {
+    "tested": 41,
+    "passed": 28,
+    "pass_rate": 0.6829,
+    "ci95": [
+     0.5302,
+     0.8044
+    ],
+    "tested_share": 0.8723
+   },
+   "cost_usd_per_task": {
+    "client_mean": 0.084064,
+    "server_mean": null,
+    "reported": 47
+   },
+   "cost_usd_per_success": 0.123099,
+   "latency_ms_median": 127417,
+   "commit_rate": 0.5319,
+   "tool_errors_mean": 1.255319,
+   "self_assessment": {
+    "n": 47,
+    "mean": 0.884064,
+    "excluded_from_ranking": true
+   }
+  },
+  {
+   "source_type": "field_report",
+   "l1": "coding",
+   "l2": "coding.test",
+   "model": "example-model-d",
+   "method": "example-harness-a",
+   "n": 67,
+   "k": 12,
+   "tests": {
+    "tested": 61,
+    "passed": 41,
+    "pass_rate": 0.6721,
+    "ci95": [
+     0.5472,
+     0.7767
+    ],
+    "tested_share": 0.9104
+   },
+   "cost_usd_per_task": {
+    "client_mean": 0.107994,
+    "server_mean": null,
+    "reported": 67
+   },
+   "cost_usd_per_success": 0.160681,
+   "latency_ms_median": 117677,
+   "commit_rate": 0.6567,
+   "tool_errors_mean": 1.462687,
+   "self_assessment": {
+    "n": 67,
+    "mean": 0.789493,
+    "excluded_from_ranking": true
+   }
+  },
+  {
+   "source_type": "field_report",
+   "l1": "coding",
+   "l2": "coding.test",
+   "model": "example-model-e",
+   "method": "example-harness-a",
+   "n": 66,
+   "k": 5,
+   "tests": {
+    "tested": 60,
+    "passed": 29,
+    "pass_rate": 0.4833,
+    "ci95": [
+     0.3617,
+     0.6069
+    ],
+    "tested_share": 0.9091
+   },
+   "cost_usd_per_task": {
+    "client_mean": 0.029552,
+    "server_mean": null,
+    "reported": 66
+   },
+   "cost_usd_per_success": 0.061146,
+   "latency_ms_median": 130165.5,
+   "commit_rate": 0.5152,
+   "tool_errors_mean": 1.590909,
+   "self_assessment": {
+    "n": 66,
+    "mean": 0.526833,
+    "excluded_from_ranking": true
+   }
+  }
+ ],
+ "suppressed": [
+  {
+   "source_type": "field_report",
+   "l1": "coding",
+   "l2": "coding.bugfix",
+   "model": "example-model-a",
+   "method": "example-harness-a",
+   "reason": "below_threshold"
+  },
+  {
+   "source_type": "field_report",
+   "l1": "coding",
+   "l2": "coding.bugfix",
+   "model": "example-model-b",
+   "method": "example-harness-b",
+   "reason": "below_threshold"
+  },
+  {
+   "source_type": "field_report",
+   "l1": "coding",
+   "l2": "coding.bugfix",
+   "model": "example-model-d",
+   "method": "example-harness-a",
+   "reason": "below_threshold"
+  },
+  {
+   "source_type": "field_report",
+   "l1": "coding",
+   "l2": "coding.bugfix",
+   "model": "example-model-e",
+   "method": "example-harness-a",
+   "reason": "below_threshold"
+  },
+  {
+   "source_type": "field_report",
+   "l1": "coding",
+   "l2": "coding.feature",
+   "model": "example-model-b",
+   "method": "example-harness-a",
+   "reason": "below_threshold"
+  },
+  {
+   "source_type": "field_report",
+   "l1": "coding",
+   "l2": "coding.feature",
+   "model": "example-model-b",
+   "method": "example-harness-b",
+   "reason": "below_threshold"
+  },
+  {
+   "source_type": "field_report",
+   "l1": "coding",
+   "l2": "coding.feature",
+   "model": "example-model-e",
+   "method": "example-harness-a",
+   "reason": "below_threshold"
+  },
+  {
+   "source_type": "field_report",
+   "l1": "coding",
+   "l2": "coding.refactor",
+   "model": "example-model-a",
+   "method": "example-harness-b",
+   "reason": "below_threshold"
+  },
+  {
+   "source_type": "field_report",
+   "l1": "coding",
+   "l2": "coding.refactor",
+   "model": "example-model-b",
+   "method": "example-harness-a",
+   "reason": "below_threshold"
+  },
+  {
+   "source_type": "field_report",
+   "l1": "coding",
+   "l2": "coding.refactor",
+   "model": "example-model-b",
+   "method": "example-harness-b",
+   "reason": "below_threshold"
+  },
+  {
+   "source_type": "field_report",
+   "l1": "coding",
+   "l2": "coding.refactor",
+   "model": "example-model-c",
+   "method": "example-harness-b",
+   "reason": "below_threshold"
+  },
+  {
+   "source_type": "field_report",
+   "l1": "coding",
+   "l2": "coding.refactor",
+   "model": "example-model-e",
+   "method": "example-harness-a",
+   "reason": "below_threshold"
+  },
+  {
+   "source_type": "field_report",
+   "l1": "coding",
+   "l2": "coding.test",
+   "model": "example-model-a",
+   "method": "example-harness-a",
+   "reason": "below_threshold"
+  },
+  {
+   "source_type": "field_report",
+   "l1": "coding",
+   "l2": "coding.test",
+   "model": "example-model-b",
+   "method": "example-harness-a",
+   "reason": "below_threshold"
+  },
+  {
+   "source_type": "field_report",
+   "l1": "coding",
+   "l2": "coding.test",
+   "model": "example-model-b",
+   "method": "example-harness-b",
+   "reason": "below_threshold"
+  },
+  {
+   "source_type": "field_report",
+   "l1": "coding",
+   "l2": "coding.test",
+   "model": "example-model-d",
+   "method": "example-harness-b",
+   "reason": "below_threshold"
+  },
+  {
+   "source_type": "field_report",
+   "l1": "coding",
+   "l2": "coding.test",
+   "model": "example-model-e",
+   "method": "example-harness-b",
+   "reason": "below_threshold"
+  }
+ ],
+ "dataset": {
+  "label": "SAMPLE — benchmark cells are the real, public Aider polyglot leaderboard (pinned snapshot); all 2017 field_report records are SYNTHETIC (example-model-*, example-harness-*).",
+  "synthetic_field_reports": true,
+  "generator": "PYTHONPATH=server python3 -m modelreceipts_server make-sample"
+ }
+}

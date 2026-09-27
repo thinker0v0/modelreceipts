@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ModelReceipts 대시보드 목업</title>
-<meta name="description" content="SAMPLE / MOCK DATA. 자기평가 기반 순위와 결과 증거 기반 순위 비교, 태스크 셀 브라우저의 UI 목업.">
+<title>ModelReceipts Dashboard</title>
+<meta name="description" content="ModelReceipts 집계 뷰어: /v1/aggregates JSON을 읽어 자기평가 대 결과 증거 순위, k·n 임계 셀 브라우저, 시드 출처를 보여 준다. 기본 데이터는 라벨이 붙은 샘플.">
 <style>
 :root {
   color-scheme: light;
@@ -24,6 +24,8 @@
   --seq-soft: #cde2fb;
   --mock-bg: #fff4d6;
   --mock-ink: #6b4a00;
+  --live-bg: #e3effc;
+  --live-ink: #103c70;
   --focus: #2a78d6;
 }
 @media (prefers-color-scheme: dark) {
@@ -35,6 +37,7 @@
     --over: #e66767; --under: #3987e5; --same: #898781;
     --seq: #3987e5; --seq-soft: #184f95;
     --mock-bg: #3a2c05; --mock-ink: #ffd776; --focus: #6da7ec;
+    --live-bg: #11294a; --live-ink: #cde2fb;
   }
 }
 :root[data-theme="dark"] {
@@ -45,6 +48,7 @@
   --over: #e66767; --under: #3987e5; --same: #898781;
   --seq: #3987e5; --seq-soft: #184f95;
   --mock-bg: #3a2c05; --mock-ink: #ffd776; --focus: #6da7ec;
+  --live-bg: #11294a; --live-ink: #cde2fb;
 }
 * { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
@@ -109,12 +113,31 @@ details { margin-top: 12px; }
 summary { cursor: pointer; color: var(--ink-2); font-size: 14px; }
 .foot { color: var(--muted); font-size: 12px; margin-top: 24px; line-height: 1.6; }
 .l1-note { font-size: 12px; color: var(--muted); }
+.mock-banner.live { background: var(--live-bg); color: var(--live-ink); }
+.mock-banner.error { background: var(--surface-2); color: var(--ink); }
+.src-line { font-size: 13px; color: var(--ink-2); margin: 6px 0 0; word-break: break-word; }
+.src-line code { font-size: 12px; }
+.sources { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.sources li { border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; background: var(--surface-2); }
+.sources .name { font-weight: 650; }
+.sources dl { display: grid; grid-template-columns: max-content 1fr; gap: 2px 12px; margin: 6px 0 0; font-size: 13px; }
+.sources dt { color: var(--ink-2); }
+.sources dd { margin: 0; overflow-wrap: anywhere; }
+a { color: var(--under); }
+.tag { display: inline-block; font-size: 11px; font-weight: 650; padding: 1px 6px; border-radius: 6px; margin-left: 6px; vertical-align: 1px; }
+.tag.syn { background: var(--mock-bg); color: var(--mock-ink); }
+.tag.pub { background: var(--live-bg); color: var(--live-ink); }
+.empty { color: var(--ink-2); font-size: 14px; padding: 16px; border: 1px dashed var(--axis); border-radius: 10px; }
+.more { margin-top: 10px; font: inherit; font-size: 13px; color: var(--ink); background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; padding: 6px 12px; cursor: pointer; }
+[hidden] { display: none !important; }
+#cells th, #cells td { padding: 9px 8px; }
+#cells th:first-child, #cells td:first-child { padding-left: 12px; }
 @media (max-width: 560px) {
   .card { padding: 16px 14px; }
   .brand h1 { font-size: 20px; }
   select { min-width: 0; width: 100%; }
   .filters label { flex: 1 1 140px; }
-  .tiles { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .tiles { grid-template-columns: repeat(2, 1fr); gap: 8px; }
   .tile { padding: 10px; }
   .tile .label { font-size: 12px; }
   .tile .value { font-size: 19px; }
@@ -130,6 +153,8 @@ summary { cursor: pointer; color: var(--ink-2); font-size: 14px; }
   #cells td[colspan] { white-space: normal; }
   #cells td.cell-title { font-weight: 650; font-size: 15px; }
   #cells td.cell-title::before { content: none; }
+  .sources dl { grid-template-columns: 1fr; }
+  .sources dt { margin-top: 4px; }
 }
 @media (forced-colors: active) {
   .legend i { forced-color-adjust: none; }
@@ -137,12 +162,13 @@ summary { cursor: pointer; color: var(--ink-2); font-size: 14px; }
 </style>
 </head>
 <body>
-<div class="mock-banner" role="note">SAMPLE / MOCK DATA — 모든 수치는 화면 설계를 위한 가짜 데이터입니다. 실제 모델 측정 결과가 아닙니다.</div>
+<div class="mock-banner" id="banner" role="note">데이터를 불러오는 중…</div>
 <div class="wrap">
   <header class="top">
     <div class="brand">
-      <h1>ModelReceipts <span class="pill">pre-alpha · UI mockup</span></h1>
+      <h1>ModelReceipts <span class="pill">pre-alpha · ~10%</span></h1>
       <p>자기평가가 아니라 결과 증거로 매긴 태스크별 모델 순위</p>
+      <p class="src-line" id="src-line"></p>
     </div>
     <div class="theme-toggle" role="group" aria-label="테마">
       <button type="button" data-theme-choice="auto">자동</button>
@@ -151,42 +177,54 @@ summary { cursor: pointer; color: var(--ink-2); font-size: 14px; }
     </div>
   </header>
 
+  <section class="card" id="load-error" hidden>
+    <h2>집계 데이터를 불러오지 못했습니다</h2>
+    <p class="sub" id="load-error-msg"></p>
+    <p class="sub">브라우저는 <code>file://</code>에서 JSON을 읽지 못합니다. 저장소 루트에서
+      <code>PYTHONPATH=server python3 -m modelreceipts_server serve</code> 후
+      <code>http://127.0.0.1:8787/dashboard/</code>(샘플) 또는 <code>http://127.0.0.1:8787/</code>(서버 집계)를 여세요.</p>
+  </section>
+
+  <div id="content" hidden>
   <div class="tiles" id="tiles"></div>
 
   <section class="card" aria-labelledby="cmp-title">
-    <h2 id="cmp-title">자기평가 기반 순위 vs 증거 기반 순위</h2>
-    <p class="sub">같은 태스크 셀에서 에이전트가 스스로 매긴 성공 점수의 순위(왼쪽)와 테스트 통과·커밋 같은 결과 증거의 순위(오른쪽). 선이 교차하면 자기평가가 순위를 왜곡하고 있다는 뜻입니다.</p>
+    <h2 id="cmp-title">자기평가 기반 순위 vs 증거 기반 순위 <span class="tag syn" id="cmp-tag" hidden>SYNTHETIC</span></h2>
+    <p class="sub">같은 태스크 셀(field_report)에서 에이전트가 스스로 매긴 성공 점수의 순위(왼쪽)와 마지막 테스트 통과율의 순위(오른쪽). 선이 교차하면 자기평가가 순위를 왜곡한다는 뜻입니다. 공개 임계를 넘은 셀만 쓰고, 방법(하네스)별 셀은 레코드 수로 가중해 모델 단위로 합칩니다.</p>
     <div class="filters">
       <label>태스크 셀 (L2)
         <select id="cmp-l2"></select>
       </label>
     </div>
-    <div class="legend" aria-hidden="true">
-      <span><i style="background:var(--over)"></i>▼ 자기평가가 과대평가 (증거 순위가 더 낮음)</span>
-      <span><i style="background:var(--under)"></i>▲ 증거 순위가 더 높음</span>
-      <span><i style="background:var(--same)"></i>순위 동일</span>
-    </div>
-    <div class="slope-wrap" id="slope-wrap">
-      <svg id="slope" role="img" aria-labelledby="cmp-title"></svg>
-      <div class="tip" id="tip" role="status"></div>
-    </div>
-    <details>
-      <summary>표로 보기</summary>
-      <div class="table-scroll" style="margin-top:8px">
-        <table id="cmp-table"><thead><tr>
-          <th>모델</th><th class="num">자기평가 순위</th><th class="num">자기평가 평균</th>
-          <th class="num">증거 순위</th><th class="num">테스트 통과율</th><th class="num">격차 (pp)</th><th class="num">레코드 n</th>
-        </tr></thead><tbody></tbody></table>
+    <div id="cmp-body">
+      <div class="legend" aria-hidden="true">
+        <span><i style="background:var(--over)"></i>▼ 자기평가가 과대평가 (증거 순위가 더 낮음)</span>
+        <span><i style="background:var(--under)"></i>▲ 증거 순위가 더 높음</span>
+        <span><i style="background:var(--same)"></i>순위 동일</span>
       </div>
-    </details>
+      <div class="slope-wrap" id="slope-wrap">
+        <svg id="slope" role="img" aria-labelledby="cmp-title"></svg>
+        <div class="tip" id="tip" role="status"></div>
+      </div>
+      <details>
+        <summary>표로 보기</summary>
+        <div class="table-scroll" style="margin-top:8px">
+          <table id="cmp-table"><thead><tr>
+            <th>모델</th><th class="num">자기평가 순위</th><th class="num">자기평가 평균</th>
+            <th class="num">증거 순위</th><th class="num">테스트 통과율</th><th class="num">격차 (pp)</th><th class="num">레코드 n</th>
+          </tr></thead><tbody></tbody></table>
+        </div>
+      </details>
+    </div>
+    <p class="empty" id="cmp-empty" hidden>자기평가가 있는 공개 셀의 모델이 두 개 이상인 L2가 아직 없습니다.</p>
   </section>
 
   <section class="card" aria-labelledby="cells-title">
     <h2 id="cells-title">태스크 셀 브라우저</h2>
-    <p class="sub">L1 / L2 × 모델 × 방법(하네스) × 비용. 기여자 k ≥ 5, 레코드 n ≥ 30인 셀만 공개합니다. 신뢰구간은 Wilson 95%.</p>
+    <p class="sub" id="cells-sub"></p>
     <div class="filters" role="group" aria-label="셀 필터">
-      <label>L1
-        <select id="f-l1"></select>
+      <label>데이터 층
+        <select id="f-src"></select>
       </label>
       <label>L2
         <select id="f-l2"></select>
@@ -207,14 +245,23 @@ summary { cursor: pointer; color: var(--ink-2); font-size: 14px; }
     <div class="table-scroll" id="cells-scroll">
       <table id="cells"><thead><tr>
         <th>모델</th><th>방법</th><th class="num">n / k</th><th>테스트 통과율 (95% CI)</th>
-        <th class="num">커밋</th><th class="num">재시도</th><th class="num">$/태스크</th><th class="num">$/성공</th><th class="num">자기평가 (참고)</th>
+        <th class="num">커밋</th><th class="num">$/태스크</th><th class="num">$/성공</th><th class="num">지연 중앙값</th><th class="num">자기평가 (참고)</th>
       </tr></thead><tbody></tbody></table>
     </div>
+    <button type="button" class="more" id="more" hidden></button>
   </section>
 
-  <p class="foot">
-    모든 수치는 결정적 의사난수(seed 20260927)로 만든 목업입니다. 모델 이름은 익명(모델 A–E), 방법 이름은 가상(Harness A/B)입니다.
-    자기평가 열은 참고용으로만 표시하며 기본 랭킹에 쓰지 않습니다. 레코드 스키마: <code>schema/record.v0.1.schema.json</code>.
+  <section class="card" aria-labelledby="src-title">
+    <h2 id="src-title">데이터 출처</h2>
+    <p class="sub" id="src-sub"></p>
+    <ul class="sources" id="sources"></ul>
+  </section>
+  </div>
+
+  <p class="foot" id="foot">
+    랭킹 신호는 결과 증거(<code>tests.pass_rate</code>, Wilson 95% CI)입니다. 자기평가 열은 참고용이며 기본 랭킹에 쓰지 않습니다.
+    현장 보고 셀은 기여자 k명·레코드 n건 이상일 때만 수치를 공개하고, 미달 셀은 존재만 표시합니다.
+    레코드 스키마: <code>schema/record.v0.1.schema.json</code> · API: <code>GET /v1/aggregates</code>.
   </p>
 </div>
 
@@ -227,6 +274,7 @@ summary { cursor: pointer; color: var(--ink-2); font-size: 14px; }
   const params = new URLSearchParams(location.search);
   let themePref = params.get("theme");
   if (!themePref) { try { themePref = localStorage.getItem("mr-theme"); } catch (e) { themePref = null; } }
+  const rerender = [];
   function applyTheme(choice) {
     if (choice === "light" || choice === "dark") root.setAttribute("data-theme", choice);
     else { root.removeAttribute("data-theme"); choice = "auto"; }
@@ -236,215 +284,276 @@ summary { cursor: pointer; color: var(--ink-2); font-size: 14px; }
   document.querySelectorAll("[data-theme-choice]").forEach(b => b.addEventListener("click", () => {
     applyTheme(b.dataset.themeChoice);
     try { localStorage.setItem("mr-theme", b.dataset.themeChoice); } catch (e) { /* storage unavailable */ }
-    renderSlope();
+    rerender.forEach(fn => fn());
   }));
+  if (window.matchMedia) window.matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change", () => rerender.forEach(fn => fn()));
 
-  // ---------- MOCK data (deterministic) ----------
-  function mulberry32(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
-  const rnd = mulberry32(20260927);
-  const L1 = [["coding", "코딩"], ["writing", "글쓰기"], ["research_qa", "조사·QA"], ["analysis_math", "분석·수학"], ["data", "데이터"], ["agentic_ops", "에이전트 운영"], ["creative", "창작"], ["conversation", "대화"], ["education", "교육"], ["other", "기타"]];
-  const L2 = [["coding.bugfix", "버그 수정", 0.00], ["coding.feature", "기능 추가", -0.06], ["coding.refactor", "리팩터링", 0.04],
-              ["coding.test", "테스트 작성", 0.07], ["coding.config_devops", "설정·DevOps", -0.10], ["coding.docs", "문서", 0.10]];
-  // skill = true evidence pass tendency; bias = overclaim of self-assessment; price = relative $ per token
-  const MODELS = [
-    { id: "모델 A", skill: 0.61, bias: 0.29, price: 1.0 },
-    { id: "모델 B", skill: 0.70, bias: 0.06, price: 1.6 },
-    { id: "모델 C", skill: 0.52, bias: 0.36, price: 0.5 },
-    { id: "모델 D", skill: 0.66, bias: 0.13, price: 0.9 },
-    { id: "모델 E", skill: 0.47, bias: 0.05, price: 0.25 },
-  ];
-  const METHODS = [["Harness A · 기본", 0.00, 1.0], ["Harness A · plan-mode", 0.05, 1.45], ["Harness B", -0.04, 0.8]];
+  // ---------- helpers ----------
   const clamp = (x, lo, hi) => Math.min(hi, Math.max(lo, x));
-  const K_MIN = 5, N_MIN = 30;
-
-  const cells = [];
-  for (const [l2, , l2fx] of L2) for (const m of MODELS) for (const [method, mfx, mcost] of METHODS) {
-    const n = Math.round(12 + rnd() * 230);
-    const k = Math.round(2 + rnd() * 38);
-    const p = clamp(m.skill + l2fx + mfx + (rnd() - 0.5) * 0.08, 0.05, 0.97);
-    const passes = Math.round(p * n);
-    const self = clamp(m.skill + m.bias + l2fx * 0.3 + (rnd() - 0.5) * 0.05, 0.3, 0.99);
-    const cost = +(0.12 * m.price * mcost * (0.8 + rnd() * 0.5)).toFixed(3);
-    cells.push({
-      l2, model: m.id, method, n, k, passes,
-      pass: passes / n,
-      commit: clamp(p - 0.08 + (rnd() - 0.5) * 0.1, 0, 1),
-      retry: clamp(0.55 - p * 0.55 + (rnd() - 0.5) * 0.08, 0, 1),
-      self, cost,
-      visible: k >= K_MIN && n >= N_MIN,
-    });
-  }
-
-  function wilson(x, n, z = 1.96) {
-    if (!n) return [0, 0];
-    const p = x / n, d = 1 + z * z / n, c = p + z * z / (2 * n), s = z * Math.sqrt(p * (1 - p) / n + z * z / (4 * n * n));
-    return [(c - s) / d, (c + s) / d];
-  }
-  const pct = v => (v * 100).toFixed(0) + "%";
-  const usd = v => "$" + v.toFixed(v < 1 ? 3 : 2);
+  const pct = v => v == null ? "—" : (v * 100).toFixed(0) + "%";
+  const usd = v => v == null ? "—" : "$" + v.toFixed(v < 1 ? 3 : 2);
+  const secs = ms => ms == null ? "—" : (ms >= 60000 ? (ms / 60000).toFixed(1) + "분" : (ms / 1000).toFixed(0) + "초");
   const el = (tag, props = {}, text) => { const e = document.createElement(tag); Object.assign(e, props); if (text != null) e.textContent = text; return e; };
   const SVGNS = "http://www.w3.org/2000/svg";
   const svgEl = (tag, attrs = {}) => { const e = document.createElementNS(SVGNS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); return e; };
-
-  // ---------- tiles ----------
-  const visible = cells.filter(c => c.visible);
-  const tiles = [
-    ["레코드 (목업)", cells.reduce((a, c) => a + c.n, 0).toLocaleString("ko-KR"), "코딩 L2 6개 × 모델 5 × 방법 3"],
-    ["공개된 셀", `${visible.length} / ${cells.length}`, `k ≥ ${K_MIN}, n ≥ ${N_MIN}일 때만 공개`],
-    ["순위가 뒤집힌 셀 (L2)", "", "자기평가 1위 ≠ 증거 1위"],
-  ];
-  const tilesEl = document.getElementById("tiles");
-
-  // ---------- comparison (slope chart) ----------
-  function aggregate(l2) {
-    return MODELS.map(m => {
-      const cs = cells.filter(c => c.l2 === l2 && c.model === m.id);
-      const n = cs.reduce((a, c) => a + c.n, 0);
-      const passes = cs.reduce((a, c) => a + c.passes, 0);
-      const self = cs.reduce((a, c) => a + c.self * c.n, 0) / n;
-      return { model: m.id, n, pass: passes / n, self };
-    });
-  }
-  function ranked(l2) {
-    const rows = aggregate(l2);
-    [...rows].sort((a, b) => b.self - a.self).forEach((r, i) => r.selfRank = i + 1);
-    [...rows].sort((a, b) => b.pass - a.pass).forEach((r, i) => r.evRank = i + 1);
-    return rows;
-  }
-  const flipped = L2.filter(([l2]) => { const r = ranked(l2); return r.find(x => x.selfRank === 1).model !== r.find(x => x.evRank === 1).model; }).length;
-  tiles[2][1] = `${flipped} / ${L2.length}`;
-  for (const [label, value, note] of tiles) {
-    const t = el("div", { className: "tile" });
-    t.append(el("div", { className: "label" }, label), el("div", { className: "value" }, value), el("div", { className: "note" }, note));
-    tilesEl.append(t);
-  }
-
-  const cmpSel = document.getElementById("cmp-l2");
-  for (const [code, name] of L2) cmpSel.append(el("option", { value: code }, `${name} (${code})`));
-
-  const svg = document.getElementById("slope");
-  const tip = document.getElementById("tip");
-  const wrap = document.getElementById("slope-wrap");
   const css = name => getComputedStyle(root).getPropertyValue(name).trim();
+  const L2_NAMES = { "coding.bugfix": "버그 수정", "coding.feature": "기능 추가", "coding.refactor": "리팩터링", "coding.test": "테스트 작성",
+    "coding.config_devops": "설정·DevOps", "coding.docs": "문서", "coding.review": "리뷰", "coding.explain": "설명", "coding.migration": "마이그레이션",
+    "coding.performance": "성능", "coding.ui": "UI", "coding.other": "기타 코딩" };
+  const SRC_NAMES = { field_report: "현장 보고 (field_report)", benchmark: "벤치마크 시드 (benchmark)", preference: "선호 시드 (preference)", usage: "사용량 시드 (usage)" };
+  const l2name = c => c == null ? "L1 전체" : (L2_NAMES[c] || c);
 
-  function showTip(r, x, y) {
-    tip.replaceChildren();
-    tip.append(el("strong", {}, r.model));
-    const rows = [["증거: 테스트 통과율", pct(r.pass) + ` (${r.evRank}위)`], ["자기평가 평균", pct(r.self) + ` (${r.selfRank}위)`], ["격차", "+" + ((r.self - r.pass) * 100).toFixed(0) + "pp"], ["레코드", r.n.toLocaleString("ko-KR")]];
-    for (const [k, v] of rows) { const d = el("div", { className: "row" }); d.append(el("span", {}, k), el("b", {}, v)); tip.append(d); }
-    tip.style.display = "block";
-    const w = wrap.clientWidth, tw = tip.offsetWidth;
-    tip.style.left = clamp(x - tw / 2, 0, w - tw) + "px";
-    tip.style.top = (y + 14) + "px";
-  }
-  const hideTip = () => { tip.style.display = "none"; };
+  // ---------- load ----------
+  const dataUrl = params.get("data") || "data/aggregates.sample.json";
+  fetch(dataUrl, { cache: "no-store" })
+    .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+    .then(render)
+    .catch(err => {
+      const b = document.getElementById("banner");
+      b.className = "mock-banner error"; b.textContent = "데이터 없음 — 아래 안내를 보세요.";
+      document.getElementById("load-error-msg").textContent = `${dataUrl} → ${err.message}`;
+      document.getElementById("load-error").hidden = false;
+    });
 
-  function renderSlope() {
-    const rows = ranked(cmpSel.value);
-    const W = Math.max(300, wrap.clientWidth), rowH = 46, top = 36, H = top + rows.length * rowH + 8;
-    const narrow = W < 520;
-    const labelW = narrow ? 104 : 170;
-    const xL = labelW, xR = W - labelW;
-    svg.setAttribute("width", W); svg.setAttribute("height", H); svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
-    svg.replaceChildren();
-    const ink2 = css("--ink-2"), muted = css("--muted"), axis = css("--axis"), surface = css("--surface"), ink = css("--ink");
-    const title = (x, t, anchor) => { const e = svgEl("text", { x, y: 16, "text-anchor": anchor, "font-size": 12, "font-weight": 600, fill: ink2 }); e.textContent = t; svg.append(e); };
-    title(xL, narrow ? "자기평가 순위" : "자기평가 순위 (AI 자기보고)", "end");
-    title(xR, narrow ? "증거 순위" : "증거 순위 (테스트·커밋)", "start");
-    svg.append(svgEl("line", { x1: xL + 8, x2: xL + 8, y1: top - 6, y2: H - 10, stroke: axis, "stroke-width": 1 }));
-    svg.append(svgEl("line", { x1: xR - 8, x2: xR - 8, y1: top - 6, y2: H - 10, stroke: axis, "stroke-width": 1 }));
-    const yOf = rank => top + (rank - 0.5) * rowH;
-    const order = [...rows].sort((a, b) => (a.selfRank === a.evRank) - (b.selfRank === b.evRank)); // draw unchanged first? keep changed on top
-    order.reverse();
-    for (const r of order) {
-      const moved = r.evRank - r.selfRank; // >0: dropped -> overclaim
-      const color = moved > 0 ? css("--over") : moved < 0 ? css("--under") : css("--same");
-      const g = svgEl("g", { tabindex: 0, role: "img", "aria-label": `${r.model}: 자기평가 ${r.selfRank}위, 증거 ${r.evRank}위, 테스트 통과율 ${pct(r.pass)}` });
-      const y1 = yOf(r.selfRank), y2 = yOf(r.evRank), x1 = xL + 8, x2 = xR - 8;
-      g.append(svgEl("line", { x1, y1, x2, y2, stroke: "transparent", "stroke-width": 24, "stroke-linecap": "round" })); // hit area
-      g.append(svgEl("line", { x1, y1, x2, y2, stroke: color, "stroke-width": 2, "stroke-linecap": "round", class: "mark" }));
-      for (const [cx, cy] of [[x1, y1], [x2, y2]]) g.append(svgEl("circle", { cx, cy, r: 5, fill: color, stroke: surface, "stroke-width": 2 }));
-      const lt = svgEl("text", { x: xL - 4, y: y1 + 4, "text-anchor": "end", "font-size": 13, fill: ink });
-      lt.textContent = `${r.model}  ${pct(r.self)}`;
-      const arrow = moved > 0 ? " ▼" : moved < 0 ? " ▲" : "";
-      const rt = svgEl("text", { x: xR + 4, y: y2 + 4, "text-anchor": "start", "font-size": 13, fill: ink });
-      rt.textContent = `${pct(r.pass)}  ${r.model}${arrow}`;
-      g.append(lt, rt);
-      const enter = ev => { g.querySelector(".mark").setAttribute("stroke-width", 3.5); const b = wrap.getBoundingClientRect(); const px = ev.clientX ? ev.clientX - b.left : (x1 + x2) / 2; const py = ev.clientY ? ev.clientY - b.top : (y1 + y2) / 2; showTip(r, px, py); };
-      const leave = () => { g.querySelector(".mark").setAttribute("stroke-width", 2); hideTip(); };
-      g.addEventListener("pointermove", enter); g.addEventListener("pointerleave", leave);
-      g.addEventListener("focus", enter); g.addEventListener("blur", leave);
-      svg.append(g);
+  function render(agg) {
+    const cells = agg.cells || [], suppressed = agg.suppressed || [], th = agg.thresholds || {};
+    const ds = agg.dataset || {};
+    const synthetic = ds.synthetic_field_reports === true;
+    const banner = document.getElementById("banner");
+    banner.textContent = ds.label || "출처 라벨이 없는 집계 데이터입니다. sources와 source_type을 확인하세요.";
+    banner.className = synthetic ? "mock-banner" : "mock-banner live";
+    document.getElementById("src-line").textContent = `데이터: ${dataUrl} · 생성 ${agg.generated_at || "?"} · ${agg.api || ""}`;
+    document.getElementById("cmp-tag").hidden = !synthetic;
+    document.getElementById("content").hidden = false;
+    const fth = th.field_report || { min_contributors: "?", min_records: "?" };
+    const thText = st => { const t = th[st]; return t ? `k ≥ ${t.min_contributors}, n ≥ ${t.min_records}` : "?"; };
+
+    // ---------- tiles ----------
+    const totals = (agg.totals || {}).records_by_source_type || {};
+    const fieldCells = cells.filter(c => c.source_type === "field_report");
+    const fieldSupp = suppressed.filter(c => c.source_type === "field_report");
+    const cmpL2s = [...new Set(fieldCells.map(c => c.l2))].filter(l2 => ranked(l2).length >= 2);
+    const flipped = cmpL2s.filter(l2 => { const r = ranked(l2); return r.find(x => x.selfRank === 1).model !== r.find(x => x.evRank === 1).model; }).length;
+    const tiles = [
+      ["현장 보고 레코드" + (synthetic ? " (합성)" : ""), (totals.field_report || 0).toLocaleString("ko-KR"), "field_report만 사용자 증거로 셈"],
+      ["공개된 현장 셀", `${fieldCells.length} / ${fieldCells.length + fieldSupp.length}`, `${thText("field_report")}일 때만 공개`],
+      ["순위가 뒤집힌 L2", cmpL2s.length ? `${flipped} / ${cmpL2s.length}` : "—", "자기평가 1위 ≠ 증거 1위"],
+      ["벤치마크 시드 레코드", (totals.benchmark || 0).toLocaleString("ko-KR"), `${cells.filter(c => c.source_type === "benchmark").length}개 셀 · 공개 데이터`],
+    ];
+    const tilesEl = document.getElementById("tiles");
+    for (const [label, value, note] of tiles) {
+      const t = el("div", { className: "tile" });
+      t.append(el("div", { className: "label" }, label), el("div", { className: "value" }, value), el("div", { className: "note" }, note));
+      tilesEl.append(t);
     }
-    // table twin
-    const tb = document.querySelector("#cmp-table tbody");
-    tb.replaceChildren();
-    for (const r of [...rows].sort((a, b) => a.evRank - b.evRank)) {
-      const tr = el("tr");
-      const gap = (r.self - r.pass) * 100;
-      tr.append(el("td", {}, r.model), el("td", { className: "num" }, r.selfRank + "위"), el("td", { className: "num" }, pct(r.self)),
-        el("td", { className: "num" }, r.evRank + "위"), el("td", { className: "num" }, pct(r.pass)),
-        el("td", { className: "num " + (gap >= 15 ? "gap-over" : "") }, "+" + gap.toFixed(0)), el("td", { className: "num" }, r.n.toLocaleString("ko-KR")));
-      tb.append(tr);
-    }
-  }
-  cmpSel.addEventListener("change", renderSlope);
-  let rz; window.addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(renderSlope, 80); });
 
-  // ---------- cell browser ----------
-  const fL1 = document.getElementById("f-l1"), fL2 = document.getElementById("f-l2"), fM = document.getElementById("f-method"), fS = document.getElementById("f-sort");
-  for (const [code, name] of L1) { const o = el("option", { value: code }, code === "coding" ? `${name} (coding)` : `${name} — v0.1 범위 밖`); o.disabled = code !== "coding"; fL1.append(o); }
-  fL2.append(el("option", { value: "all" }, "전체 코딩 L2"));
-  for (const [code, name] of L2) fL2.append(el("option", { value: code }, name));
-  fM.append(el("option", { value: "all" }, "전체 방법"));
-  for (const [name] of METHODS) fM.append(el("option", { value: name }, name));
-  document.getElementById("l1-note").textContent = "v0.1은 Claude Code Stop 훅의 코딩 태스크만 수집합니다. 다른 L1은 분류 코드만 정의돼 있습니다.";
-
-  function ciSvg(c) {
-    const [lo, hi] = wilson(c.passes, c.n), W = 110, H = 12, s = svgEl("svg", { width: W, height: H, "aria-hidden": "true" });
-    s.append(svgEl("rect", { x: 0, y: 5, width: W, height: 2, rx: 1, fill: css("--grid") }));
-    s.append(svgEl("rect", { x: lo * W, y: 3, width: Math.max(2, (hi - lo) * W), height: 6, rx: 3, fill: css("--seq-soft") }));
-    s.append(svgEl("rect", { x: clamp(c.pass * W - 1, 0, W - 2), y: 0, width: 2, height: H, rx: 1, fill: css("--seq") }));
-    return s;
-  }
-
-  const lab = (td, label) => { td.dataset.label = label; return td; };
-  function renderCells() {
-    const l2 = fL2.value, method = fM.value, sort = fS.value;
-    let rows = cells.filter(c => (l2 === "all" || c.l2 === l2) && (method === "all" || c.method === method));
-    const key = { pass: c => -c.pass, cps: c => c.cost / Math.max(c.pass, 0.01), cost: c => c.cost, n: c => -c.n }[sort];
-    rows.sort((a, b) => (b.visible - a.visible) || (key(a) - key(b)));
-    const tb = document.querySelector("#cells tbody");
-    tb.replaceChildren();
-    const l2name = Object.fromEntries(L2.map(([c, n]) => [c, n]));
-    for (const c of rows) {
-      const tr = el("tr", { className: c.visible ? "" : "hidden-cell" });
-      const modelCell = el("td", { className: "cell-title" }, l2 === "all" ? `${c.model} · ${l2name[c.l2]}` : c.model);
-      if (!c.visible) {
-        const td = el("td", { colSpan: 7 });
-        td.append(el("span", { className: "badge-lock" }, `비공개 셀 — 기여자 k=${c.k}, 레코드 n=${c.n} (공개 기준 k ≥ ${K_MIN}, n ≥ ${N_MIN})`));
-        tr.append(modelCell, lab(el("td", { className: "wide" }, c.method), "방법"), td);
-      } else {
-        const [lo, hi] = wilson(c.passes, c.n);
-        const ciTd = el("td", { className: "wide" }); const wrapCi = el("span", { className: "ci" });
-        wrapCi.append(ciSvg(c), el("span", {}, `${pct(c.pass)} (${pct(lo)}–${pct(hi)})`));
-        ciTd.append(wrapCi);
-        tr.append(modelCell, lab(el("td", { className: "wide" }, c.method), "방법"), lab(el("td", { className: "num" }, `${c.n} / ${c.k}`), "n / k"),
-          lab(ciTd, "테스트 통과율"),
-          lab(el("td", { className: "num" }, pct(c.commit)), "커밋"), lab(el("td", { className: "num" }, pct(c.retry)), "재시도"),
-          lab(el("td", { className: "num" }, usd(c.cost)), "$/태스크"), lab(el("td", { className: "num" }, usd(c.cost / c.pass)), "$/성공"),
-          lab(el("td", { className: "num", style: "color:var(--muted)" }, pct(c.self)), "자기평가 (참고)"));
+    // ---------- comparison ----------
+    function ranked(l2) {
+      const by = new Map();
+      for (const c of fieldCells) {
+        if (c.l2 !== l2 || !c.self_assessment || !c.self_assessment.n || !c.tests.tested) continue;
+        const m = by.get(c.model) || { model: c.model, n: 0, tested: 0, passed: 0, selfSum: 0, selfN: 0 };
+        m.n += c.n; m.tested += c.tests.tested; m.passed += c.tests.passed;
+        m.selfSum += c.self_assessment.mean * c.self_assessment.n; m.selfN += c.self_assessment.n;
+        by.set(c.model, m);
       }
-      tb.append(tr);
+      const rows = [...by.values()].map(m => ({ model: m.model, n: m.n, pass: m.passed / m.tested, self: m.selfSum / m.selfN }));
+      [...rows].sort((a, b) => b.self - a.self).forEach((r, i) => r.selfRank = i + 1);
+      [...rows].sort((a, b) => b.pass - a.pass).forEach((r, i) => r.evRank = i + 1);
+      return rows;
     }
-  }
-  [fL2, fM, fS].forEach(s => s.addEventListener("change", renderCells));
-  fL2.value = "coding.bugfix";
+    const cmpSel = document.getElementById("cmp-l2");
+    for (const l2 of cmpL2s) cmpSel.append(el("option", { value: l2 }, `${l2name(l2)} (${l2})`));
+    document.getElementById("cmp-body").hidden = !cmpL2s.length;
+    document.getElementById("cmp-empty").hidden = !!cmpL2s.length;
+    cmpSel.disabled = !cmpL2s.length;
 
-  renderSlope();
-  renderCells();
-  if (window.matchMedia) window.matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change", () => { renderSlope(); renderCells(); });
-  document.querySelectorAll("[data-theme-choice]").forEach(b => b.addEventListener("click", renderCells));
+    const svg = document.getElementById("slope"), tip = document.getElementById("tip"), wrap = document.getElementById("slope-wrap");
+    function showTip(r, x, y) {
+      tip.replaceChildren();
+      tip.append(el("strong", {}, r.model));
+      const gap = (r.self - r.pass) * 100;
+      const rows = [["증거: 테스트 통과율", pct(r.pass) + ` (${r.evRank}위)`], ["자기평가 평균", pct(r.self) + ` (${r.selfRank}위)`], ["격차", (gap >= 0 ? "+" : "") + gap.toFixed(0) + "pp"], ["레코드", r.n.toLocaleString("ko-KR")]];
+      for (const [k, v] of rows) { const d = el("div", { className: "row" }); d.append(el("span", {}, k), el("b", {}, v)); tip.append(d); }
+      tip.style.display = "block";
+      const w = wrap.clientWidth, tw = tip.offsetWidth;
+      tip.style.left = clamp(x - tw / 2, 0, w - tw) + "px";
+      tip.style.top = (y + 14) + "px";
+    }
+    const hideTip = () => { tip.style.display = "none"; };
+
+    function renderSlope() {
+      if (!cmpL2s.length) return;
+      const rows = ranked(cmpSel.value);
+      const W = Math.max(300, wrap.clientWidth), rowH = 46, top = 36, H = top + rows.length * rowH + 8;
+      const narrow = W < 520, labelW = narrow ? 128 : 190, xL = labelW, xR = W - labelW;
+      const short = m => narrow ? m.replace(/^example-model-/, "모델 ").replace(/^example-/, "") : m;
+      svg.setAttribute("width", W); svg.setAttribute("height", H); svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+      svg.replaceChildren();
+      const ink2 = css("--ink-2"), axis = css("--axis"), surface = css("--surface"), ink = css("--ink");
+      const title = (x, t, anchor) => { const e = svgEl("text", { x, y: 16, "text-anchor": anchor, "font-size": 12, "font-weight": 600, fill: ink2 }); e.textContent = t; svg.append(e); };
+      title(xL, narrow ? "자기평가 순위" : "자기평가 순위 (AI 자기보고)", "end");
+      title(xR, narrow ? "증거 순위" : "증거 순위 (테스트 통과)", "start");
+      svg.append(svgEl("line", { x1: xL + 8, x2: xL + 8, y1: top - 6, y2: H - 10, stroke: axis, "stroke-width": 1 }));
+      svg.append(svgEl("line", { x1: xR - 8, x2: xR - 8, y1: top - 6, y2: H - 10, stroke: axis, "stroke-width": 1 }));
+      const yOf = rank => top + (rank - 0.5) * rowH;
+      const order = [...rows].sort((a, b) => (a.selfRank === a.evRank) - (b.selfRank === b.evRank)).reverse();
+      for (const r of order) {
+        const moved = r.evRank - r.selfRank;
+        const color = moved > 0 ? css("--over") : moved < 0 ? css("--under") : css("--same");
+        const g = svgEl("g", { tabindex: 0, role: "img", "aria-label": `${r.model}: 자기평가 ${r.selfRank}위, 증거 ${r.evRank}위, 테스트 통과율 ${pct(r.pass)}` });
+        const y1 = yOf(r.selfRank), y2 = yOf(r.evRank), x1 = xL + 8, x2 = xR - 8;
+        g.append(svgEl("line", { x1, y1, x2, y2, stroke: "transparent", "stroke-width": 24, "stroke-linecap": "round" }));
+        g.append(svgEl("line", { x1, y1, x2, y2, stroke: color, "stroke-width": 2, "stroke-linecap": "round", class: "mark" }));
+        for (const [cx, cy] of [[x1, y1], [x2, y2]]) g.append(svgEl("circle", { cx, cy, r: 5, fill: color, stroke: surface, "stroke-width": 2 }));
+        const lt = svgEl("text", { x: xL - 4, y: y1 + 4, "text-anchor": "end", "font-size": 13, fill: ink });
+        lt.textContent = `${short(r.model)}  ${pct(r.self)}`;
+        const arrow = moved > 0 ? " ▼" : moved < 0 ? " ▲" : "";
+        const rt = svgEl("text", { x: xR + 4, y: y2 + 4, "text-anchor": "start", "font-size": 13, fill: ink });
+        rt.textContent = `${pct(r.pass)}  ${short(r.model)}${arrow}`;
+        g.append(lt, rt);
+        const enter = ev => { g.querySelector(".mark").setAttribute("stroke-width", 3.5); const b = wrap.getBoundingClientRect(); const px = ev.clientX ? ev.clientX - b.left : (x1 + x2) / 2; const py = ev.clientY ? ev.clientY - b.top : (y1 + y2) / 2; showTip(r, px, py); };
+        const leave = () => { g.querySelector(".mark").setAttribute("stroke-width", 2); hideTip(); };
+        g.addEventListener("pointermove", enter); g.addEventListener("pointerleave", leave);
+        g.addEventListener("focus", enter); g.addEventListener("blur", leave);
+        svg.append(g);
+      }
+      const tb = document.querySelector("#cmp-table tbody");
+      tb.replaceChildren();
+      for (const r of [...rows].sort((a, b) => a.evRank - b.evRank)) {
+        const tr = el("tr"), gap = (r.self - r.pass) * 100;
+        tr.append(el("td", {}, r.model), el("td", { className: "num" }, r.selfRank + "위"), el("td", { className: "num" }, pct(r.self)),
+          el("td", { className: "num" }, r.evRank + "위"), el("td", { className: "num" }, pct(r.pass)),
+          el("td", { className: "num " + (gap >= 15 ? "gap-over" : "") }, (gap >= 0 ? "+" : "") + gap.toFixed(0)), el("td", { className: "num" }, r.n.toLocaleString("ko-KR")));
+        tb.append(tr);
+      }
+    }
+    cmpSel.addEventListener("change", renderSlope);
+    let rz; window.addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(renderSlope, 80); });
+
+    // ---------- cell browser ----------
+    const fSrc = document.getElementById("f-src"), fL2 = document.getElementById("f-l2"), fM = document.getElementById("f-method"), fS = document.getElementById("f-sort");
+    const moreBtn = document.getElementById("more");
+    const PAGE = 12;
+    let showAll = false;
+    const srcTypes = [...new Set([...cells, ...suppressed].map(c => c.source_type))];
+    for (const st of ["field_report", "benchmark", "preference", "usage"].filter(s => srcTypes.includes(s))) fSrc.append(el("option", { value: st }, SRC_NAMES[st]));
+    function fillOptions() {
+      const st = fSrc.value, pool = [...cells, ...suppressed].filter(c => c.source_type === st);
+      const keep = [fL2.value, fM.value];
+      fL2.replaceChildren(el("option", { value: "all" }, "전체"));
+      for (const l2 of [...new Set(pool.map(c => c.l2))].sort()) fL2.append(el("option", { value: l2 ?? "" }, l2name(l2)));
+      fM.replaceChildren(el("option", { value: "all" }, "전체 방법"));
+      for (const m of [...new Set(pool.map(c => c.method))].sort()) fM.append(el("option", { value: m }, m));
+      if ([...fL2.options].some(o => o.value === keep[0])) fL2.value = keep[0];
+      if ([...fM.options].some(o => o.value === keep[1])) fM.value = keep[1];
+      const t = th[st];
+      document.getElementById("cells-sub").textContent = `L1 / L2 × 모델 × 방법(하네스) × 비용. 이 층의 공개 기준: 기여자 k ≥ ${t ? t.min_contributors : "?"}, 레코드 n ≥ ${t ? t.min_records : "?"}. 신뢰구간은 Wilson 95%.`;
+      document.getElementById("l1-note").textContent = st === "benchmark"
+        ? "벤치마크 시드: Aider polyglot 연습문제 1개 = 레코드 1개. L2(coding.feature)는 근사 매핑이고, 시드가 보고하지 않는 커밋·자기평가는 비워 둡니다."
+        : synthetic ? "이 샘플의 현장 보고는 전부 합성 데이터입니다(example-model-*, example-harness-*). 실제 측정이 아닙니다."
+        : "v0.1은 Claude Code Stop 훅의 코딩 태스크만 수집합니다.";
+    }
+
+    function ciSvg(c) {
+      const [lo, hi] = c.tests.ci95 || [0, 0], W = 72, H = 12, s = svgEl("svg", { width: W, height: H, "aria-hidden": "true" });
+      s.append(svgEl("rect", { x: 0, y: 5, width: W, height: 2, rx: 1, fill: css("--grid") }));
+      s.append(svgEl("rect", { x: lo * W, y: 3, width: Math.max(2, (hi - lo) * W), height: 6, rx: 3, fill: css("--seq-soft") }));
+      s.append(svgEl("rect", { x: clamp(c.tests.pass_rate * W - 1, 0, W - 2), y: 0, width: 2, height: H, rx: 1, fill: css("--seq") }));
+      return s;
+    }
+    const lab = (td, label) => { td.dataset.label = label; return td; };
+
+    function renderCells() {
+      const st = fSrc.value, l2 = fL2.value, method = fM.value, sort = fS.value;
+      const match = c => c.source_type === st && (l2 === "all" || (c.l2 ?? "") === l2) && (method === "all" || c.method === method);
+      const key = {
+        pass: c => -(c.tests.pass_rate ?? -1),
+        cps: c => c.cost_usd_per_success ?? Infinity,
+        cost: c => c.cost_usd_per_task.client_mean ?? Infinity,
+        n: c => -c.n,
+      }[sort];
+      const vis = cells.filter(match).sort((a, b) => key(a) - key(b));
+      const hid = suppressed.filter(match);
+      const rows = [...vis.map(c => [c, true]), ...hid.map(c => [c, false])];
+      const shown = showAll ? rows : rows.slice(0, PAGE);
+      const tb = document.querySelector("#cells tbody");
+      tb.replaceChildren();
+      for (const [c, visible] of shown) {
+        const tr = el("tr", { className: visible ? "" : "hidden-cell" });
+        const title = l2 === "all" ? `${c.model} · ${l2name(c.l2)}` : c.model;
+        const modelCell = el("td", { className: "cell-title" }, title);
+        if (!visible) {
+          const td = el("td", { colSpan: 7 });
+          td.append(el("span", { className: "badge-lock" }, `비공개 셀 — 공개 기준(${thText(c.source_type)}) 미달. 수치를 내보내지 않습니다.`));
+          tr.append(modelCell, lab(el("td", { className: "wide" }, c.method), "방법"), td);
+        } else {
+          const [lo, hi] = c.tests.ci95 || [null, null];
+          const ciTd = el("td", { className: "wide" });
+          if (c.tests.pass_rate != null) {
+            const w = el("span", { className: "ci" });
+            w.append(ciSvg(c), el("span", {}, `${pct(c.tests.pass_rate)} (${pct(lo)}–${pct(hi)})`));
+            ciTd.append(w);
+          } else ciTd.textContent = "테스트 없음";
+          const self = c.self_assessment && c.self_assessment.n ? pct(c.self_assessment.mean) : "—";
+          tr.append(modelCell, lab(el("td", { className: "wide" }, c.method), "방법"), lab(el("td", { className: "num" }, `${c.n} / ${c.k}`), "n / k"),
+            lab(ciTd, "테스트 통과율"),
+            lab(el("td", { className: "num" }, pct(c.commit_rate)), "커밋"),
+            lab(el("td", { className: "num" }, usd(c.cost_usd_per_task.client_mean)), "$/태스크"),
+            lab(el("td", { className: "num" }, usd(c.cost_usd_per_success)), "$/성공"),
+            lab(el("td", { className: "num" }, secs(c.latency_ms_median)), "지연 중앙값"),
+            lab(el("td", { className: "num", style: "color:var(--muted)" }, self), "자기평가 (참고)"));
+        }
+        tb.append(tr);
+      }
+      if (!rows.length) { const tr = el("tr"); tr.append(el("td", { colSpan: 9 }, "조건에 맞는 셀이 없습니다.")); tb.append(tr); }
+      moreBtn.hidden = rows.length <= PAGE;
+      moreBtn.textContent = showAll ? "접기" : `나머지 ${rows.length - PAGE}개 셀 더 보기`;
+    }
+    fSrc.addEventListener("change", () => { showAll = false; fillOptions(); renderCells(); });
+    [fL2, fM, fS].forEach(s => s.addEventListener("change", () => { showAll = false; renderCells(); }));
+    moreBtn.addEventListener("click", () => { showAll = !showAll; renderCells(); });
+    const initialSrc = params.get("layer");
+    if (initialSrc && srcTypes.includes(initialSrc)) fSrc.value = initialSrc;
+    fillOptions();
+    // Start on one L2 so both published and suppressed cells are visible at a glance.
+    const firstL2 = [...fL2.options].map(o => o.value).find(v => v !== "all");
+    if (fSrc.value === "field_report" && firstL2 !== undefined) fL2.value = firstL2;
+
+    // ---------- sources ----------
+    const list = document.getElementById("sources");
+    document.getElementById("src-sub").textContent = "시드 층은 source_type으로 분리되고 현장 보고와 합산되지 않습니다. Artificial Analysis 데이터와 LMSYS-Chat-1M은 약관상 쓰지 않습니다.";
+    for (const s of agg.sources || []) {
+      const li = el("li");
+      const name = el("div", { className: "name" }, s.name);
+      name.append(el("span", { className: "tag pub" }, "공개 데이터 · " + s.source_type));
+      const dl = el("dl");
+      const add = (k, v, href) => {
+        dl.append(el("dt", {}, k));
+        const dd = el("dd");
+        if (href && /^https:\/\//.test(href)) dd.append(el("a", { href, rel: "noopener", target: "_blank" }, v));
+        else dd.textContent = v ?? "—";
+        dl.append(dd);
+      };
+      add("출처", s.url, s.url);
+      add("커밋", `${(s.commit_sha || "").slice(0, 12)} · ${s.commit_date || "?"}`);
+      add("라이선스", s.license);
+      add("비고", s.license_note);
+      li.append(name, dl);
+      list.append(li);
+    }
+    const synthLi = el("li");
+    const sn = el("div", { className: "name" }, "현장 보고 (field_report)");
+    sn.append(el("span", { className: synthetic ? "tag syn" : "tag pub" }, synthetic ? "SYNTHETIC" : "이 서버에 제출된 레코드"));
+    synthLi.append(sn, el("p", { className: "src-line" }, synthetic
+      ? "샘플 생성기가 결정적 의사난수로 만든 가짜 레코드입니다. 모델·하네스 이름도 가상입니다. 자기평가 값도 합성이며, 실제 수집기는 모델에게 자기평가를 요청하지 않습니다."
+      : "이 인스턴스가 POST /v1/records로 받은 레코드입니다. 공개 기준 미달 셀은 수치 없이 존재만 표시됩니다."));
+    list.append(synthLi);
+
+    renderSlope();
+    renderCells();
+    rerender.push(renderSlope, renderCells);
+  }
 })();
 </script>
 </body>
