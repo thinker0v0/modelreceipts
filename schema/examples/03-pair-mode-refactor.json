@@ -1,0 +1,52 @@
+{
+  "schema_version": "0.1.0",
+  "record_id": "8f2d6b19-3c7e-4a05-b1d8-6e4f0a9c2b77",
+  "submitted_at": "2026-09-27T11:40:02Z",
+  "source": {
+    "source_type": "field_report",
+    "client": "claude-code",
+    "client_version": "2.1.200",
+    "collector": "pair-mode",
+    "submit_mode": "selected",
+    "install_key_sig": null
+  },
+  "task": {
+    "l1": "coding",
+    "l2": "coding.refactor",
+    "taxonomy_version": "t0.1",
+    "classifier": "rules-v0",
+    "interaction_type": "agentic",
+    "difficulty_prior": { "files_touched": 3, "context_tokens": 24800 }
+  },
+  "model": { "provider": "example", "id": "example-model-a", "route": "openrouter", "effort": "medium" },
+  "method": {
+    "harness": "claude-code",
+    "workflow_tags": ["pair-mode", "subagents"],
+    "tools_used": ["Bash", "Edit", "Task"]
+  },
+  "usage": {
+    "input_tokens": 2200,
+    "output_tokens": 3900,
+    "cache_read_tokens": 140300,
+    "cache_write_tokens": 9800,
+    "cost_usd_client": 0.41,
+    "cost_usd_server": 0.39,
+    "latency_ms": 131000,
+    "turns": 11
+  },
+  "outcome": {
+    "status": "completed",
+    "evidence": {
+      "test_cmd_detected": true,
+      "test_runs": 1,
+      "tests_passed": true,
+      "committed": false,
+      "tool_error_count": 0,
+      "reverted_within_7d": null,
+      "user_retry_next_prompt": null
+    },
+    "self_assessment": { "score": 0.8, "rater": "judge_llm", "judge_model": "example-judge-1" }
+  },
+  "pairing": { "pair_id": "1d9a4e7c-5b3f-4c21-a8e6-0f7b2d9c4e58" },
+  "privacy": { "content_included": false, "identifiers_included": false }
+}

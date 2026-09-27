@@ -1,0 +1,52 @@
+{
+  "schema_version": "0.1.0",
+  "record_id": "5b1f7c2e-9a41-4d3e-8c0a-2f6b9e1d4a10",
+  "submitted_at": "2026-09-27T09:12:44Z",
+  "source": {
+    "source_type": "field_report",
+    "client": "claude-code",
+    "client_version": "2.1.200",
+    "collector": "stop-hook",
+    "submit_mode": "all_runs",
+    "install_key_sig": null
+  },
+  "task": {
+    "l1": "coding",
+    "l2": "coding.bugfix",
+    "taxonomy_version": "t0.1",
+    "classifier": "rules-v0",
+    "interaction_type": "agentic",
+    "difficulty_prior": { "files_touched": 2, "context_tokens": 38120 }
+  },
+  "model": { "provider": "anthropic", "id": "claude-opus-5-5", "route": "direct", "effort": "high" },
+  "method": {
+    "harness": "claude-code",
+    "workflow_tags": [],
+    "tools_used": ["Bash", "Edit", "Grep", "Read"]
+  },
+  "usage": {
+    "input_tokens": 1840,
+    "output_tokens": 2310,
+    "cache_read_tokens": 212400,
+    "cache_write_tokens": 14200,
+    "cost_usd_client": null,
+    "cost_usd_server": null,
+    "latency_ms": 94000,
+    "turns": 9
+  },
+  "outcome": {
+    "status": "completed",
+    "evidence": {
+      "test_cmd_detected": true,
+      "test_runs": 2,
+      "tests_passed": true,
+      "committed": true,
+      "tool_error_count": 1,
+      "reverted_within_7d": null,
+      "user_retry_next_prompt": null
+    },
+    "self_assessment": null
+  },
+  "pairing": { "pair_id": null },
+  "privacy": { "content_included": false, "identifiers_included": false }
+}
