@@ -1,0 +1,37 @@
+{
+  "_comment": "SYNTHETIC fixture for tests and the dashboard sample. Not OpenRouter data. Model names are made up.",
+  "period": {
+    "start": "2026-09-01",
+    "end": "2026-09-07"
+  },
+  "rows": [
+    {
+      "model": "example-vendor/example-model-a",
+      "tokens": 912000000
+    },
+    {
+      "model": "example-vendor/example-model-b",
+      "tokens": 640000000
+    },
+    {
+      "model": "example-vendor/example-model-c",
+      "tokens": 410000000
+    },
+    {
+      "model": "example-lab/example-model-d",
+      "tokens": 205000000
+    },
+    {
+      "model": "example-lab/example-model-e",
+      "tokens": 120000000
+    },
+    {
+      "model": "example-vendor/example-model-a",
+      "tokens": 88000000
+    },
+    {
+      "model": "other",
+      "tokens": 300000000
+    }
+  ]
+}

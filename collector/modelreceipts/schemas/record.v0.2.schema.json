@@ -363,7 +363,7 @@
               "anyOf": [
                 {
                   "type": "string",
-                  "pattern": "^(retry-rules-v[0-9]+|manual)$"
+                  "pattern": "^(retry-rules-v[0-9]+|manual|synthetic)$"
                 },
                 {
                   "type": "null"

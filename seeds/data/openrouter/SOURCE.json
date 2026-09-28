@@ -1,0 +1,13 @@
+{
+  "source_id": "openrouter-usage@synthetic-fixture",
+  "name": "SYNTHETIC fixture shaped like an OpenRouter usage export (not real data)",
+  "source_type": "usage",
+  "synthetic": true,
+  "url": "https://openrouter.ai/rankings",
+  "file": "usage.synthetic.json",
+  "sha256": "977fd3032d676014cadd15aa8ea908f217cf75c6442d74890c64bf6ed1c32ae9",
+  "retrieved_at": "2026-09-28",
+  "license": "CC0-1.0",
+  "license_note": "The fixture itself is synthetic and written for this repository. Real OpenRouter rankings data is CC BY 4.0 according to the project's research notes (openrouter.ai/data); fetching it needs an OpenRouter API key and a check of the current terms. Neither was done here.",
+  "how_to_fetch_real_data": "1) A person creates an OpenRouter API key (never commit it). 2) Confirm the rankings/usage export endpoint, its fields and license on openrouter.ai/data. 3) Save the export locally and convert it to {period, rows:[{model, tokens}]}. 4) PYTHONPATH=server python3 -m modelreceipts_server import-seed openrouter --input export.json"
+}

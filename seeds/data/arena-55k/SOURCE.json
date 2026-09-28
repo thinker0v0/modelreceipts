@@ -1,0 +1,23 @@
+{
+  "source_id": "arena-55k@18c2983",
+  "name": "LMArena arena-human-preference-55k (aggregate win counts by task code)",
+  "source_type": "preference",
+  "dataset": "https://huggingface.co/datasets/lmarena-ai/arena-human-preference-55k",
+  "url": "https://huggingface.co/datasets/lmarena-ai/arena-human-preference-55k/tree/18c298340948c0e7f7727399fd459cca6ce0ca6f",
+  "revision": "18c298340948c0e7f7727399fd459cca6ce0ca6f",
+  "commit": "18c298340948c0e7f7727399fd459cca6ce0ca6f",
+  "commit_date": "2024-05-17T03:04:04Z",
+  "retrieved_at": "2026-09-28",
+  "raw_file": "train.csv",
+  "raw_bytes": 184175071,
+  "raw_sha256": "0692154aaf20fc6649090c3f49b6b5dd1e693a765ecb5f0856ae0da5946f5be2",
+  "raw_sha256_note": "Equals the X-Linked-ETag the Hugging Face hub reports for train.csv at this revision.",
+  "raw_redistributed": false,
+  "fetch_command": "curl -fL -o train.csv https://huggingface.co/datasets/lmarena-ai/arena-human-preference-55k/resolve/18c298340948c0e7f7727399fd459cca6ce0ca6f/train.csv",
+  "rebuild_command": "PYTHONPATH=seeds python3 -m modelreceipts_seeds arena-55k --rebuild-from train.csv",
+  "license": "Apache-2.0",
+  "license_note": "The dataset card at this revision declares license: apache-2.0. Only derived aggregate counts (battles, wins, losses, ties per task code and model) are redistributed here, with this attribution. No prompts, responses or battle ids are included. Citation: Chiang et al., 'Chatbot Arena: An Open Platform for Evaluating LLMs by Human Preference', arXiv:2403.04132.",
+  "derivation": "Each battle's prompt is classified locally with the collector's rules-v1 classifier (in memory only). Every model in the battle adds one battle and a win, loss or tie to the cells (L1, L2, model), (L1, all L2) and (all tasks). win_rate = (wins + ties/2) / battles. Both tie labels count as ties.",
+  "cells_file": "cells.jsonl",
+  "cells_sha256": "a70f29842dc2e0f94ba5634b557ee5825068f0ac8547ff853bae636b190956ff"
+}

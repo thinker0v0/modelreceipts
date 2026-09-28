@@ -1,4 +1,4 @@
-"""Aider polyglot leaderboard -> schema v0.1 seed records (``source_type=benchmark``).
+"""Aider polyglot leaderboard -> schema v0.2 seed records (``source_type=benchmark``).
 
 Input: the pinned snapshot in ``seeds/data/aider-polyglot/`` (see SOURCE.json for
 URL, commit, sha256 and license). The importer never touches the network.
@@ -19,10 +19,10 @@ Mapping (one leaderboard row = one benchmark run over ``test_cases`` exercises):
   "not reported" on the leaderboard and becomes ``null``.
 * Task codes: ``coding`` / ``coding.feature`` (Exercism "implement to spec"),
   classifier ``seed:aider-polyglot``. This L2 mapping is an approximation.
-* Schema v0.1 has non-nullable fields the leaderboard does not report
-  (``committed``, ``tool_error_count``, ``turns`` and, for most rows, tokens).
-  They are filled with placeholders (false/0) and the server ignores them for
-  benchmark cells (see server/README.md). A schema v0.2 could make them nullable.
+* Fields the leaderboard does not report (``committed``, ``tool_error_count``,
+  ``turns`` and, for most rows, tokens) are ``null`` (schema v0.2). Record ids
+  are the same as in the earlier v0.1 import, so a v0.1 database migrated with
+  ``migrate-db`` and a fresh v0.2 import describe the same exercises.
 """
 
 from __future__ import annotations
@@ -109,13 +109,13 @@ def row_to_records(row: dict, source_id: str) -> Iterator[dict]:
     version = version if re.fullmatch(r"[0-9A-Za-z.+-]{1,32}", version) else None
     seconds = row.get("seconds_per_case")
     latency = round(float(seconds) * 1000) if isinstance(seconds, (int, float)) and seconds > 0 else None
-    tokens_in = _per_case(row.get("prompt_tokens"), n, as_int=True) or 0
-    tokens_out = _per_case(row.get("completion_tokens"), n, as_int=True) or 0
+    tokens_in = _per_case(row.get("prompt_tokens"), n, as_int=True)
+    tokens_out = _per_case(row.get("completion_tokens"), n, as_int=True)
     outcomes = [(True, 1)] * p1 + [(True, 2)] * (p2 - p1) + [(False, 2)] * (n - p2)
 
     for i, (passed, runs) in enumerate(outcomes):
         yield {
-            "schema_version": "0.1.0",
+            "schema_version": "0.2.0",
             "record_id": str(uuid.uuid5(SEED_NAMESPACE, f"{source_id}/{row['dirname']}/{i}")),
             "submitted_at": f"{row['date']}T00:00:00Z",
             "source": {
@@ -148,12 +148,12 @@ def row_to_records(row: dict, source_id: str) -> Iterator[dict]:
             "usage": {
                 "input_tokens": tokens_in,
                 "output_tokens": tokens_out,
-                "cache_read_tokens": 0,
-                "cache_write_tokens": 0,
+                "cache_read_tokens": None,
+                "cache_write_tokens": None,
                 "cost_usd_client": _per_case(row.get("total_cost"), n),
                 "cost_usd_server": None,
                 "latency_ms": latency,
-                "turns": 0,
+                "turns": None,
             },
             "outcome": {
                 "status": "completed",
@@ -161,10 +161,11 @@ def row_to_records(row: dict, source_id: str) -> Iterator[dict]:
                     "test_cmd_detected": True,
                     "test_runs": runs,
                     "tests_passed": passed,
-                    "committed": False,
-                    "tool_error_count": 0,
+                    "committed": None,
+                    "tool_error_count": None,
                     "reverted_within_7d": None,
                     "user_retry_next_prompt": None,
+                    "retry_detector": None,
                 },
                 "self_assessment": None,
             },
