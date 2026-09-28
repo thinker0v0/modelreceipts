@@ -1,4 +1,4 @@
-# server — ingest API (v1.0.0-rc1, localhost only)
+# server — ingest API (v1.0.0-rc2, localhost only)
 
 서버가 하는 일:
 
@@ -40,6 +40,7 @@ python3 -m modelreceipts_server migrate-db --from old.sqlite3 --to new.sqlite3
 | `--prices FILE` | `data/prices.json` | 서버 비용을 재계산할 가격표입니다. |
 | `--rate-per-hour` / `--burst` | 120 / 30 | 기여자별 토큰 버킷 |
 | `--cell-daily-cap` | 50 | 기여자·셀당 24시간 레코드 상한 |
+| `--new-contributors-per-hour` / `--new-contributor-burst` | 360 / 60 | DB에 레코드가 없는 기여자(처음 보는 키)가 함께 쓰는 공용 토큰 버킷. 요청마다 새 키를 만들어 기여자별 버킷을 피하는 것을 막습니다. |
 | `--min-contributors` (`MR_MIN_CONTRIBUTORS`) | 5 | `field_report` 셀의 k |
 | `--min-records` (`MR_MIN_RECORDS`) | 30 | `field_report` 셀의 n |
 | `--max-contributor-share` | 0.5 | 한 기여자가 셀 레코드의 이 비율을 넘으면 비공개(`dominated_by_one_contributor`) |
@@ -52,7 +53,8 @@ k=5, n=30은 조사 보고서의 초기 제안값입니다. 시드는 이미 공
 
 ### `POST /v1/records`
 
-- **본문:** 레코드 JSON 1건. `Content-Type: application/json`, 최대 64 KiB.
+- **본문:** 레코드 JSON 1건. `Content-Type: application/json`, 최대 64 KiB. `Content-Length`는 ASCII 숫자만 받습니다(음수·부호·`Transfer-Encoding`은 411).
+- **JSON:** 엄격하게 읽습니다. `NaN`/`Infinity`, 너무 깊은 중첩, 4300자리를 넘는 정수 리터럴은 `400 invalid_json`입니다. 스키마 검증은 ±(2⁵³−1)을 넘는 정수와 문자열 끝의 줄바꿈도 거부합니다.
 - **서명 헤더** (`modelreceipts submit`이 붙입니다):
   - `X-ModelReceipts-Key`: 공개 키(base64url)
   - `X-ModelReceipts-Timestamp`: 유닉스 초. ±300초 안이어야 합니다.
@@ -65,7 +67,8 @@ k=5, n=30은 조사 보고서의 초기 제안값입니다. 시드는 이미 공
   ```
 
 - **기여자:** DB별 salt로 해시한 공개 키를 씁니다(`k:…`). 비밀 키와 공개 키 원문은 저장하지 않습니다.
-- **처리 순서:** 서명 검증 → 토큰 버킷 → JSON → 스키마 검증 → 셀 일일 상한 → 저장.
+- **처리 순서:** 서명 검증 → 기여자별 토큰 버킷 → (처음 보는 기여자면) 공용 newcomer 버킷 → JSON → 스키마 검증 → 셀 일일 상한 → 저장.
+- **서명 키:** 위수가 작은 점(small-order point, 예: 항등원)인 공개 키는 거부합니다. 이런 키로는 비밀 키 없이도 서명이 맞아 보일 수 있습니다.
 - **받는 `source_type`:** `field_report`만 받습니다. 시드 층은 운영자가 로컬에서 `import-seed`로만 넣습니다.
 
 | 응답 | 의미 |
@@ -75,7 +78,8 @@ k=5, n=30은 조사 보고서의 초기 제안값입니다. 시드는 이미 공
 | `400 invalid_json` / `415` / `411` / `413` | 전송 형식 문제 |
 | `401 signature_required` / `401 bad_signature` | 서명 없음 / 서명·시각·본문 불일치 |
 | `409 duplicate_record_id` | 같은 id는 다시 쓸 수 없습니다 (덮어쓰기 없음) |
-| `429 rate_limited` / `429 cell_daily_cap` + `Retry-After` | 레이트 리밋 / 셀 일일 상한 |
+| `429 rate_limited` / `429 new_contributor_rate_limited` / `429 cell_daily_cap` + `Retry-After` | 기여자별 레이트 리밋 / 처음 보는 기여자 공용 예산 / 셀 일일 상한 |
+| `500 {"error":"internal_error"}` | 예상하지 못한 오류. 내부 정보(경로, 예외 메시지)는 응답에 넣지 않고, 로그에도 예외 종류만 남깁니다. |
 | `405` | `PUT`/`PATCH`/`DELETE`: 수정·삭제 경로는 없습니다 |
 
 ### `GET /v1/overview` (공개, `GET /v1/aggregates`는 별칭)
@@ -158,3 +162,5 @@ python3 -m unittest discover -s server/tests -v
 
 - `test_server.py`: 저장, 집계, HTTP 기본
 - `test_v1.py`: 서명, 게이트, 레이트 리밋, 셀 상한, 서버 비용, 신호 분리, 지배 기여자, 페어 모드, 시드 셀, DB 마이그레이션, 샘플·그림 최신 여부
+- `test_hardening.py`(rc2): 전송 한도, 엄격한 JSON, 500 처리, 로그 이스케이프, 연결 끊김 로그, 키 돌려쓰기 방지, 고정 시드 무작위 변형·정적 경로·토큰 버킷 성질
+- `test_release.py`(rc2): 버전 문자열 일치, 대시보드 외부 리소스 없음, 접근성 기본 항목

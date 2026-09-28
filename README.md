@@ -1,11 +1,11 @@
 # ModelReceipts
 
 [![ci](https://github.com/thinker0v0/modelreceipts/actions/workflows/ci.yml/badge.svg)](.github/workflows/ci.yml)
-![status](https://img.shields.io/badge/status-v1.0.0--rc1%20code--complete-yellowgreen)
+![status](https://img.shields.io/badge/status-v1.0.0--rc2%20code--complete-yellowgreen)
 ![python](https://img.shields.io/badge/python-3.10%2B%2C%20stdlib%20only-blue)
 ![license](https://img.shields.io/badge/license-Apache--2.0-lightgrey)
 
-> **English summary.** ModelReceipts is an open-source, vendor-neutral database of *which model × method × cost actually works for a given kind of task*, built from **verifiable outcome evidence** (tests passed, commits kept, next-prompt retries) instead of AI self-assessment. The first collector is a Claude Code `Stop` hook for coding tasks. Prompts and model outputs **never leave your machine**: tasks are mapped locally to closed category codes. **Status: v1.0.0-rc1, a code-complete candidate.** It includes:
+> **English summary.** ModelReceipts is an open-source, vendor-neutral database of *which model × method × cost actually works for a given kind of task*, built from **verifiable outcome evidence** (tests passed, commits kept, next-prompt retries) instead of AI self-assessment. The first collector is a Claude Code `Stop` hook for coding tasks. Prompts and model outputs **never leave your machine**: tasks are mapped locally to closed category codes. **Status: v1.0.0-rc2, a code-complete candidate after a quality, security and design pass ([`docs/QUALITY.md`](docs/QUALITY.md)).** It includes:
 >
 > - schema v0.2 with a migration and a validation CLI
 > - a Stop-hook collector that previews by default, and a hook installer that runs as a dry run first
@@ -29,7 +29,7 @@
 |---|---|
 | <img src="docs/screenshots/dashboard-phone-light.png" width="260" alt="dashboard phone light"> | <img src="docs/screenshots/dashboard-phone-dark.png" width="260" alt="dashboard phone dark"> |
 
-<sub>대시보드는 <code>GET /v1/aggregates/detail</code>(기여자 상세)이나 <code>GET /v1/overview</code>(공개 개요)의 JSON을 그립니다. 스크린샷에서 <b>실제 공개 데이터</b>는 벤치마크 셀(Aider polyglot)과 선호 셀(LMArena 55k 집계)입니다. <b>전부 합성 데이터</b>(<code>example-model-*</code>)인 것은 현장 보고(field_report) 셀, 자기평가 비교, 페어 모드, 사용량(OpenRouter 모양) 셀입니다. 같은 라벨이 화면 상단 배너, 카드의 SYNTHETIC 태그, "데이터 출처" 카드에도 붙습니다.</sub>
+<sub>대시보드는 <code>GET /v1/aggregates/detail</code>(기여자 상세)이나 <code>GET /v1/overview</code>(공개 개요)의 JSON을 그립니다. 스크린샷에서 <b>실제 공개 데이터</b>는 벤치마크 셀(Aider polyglot)과 선호 셀(LMArena 55k 집계)입니다. <b>전부 합성 데이터</b>(<code>example-model-*</code>)인 것은 현장 보고(field_report) 셀, 자기평가 비교, 페어 모드, 사용량(OpenRouter 모양) 셀입니다. 같은 라벨이 화면 상단 띠, 히어로·KPI, 카드의 SYNTHETIC 태그, 차트 안의 워터마크, "데이터 출처" 카드에 붙습니다. 화면 구성과 참고한 디자인 패턴은 <a href="docs/DESIGN_REFERENCES.md"><code>docs/DESIGN_REFERENCES.md</code></a>에 있습니다.</sub>
 
 데모 그림(합성): [`docs/figures/self-vs-evidence.synthetic.svg`](docs/figures/self-vs-evidence.synthetic.svg) — 자기평가 순위와 증거 순위를 비교하고 페어 모드 맞대결을 보여 줍니다. `make-sample`이 표준 라이브러리로 생성합니다.
 
@@ -85,6 +85,7 @@
 - **한 사람이 셀을 채우지 못하게 서버가 두 가지 상한을 둡니다.**
   - 기여자별 토큰 버킷: 기본 시간당 120건, 버스트 30건
   - 셀별 일일 상한: 기여자·셀당 24시간에 50건
+  - 처음 보는 기여자(키)의 공용 예산: 시간당 360건, 버스트 60건. 요청마다 새 키를 만들어 기여자별 한도를 피하는 것을 막습니다.
 - **조회는 두 층입니다.**
   - **공개 개요**(`/v1/overview`): L1 × 모델 단위의 통과율 점추정과 공개 시드만 담습니다.
   - **기여자 상세**(`/v1/aggregates/detail`): L2 × 하네스 셀, Wilson 95% CI, 비용, 재시도율, 자기평가 비교, 페어 모드를 담습니다. 최근 90일 안에 현장 보고를 낸 설치 키로 서명한 요청에만 열립니다.
@@ -127,17 +128,19 @@ flowchart LR
 - [`seeds/`](seeds/): 시드
 - [`dashboard/`](dashboard/): 대시보드
 - [`docs/USER_TASKS.md`](docs/USER_TASKS.md): 사람이 해야 할 일
+- [`docs/QUALITY.md`](docs/QUALITY.md): 품질·보안 자체 점검 결과(rc2)
+- [`docs/DESIGN_REFERENCES.md`](docs/DESIGN_REFERENCES.md): 대시보드 디자인 참고
 
 런타임 코드는 전부 Python 표준 라이브러리만 씁니다. Ed25519도 순수 Python으로 구현했고, RFC 8032 테스트 벡터와 `cryptography` 교차검증을 통과합니다. 단, 이 구현은 상수 시간(constant-time)이 아니고 보안 감사를 받지 않았습니다. 실제 운영 배포 전에는 `cryptography` 같은 검증된 라이브러리로 바꾸세요. 서버와 수집기는 같은 검증기를 씁니다. FastAPI 대신 `http.server`를 고른 이유는 [`server/README.md`](server/README.md)에 있습니다.
 
-## 현재 상태: v1.0.0-rc1 — 코드 완성 후보
+## 현재 상태: v1.0.0-rc2 — 코드 완성 후보
 
-코드로 할 수 있는 로드맵 항목은 모두 구현했습니다. **남은 일은 사람이 해야 하는 일**입니다. 실제 배포, PyPI 게시, 데이터 라이선스 결정, 기여자 모집, 실데이터 수집이 여기에 해당하며, [`docs/USER_TASKS.md`](docs/USER_TASKS.md)에 정리했습니다. 공개 서버와 실제 사용자 데이터는 아직 없습니다.
+코드로 할 수 있는 로드맵 항목은 모두 구현했습니다. rc2는 새 기능 없이 품질·보안 자체 점검과 대시보드 디자인만 바꿨습니다([`docs/QUALITY.md`](docs/QUALITY.md)). **남은 일은 사람이 해야 하는 일**입니다. 실제 배포, PyPI 게시, 데이터 라이선스 결정, 기여자 모집, 실데이터 수집이 여기에 해당하며, [`docs/USER_TASKS.md`](docs/USER_TASKS.md)에 정리했습니다. 공개 서버와 실제 사용자 데이터는 아직 없습니다.
 
-테스트(2026-09-28 실행): **132개 통과.** 런타임 의존성은 0개입니다.
+테스트(2026-09-28 실행): **160개 통과.** 런타임 의존성은 0개입니다.
 
-- collector 69개
-- server 42개
+- collector 79개
+- server 60개
 - seeds 21개
 
 ## 빠른 시작
@@ -154,25 +157,27 @@ python3 -m unittest discover -s seeds/tests
 export PYTHONPATH=collector:seeds:server
 python3 -m modelreceipts_server import-seed aider-polyglot
 python3 -m modelreceipts_server import-seed arena-55k
-python3 -m modelreceipts_server serve     # 서명 필수·게이트 켬이 기본. 다른 터미널에서 계속
+python3 -m modelreceipts_server serve &   # 서명 필수·게이트 켬이 기본. 끝낼 때: kill %1
+sleep 2                                     # 서버가 뜰 때까지
 
 # 2) 수집기 미리보기 — 합성 transcript fixture. 아무것도 보내지 않음
+T=$(mktemp -d)                              # 이 연습의 파일(키 포함)은 모두 여기에만 생김
 sed "s|REPLACED_AT_TEST_TIME|$PWD/collector/tests/fixtures/synthetic_transcript.jsonl|" \
-  collector/tests/fixtures/stop_payload.json > /tmp/mr-payload.json
-python3 -m modelreceipts hook --payload /tmp/mr-payload.json
+  collector/tests/fixtures/stop_payload.json > "$T/payload.json"
+python3 -m modelreceipts hook --payload "$T/payload.json"
 
 # 3) 설치 키를 만들고 localhost로 서명 제출 — --endpoint를 줄 때만 전송
-python3 -m modelreceipts keygen --key-file /tmp/mr-key
-python3 -m modelreceipts submit --payload /tmp/mr-payload.json \
-  --endpoint http://127.0.0.1:8787 --key-file /tmp/mr-key      # 201, server_cost 포함
+python3 -m modelreceipts keygen --key-file "$T/key"
+python3 -m modelreceipts submit --payload "$T/payload.json" \
+  --endpoint http://127.0.0.1:8787 --key-file "$T/key"      # 201, server_cost 포함
 
 # 4) 조회: 공개 개요(누구나) / 기여자 상세(서명 필요, 방금 제출했으므로 열림)
 curl -s http://127.0.0.1:8787/v1/overview | head
-python3 -m modelreceipts query --endpoint http://127.0.0.1:8787 --key-file /tmp/mr-key --source-type field_report
+python3 -m modelreceipts query --endpoint http://127.0.0.1:8787 --key-file "$T/key" --source-type field_report | head
 
 # 5) 훅 설치 미리보기 — 임시 파일로 연습. --apply 없이는 아무것도 쓰지 않음
-echo '{}' > /tmp/mr-settings.json
-python3 -m modelreceipts install-hook --settings /tmp/mr-settings.json
+echo '{}' > "$T/settings.json"
+python3 -m modelreceipts install-hook --settings "$T/settings.json"
 
 # 6) 스키마·분류기 도구
 python3 -m modelreceipts validate schema/examples/*.json schema/examples/v0.1/*.json
@@ -183,6 +188,9 @@ python3 -m modelreceipts eval-classifier --split test
 #    http://127.0.0.1:8787/                          → 이 서버의 공개 개요
 #    http://127.0.0.1:8787/dashboard/                → 라벨 붙은 샘플(기여자 상세 보기)
 #    http://127.0.0.1:8787/dashboard/?view=overview  → 샘플의 공개 개요 보기
+
+# 8) 정리
+kill %1; rm -rf "$T"
 ```
 
 - `--key-file`을 생략하면 `~/.local/state/modelreceipts/install_key`를 씁니다.
@@ -193,7 +201,7 @@ python3 -m modelreceipts eval-classifier --split test
 
 기준은 조사 보고서의 "20% MVP 범위 제안"입니다. MVP의 목표는 **한 개의 좁은 셀에서 "증거 기반 순위가 자기평가 기반 순위와 다르다"를 실제 데이터로 보여 주는 것**입니다. 코드는 준비됐지만 실제 데이터는 아직 없습니다.
 
-| 영역 | MVP 범위 | 상태 (v1.0.0-rc1) |
+| 영역 | MVP 범위 | 상태 (v1.0.0-rc2) |
 |---|---|---|
 | 수집 경로 | `Stop` 훅, transcript 파서, 설치 스크립트, 전송 전 미리보기와 opt-in | ✅ 파서·미리보기·opt-in `submit`<br>✅ `install-hook`/`uninstall-hook`: dry-run 기본, `--settings` 필수, `--apply`+확인, 백업, 멱등, 깨끗한 제거 |
 | 태스크 분류 | 폐쇄형 L1·L2 코드, 로컬 규칙 분류기 + 버전 기록 | ✅ `rules-v1` 기본 (`rules-v0`은 재현용으로 보존)<br>✅ 합성 평가 세트 240개와 클래스별 P/R ([`RESULTS.md`](collector/eval/RESULTS.md)) |
