@@ -83,7 +83,7 @@ def evaluate(examples: list[dict], classifier: str) -> dict:
     }
 
 
-def _fmt(x) -> str:
+def _fmt(x: float | None) -> str:
     return "—" if x is None else f"{x:.2f}"
 
 

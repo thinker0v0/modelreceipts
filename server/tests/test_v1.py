@@ -114,7 +114,7 @@ class GateTest(_Http):
         for i in range(4):
             self.call("POST", "/v1/records", record(i, l2="coding.bugfix" if i % 2 else "coding.docs"),
                       key=key if i < 2 else generate_key())
-        status, headers, body = self.call("GET", "/v1/overview")
+        status, _, body = self.call("GET", "/v1/overview")
         self.assertEqual(status, 200)
         self.assertEqual(body["view"], "overview")
         field = [c for c in body["cells"] if c["source_type"] == "field_report"]

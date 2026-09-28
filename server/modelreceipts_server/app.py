@@ -31,7 +31,8 @@ import socket
 from dataclasses import dataclass, field
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from urllib.parse import parse_qs, urlsplit
+from typing import Any, Callable, NoReturn
+from urllib.parse import SplitResult, parse_qs, urlsplit
 
 from modelreceipts.signing import SignatureError, has_signature, verify_request
 
@@ -46,11 +47,11 @@ GATE_DAYS = 90
 _CONTENT_LENGTH = re.compile(r"[0-9]{1,9}")  # ASCII digits only: no sign, no "1_000", no "²"
 
 
-def _reject_constant(name: str):
+def _reject_constant(name: str) -> NoReturn:
     raise ValueError(f"{name} is not valid JSON")
 
 
-def parse_json_body(raw: bytes):
+def parse_json_body(raw: bytes) -> Any:
     """Strict JSON: UTF-8, no NaN/Infinity. Raises ValueError with a client-safe message.
 
     ``json.loads`` can also raise RecursionError (deep nesting) and a plain
@@ -76,10 +77,10 @@ def _printable(text: str, limit: int = 200) -> str:
     return out + ("..." if len(text) > limit else "")
 
 
-def _guarded(method):
+def _guarded(method: Callable[[Any], None]) -> Callable[[Any], None]:
     """Answer 500 with a fixed body on any unexpected exception (no internals leak)."""
     @functools.wraps(method)
-    def wrapper(self):
+    def wrapper(self: Any) -> None:
         try:
             return method(self)
         except Exception as exc:  # noqa: BLE001 - last-resort guard
@@ -109,7 +110,7 @@ class Policy:
 
 
 def make_handler(store: Store, thresholds: Thresholds, policy: Policy | None = None,
-                 dashboard_dir: Path = DASHBOARD_DIR, quiet: bool = False):
+                 dashboard_dir: Path = DASHBOARD_DIR, quiet: bool = False) -> type[BaseHTTPRequestHandler]:
     quiet_logs = quiet
     dashboard_root = dashboard_dir.resolve()
     policy = policy or Policy()
@@ -127,7 +128,7 @@ def make_handler(store: Store, thresholds: Thresholds, policy: Policy | None = N
         quiet = quiet_logs
 
         # -- helpers -------------------------------------------------------
-        def log_message(self, fmt, *args):  # no client address in logs
+        def log_message(self, fmt: str, *args: Any) -> None:  # no client address in logs
             if not quiet:
                 raw_path = getattr(self, "path", "")
                 path = _printable(urlsplit(raw_path).path) if isinstance(raw_path, str) else "?"
@@ -135,7 +136,7 @@ def make_handler(store: Store, thresholds: Thresholds, policy: Policy | None = N
                 command = _printable(str(getattr(self, "command", None) or "-"))
                 print(f"[modelreceipts-server] {command} {path} -> {status}", flush=True)
 
-        def _send(self, status: int, body: bytes, ctype: str, extra: dict | None = None):
+        def _send(self, status: int, body: bytes, ctype: str, extra: dict | None = None) -> None:
             self.send_response(status)
             self.send_header("Content-Type", ctype)
             self.send_header("Content-Length", str(len(body)))
@@ -147,12 +148,13 @@ def make_handler(store: Store, thresholds: Thresholds, policy: Policy | None = N
             if self.command != "HEAD":
                 self.wfile.write(body)
 
-        def _json(self, status: int, obj, extra: dict | None = None):
+        def _json(self, status: int, obj: Any, extra: dict | None = None) -> None:
             # allow_nan=False: never emit NaN/Infinity (invalid JSON); the guard turns it into a 500.
             body = (json.dumps(obj, ensure_ascii=False, indent=2, allow_nan=False) + "\n").encode("utf-8")
             self._send(status, body, "application/json; charset=utf-8", extra)
 
-        def _error(self, status: int, code: str, details=None, extra: dict | None = None):
+        def _error(self, status: int, code: str, details: list[str] | None = None,
+                   extra: dict | None = None) -> None:
             obj = {"error": code}
             if details:
                 obj["details"] = details
@@ -160,7 +162,7 @@ def make_handler(store: Store, thresholds: Thresholds, policy: Policy | None = N
 
         # -- routes --------------------------------------------------------
         @_guarded
-        def do_GET(self):
+        def do_GET(self) -> None:
             url = urlsplit(self.path)
             if url.path == "/healthz":
                 return self._json(200, {"ok": True, "version": __version__, "schema_versions": ["0.1.0", "0.2.0"],
@@ -184,7 +186,7 @@ def make_handler(store: Store, thresholds: Thresholds, policy: Policy | None = N
         do_HEAD = do_GET
 
         @_guarded
-        def do_POST(self):
+        def do_POST(self) -> None:
             path = urlsplit(self.path).path
             if path in {"/v1/aggregates", "/v1/aggregates/detail", "/v1/overview", "/healthz"}:
                 return self._method_not_allowed()
@@ -254,13 +256,13 @@ def make_handler(store: Store, thresholds: Thresholds, policy: Policy | None = N
             return self._json(201, {"status": "stored", "record_id": record["record_id"],
                                     "signed": verified, "server_cost": cost})
 
-        def _method_not_allowed(self):
+        def _method_not_allowed(self) -> None:
             allow = "POST" if urlsplit(self.path).path == "/v1/records" else "GET, HEAD"
             self._send(405, b'{"error": "method_not_allowed"}\n', "application/json", {"Allow": allow})
 
         do_PUT = do_DELETE = do_PATCH = _method_not_allowed
 
-        def _detail(self, url):
+        def _detail(self, url: SplitResult) -> None:
             if policy.gate:
                 path_q = url.path + (f"?{url.query}" if url.query else "")
                 try:
@@ -274,7 +276,7 @@ def make_handler(store: Store, thresholds: Thresholds, policy: Policy | None = N
                                        [f"this key has no field report in the last {GATE_DAYS} days"])
             query = parse_qs(url.query)
 
-            def one(name):
+            def one(name: str) -> str | None:
                 vals = query.get(name)
                 return vals[0] if vals else None
             source_type, level = one("source_type"), one("level") or "l2"
@@ -289,7 +291,7 @@ def make_handler(store: Store, thresholds: Thresholds, policy: Policy | None = N
             result["gate"] = {"enabled": policy.gate, "window_days": GATE_DAYS}
             return self._json(200, result)
 
-        def _static(self, rel: str):
+        def _static(self, rel: str) -> None:
             rel = rel or "index.html"
             if "\x00" in rel:
                 return self._error(404, "not_found")

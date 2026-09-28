@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import random
 import uuid
+from collections.abc import Iterator
 from datetime import datetime, timezone
 
 from .aggregate import Thresholds, aggregate, overview
@@ -85,7 +86,7 @@ def _record(i: int, rnd: random.Random, l2: str, model: str, skill: float, bias:
     }
 
 
-def synthetic_field_records(seed: int = 20260927):
+def synthetic_field_records(seed: int = 20260927) -> Iterator[tuple[str, dict]]:
     """Yield (install_id, record) pairs: independent runs, then pair-mode runs. Deterministic."""
     rnd = random.Random(seed)
     skills = {m: (s, b, sc) for m, s, b, sc in MODELS}

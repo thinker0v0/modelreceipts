@@ -27,10 +27,14 @@ import ipaddress
 import json
 import sys
 from pathlib import Path
+from typing import TYPE_CHECKING
 from urllib.parse import urlencode, urlsplit
 
 from .signing import DEFAULT_KEY_FILE, InstallKey, load_or_create_key, sign_request
 from .validate import load_validator
+
+if TYPE_CHECKING:  # the hook path must not import network modules at runtime
+    import urllib.request
 
 PREVIEW_BANNER = "[modelreceipts] PREVIEW — this is exactly what would be sent:"
 
@@ -57,14 +61,14 @@ def records_url(endpoint: str) -> str:
     return base if base.endswith("/v1/records") else base + "/v1/records"
 
 
-def _open(req, timeout: float, endpoint: str) -> tuple[int, dict]:
+def _open(req: urllib.request.Request, timeout: float, endpoint: str) -> tuple[int, dict]:
     import urllib.error
     import urllib.request
 
     class NoRedirect(urllib.request.HTTPRedirectHandler):
         # Following a 30x would re-send the signed headers to a host that was never
         # checked against the loopback rule. A redirect is reported as its status.
-        def redirect_request(self, *args, **kwargs):
+        def redirect_request(self, *args, **kwargs) -> None:
             return None
 
     opener = urllib.request.build_opener(NoRedirect)
@@ -106,7 +110,7 @@ def fetch_detail(endpoint: str, key: InstallKey, params: dict, timeout: float = 
     return _open(req, timeout, endpoint)
 
 
-def _load_record(args) -> dict:
+def _load_record(args: argparse.Namespace) -> dict:
     if args.record:
         return json.loads(args.record.read_text(encoding="utf-8"))
     from .hook import run

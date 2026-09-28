@@ -90,7 +90,7 @@ def load_source(source_dir: Path = SOURCE_DIR) -> tuple[dict, list[dict]]:
     return meta, parse_list_of_maps(raw.decode("utf-8"))
 
 
-def _per_case(total: Any, n: int, as_int: bool = False):
+def _per_case(total: Any, n: int, as_int: bool = False) -> int | float | None:
     if not isinstance(total, (int, float)) or isinstance(total, bool) or total <= 0:
         return None
     return int(total // n) if as_int else round(total / n, 6)

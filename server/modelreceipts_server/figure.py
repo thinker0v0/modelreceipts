@@ -17,12 +17,13 @@ DIV_A, DIV_MID, DIV_B = "#2a78d6", "#d3d1c8", "#e34948"
 FONT = "system-ui, -apple-system, 'Segoe UI', 'Noto Sans KR', sans-serif"
 
 
-def _t(x, y, text, size=13, anchor="start", fill=INK, weight=400) -> str:
+def _t(x: float, y: float, text: str, size: int = 13, anchor: str = "start", fill: str = INK,
+       weight: int = 400) -> str:
     return (f'<text x="{x:.1f}" y="{y:.1f}" font-size="{size}" text-anchor="{anchor}" fill="{fill}" '
             f'font-weight="{weight}">{escape(str(text))}</text>')
 
 
-def _pct(v) -> str:
+def _pct(v: float | None) -> str:
     return "—" if v is None else f"{v * 100:.0f}%"
 
 

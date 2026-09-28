@@ -44,7 +44,7 @@ def _add_threshold_args(p: argparse.ArgumentParser) -> None:
     g.add_argument("--pair-min-contributors", type=int, default=3, help="contributors needed for a head-to-head result (default 3)")
 
 
-def _thresholds(a) -> Thresholds:
+def _thresholds(a: argparse.Namespace) -> Thresholds:
     return Thresholds.build(a.min_contributors, a.min_records, a.seed_min_contributors, a.seed_min_records,
                             a.max_contributor_share, a.pair_min_pairs, a.pair_min_contributors)
 
@@ -54,7 +54,7 @@ def _open_store(path: Path, prices: Path = DEFAULT_PRICES) -> Store:
     return Store(path, prices=PriceTable.load(prices))
 
 
-def _seed(source: str, input_path: Path | None):
+def _seed(source: str, input_path: Path | None) -> tuple[dict, list[dict], list[dict]]:
     """Return (meta, per_run_records, seed_cells)."""
     if source == "aider-polyglot":
         from modelreceipts_seeds import aider_polyglot
@@ -86,6 +86,10 @@ def main(argv: list[str]) -> int:
     p_serve.add_argument("--rate-per-hour", type=float, default=120.0, help="records per contributor per hour (default 120)")
     p_serve.add_argument("--burst", type=int, default=30, help="burst size per contributor (default 30)")
     p_serve.add_argument("--cell-daily-cap", type=int, default=50, help="records per contributor per cell per 24h (default 50)")
+    p_serve.add_argument("--new-contributors-per-hour", type=float, default=360.0,
+                         help="shared budget for first-time contributors, per hour (default 360)")
+    p_serve.add_argument("--new-contributor-burst", type=int, default=60,
+                         help="burst of the shared first-time contributor budget (default 60)")
     _add_threshold_args(p_serve)
 
     p_seed = sub.add_parser("import-seed", help="load a seed source (idempotent)")
@@ -116,7 +120,8 @@ def main(argv: list[str]) -> int:
         from .app import NotLoopback, Policy, make_server
         store = _open_store(a.db, a.prices)
         policy = Policy(signatures=a.signatures, gate=a.gate == "on",
-                        limits=RateLimits(a.rate_per_hour, a.burst, a.cell_daily_cap))
+                        limits=RateLimits(a.rate_per_hour, a.burst, a.cell_daily_cap,
+                                          a.new_contributors_per_hour, a.new_contributor_burst))
         try:
             httpd = make_server(store, a.host, a.port, _thresholds(a), policy=policy)
         except NotLoopback as exc:

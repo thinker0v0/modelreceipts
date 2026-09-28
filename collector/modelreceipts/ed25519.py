@@ -19,6 +19,8 @@ from __future__ import annotations
 import hashlib
 import secrets
 
+Point = tuple[int, int, int, int]  # extended homogeneous coordinates (X, Y, Z, T)
+
 _p = 2 ** 255 - 19
 _q = 2 ** 252 + 27742317777372353535851937790883648493  # group order L
 
@@ -31,7 +33,7 @@ _d = -121665 * _inv(121666) % _p
 _SQRT_M1 = pow(2, (_p - 1) // 4, _p)
 
 
-def _add(P, Q):
+def _add(P: Point, Q: Point) -> Point:
     A = (P[1] - P[0]) * (Q[1] - Q[0]) % _p
     B = (P[1] + P[0]) * (Q[1] + Q[0]) % _p
     C = 2 * P[3] * Q[3] * _d % _p
@@ -40,7 +42,7 @@ def _add(P, Q):
     return (E * F % _p, G * H % _p, F * G % _p, E * H % _p)
 
 
-def _mul(s: int, P):
+def _mul(s: int, P: Point) -> Point:
     Q = (0, 1, 1, 0)  # neutral element (_IDENTITY)
     while s > 0:
         if s & 1:
@@ -50,11 +52,11 @@ def _mul(s: int, P):
     return Q
 
 
-def _equal(P, Q) -> bool:
+def _equal(P: Point, Q: Point) -> bool:
     return (P[0] * Q[2] - Q[0] * P[2]) % _p == 0 and (P[1] * Q[2] - Q[1] * P[2]) % _p == 0
 
 
-def _recover_x(y: int, sign: int):
+def _recover_x(y: int, sign: int) -> int | None:
     if y >= _p:
         return None
     x2 = (y * y - 1) * _inv(_d * y * y + 1)
@@ -75,23 +77,23 @@ _gx = _recover_x(_gy, 0)
 _G = (_gx, _gy, 1, _gx * _gy % _p)
 
 
-_IDENTITY = (0, 1, 1, 0)
+_IDENTITY: Point = (0, 1, 1, 0)
 
 
-def _is_small_order(P) -> bool:
+def _is_small_order(P: Point) -> bool:
     """True for the 8 torsion points. With such a public key A, a signature with a
     small-order R and s = 0 verifies for many (for the identity: all) messages, so
     the key proves possession of nothing."""
     return _equal(_mul(8, P), _IDENTITY)
 
 
-def _compress(P) -> bytes:
+def _compress(P: Point) -> bytes:
     zinv = _inv(P[2])
     x, y = P[0] * zinv % _p, P[1] * zinv % _p
     return int.to_bytes(y | ((x & 1) << 255), 32, "little")
 
 
-def _decompress(s: bytes):
+def _decompress(s: bytes) -> Point | None:
     if len(s) != 32:
         return None
     y = int.from_bytes(s, "little")

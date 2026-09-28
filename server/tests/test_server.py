@@ -263,7 +263,7 @@ class HttpApiTest(unittest.TestCase):
         self.assertEqual(self.call("POST", "/v1/aggregates", {})[0], 405)
 
     def test_dashboard_static_and_traversal(self):
-        status, headers, body = self.call("GET", "/dashboard/index.html")
+        status, headers, _ = self.call("GET", "/dashboard/index.html")
         self.assertEqual(status, 200)
         self.assertIn("text/html", headers["Content-Type"])
         self.assertEqual(self.call("GET", "/dashboard/../server/modelreceipts_server/store.py")[0], 404)

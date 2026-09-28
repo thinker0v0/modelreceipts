@@ -40,7 +40,7 @@ _DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
 
 def _split(model: str) -> tuple[str, str]:
-    vendor, _, name = model.partition("/")
+    vendor = model.partition("/")[0]
     provider = re.sub(r"[^a-z0-9._-]+", "-", vendor.lower()).strip("-._") or "unknown"
     mid = re.sub(r"[^A-Za-z0-9._:/@-]", "-", model).lstrip("._:/@-")[:128] or "unknown"
     return provider[:64], mid

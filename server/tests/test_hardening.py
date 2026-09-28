@@ -238,7 +238,7 @@ class RandomizedServerTest(_Server):
         rng = random.Random(SEED + 1)
         pieces = ["..", "%2e%2e", ".", "", "data", "index.html", "%00", "\\..", "//", "LICENSE",
                   "server", "README.md", "..%2f", "%2F", "~"]
-        for i in range(80):
+        for _ in range(80):
             path = "/dashboard/" + "/".join(rng.choice(pieces) for _ in range(rng.randint(1, 5)))
             status, body = self.get(path.encode())
             with self.subTest(path=path):

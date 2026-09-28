@@ -32,7 +32,7 @@ import statistics
 from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import Iterable, Mapping
+from typing import Any, Callable, Iterable, Iterator, Mapping
 
 SOURCE_TYPES = ("field_report", "benchmark", "preference", "usage")
 SEED_TYPES = ("benchmark", "preference", "usage")
@@ -97,7 +97,7 @@ def _median(values: list) -> float | None:
     return round(statistics.median(vals), 3) if vals else None
 
 
-def _get(row: Mapping, key: str):
+def _get(row: Mapping, key: str) -> Any:
     try:
         return row[key]
     except (KeyError, IndexError):
@@ -158,7 +158,7 @@ def _cell_stats(source_type: str, rows: list[Mapping]) -> dict:
     return stats
 
 
-def _filter(rows, source_type, l1, l2):
+def _filter(rows: Iterable[Mapping], source_type: str | None, l1: str | None, l2: str | None) -> Iterator[Mapping]:
     for r in rows:
         if source_type and r["source_type"] != source_type:
             continue
@@ -169,7 +169,8 @@ def _filter(rows, source_type, l1, l2):
         yield r
 
 
-def _cells(rows: list, thresholds: Thresholds, key_fn, stats_fn):
+def _cells(rows: list, thresholds: Thresholds, key_fn: Callable[[Mapping], tuple],
+           stats_fn: Callable[..., dict]) -> tuple[list[dict], list[dict]]:
     groups: dict[tuple, list] = defaultdict(list)
     for r in rows:
         groups[key_fn(r)].append(r)
@@ -284,7 +285,8 @@ def seed_cell_view(seed_cells: Iterable[Mapping], thresholds: Thresholds) -> dic
             "cells": published, "suppressed": suppressed}
 
 
-def _envelope(api: str, view: str, level: str, thresholds, filters, totals, seed_sources, now, method_dim) -> dict:
+def _envelope(api: str, view: str, level: str, thresholds: Thresholds, filters: dict, totals: dict,
+              seed_sources: list[dict] | None, now: datetime | None, method_dim: str | None) -> dict:
     now = now or datetime.now(timezone.utc)
     return {
         "api": api,
@@ -300,14 +302,14 @@ def _envelope(api: str, view: str, level: str, thresholds, filters, totals, seed
     }
 
 
-def _cell_totals(seed_cells) -> dict:
+def _cell_totals(seed_cells: Iterable[Mapping]) -> dict:
     t: dict[str, int] = defaultdict(int)
     for c in seed_cells:
         t[c["source_type"]] += 1
     return dict(sorted(t.items()))
 
 
-def _totals(rows) -> dict:
+def _totals(rows: Iterable[Mapping]) -> dict:
     t: dict[str, int] = defaultdict(int)
     for r in rows:
         t[r["source_type"]] += 1

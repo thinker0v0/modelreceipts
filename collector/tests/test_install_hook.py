@@ -88,7 +88,7 @@ class InstallHookTest(unittest.TestCase):
     def test_apply_requires_confirmation(self):
         self.write(OTHER)
         before = self.settings.read_bytes()
-        code, out = self.run_cmd("install", "--apply", confirm=lambda q: False)
+        code, _ = self.run_cmd("install", "--apply", confirm=lambda q: False)
         self.assertEqual(code, 1)
         self.assertEqual(self.settings.read_bytes(), before)
         self.assertEqual(self.backups(), [])

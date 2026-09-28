@@ -253,7 +253,7 @@ class AutoValidator:
         return self._validator(key).errors(instance)
 
 
-def load_validator(schema_path: Path | str | None = None, **kwargs):
+def load_validator(schema_path: Path | str | None = None, **kwargs) -> Validator | AutoValidator:
     """A fixed-schema ``Validator`` if ``schema_path`` is given, else an ``AutoValidator``."""
     if schema_path is None:
         return AutoValidator(**kwargs)

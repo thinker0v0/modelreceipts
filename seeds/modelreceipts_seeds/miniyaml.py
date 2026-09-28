@@ -24,7 +24,7 @@ _DQ_RE = re.compile(r'^"((?:[^"\\]|\\.)*)"[ \t]*(?:#.*)?$')
 _SQ_RE = re.compile(r"^'((?:[^']|'')*)'[ \t]*(?:#.*)?$")
 
 
-def _scalar(text: str, lineno: int):
+def _scalar(text: str, lineno: int) -> object:
     text = text.strip()
     if text.startswith('"'):
         m = _DQ_RE.match(text)

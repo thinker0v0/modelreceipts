@@ -152,7 +152,7 @@ def _now() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
-def _bool(v):
+def _bool(v: object) -> int | None:
     return None if v is None else int(bool(v))
 
 
@@ -221,7 +221,7 @@ class Store:
         return self._salt
 
     # ---- writes ---------------------------------------------------------
-    def validate(self, record) -> list[str]:
+    def validate(self, record: object) -> list[str]:
         if not isinstance(record, dict):
             return ["$: expected a JSON object"]
         return self._validator.errors(record)

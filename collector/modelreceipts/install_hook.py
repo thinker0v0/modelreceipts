@@ -50,7 +50,7 @@ def hook_command(collector_dir: Path, python: str, preview_dir: Path) -> str:
             f"--preview-dir {shlex.quote(str(preview_dir))}")
 
 
-def is_ours(entry) -> bool:
+def is_ours(entry: object) -> bool:
     return isinstance(entry, dict) and isinstance(entry.get("command"), str) and bool(_OURS.search(entry["command"]))
 
 
