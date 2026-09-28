@@ -28,6 +28,7 @@ import json
 import mimetypes
 import re
 import socket
+import sys
 from dataclasses import dataclass, field
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -316,6 +317,16 @@ def _dev_label() -> dict:
             "synthetic_field_reports": None}
 
 
+class _Server(ThreadingHTTPServer):
+    """Client disconnects are normal (``curl | head``); never print tracebacks for them."""
+
+    def handle_error(self, request: Any, client_address: Any) -> None:  # client address is never logged
+        exc = sys.exc_info()[1]
+        if isinstance(exc, (ConnectionError, TimeoutError)):
+            return
+        print(f"[modelreceipts-server] connection error: {type(exc).__name__}", file=sys.stderr, flush=True)
+
+
 def make_server(store: Store, host: str = "127.0.0.1", port: int = 8787, thresholds: Thresholds | None = None,
                 quiet: bool = False, policy: Policy | None = None) -> ThreadingHTTPServer:
     if host not in LOOPBACK_HOSTS:
@@ -323,7 +334,7 @@ def make_server(store: Store, host: str = "127.0.0.1", port: int = 8787, thresho
                           "put a TLS-terminating reverse proxy in front of it for a real deployment")
     handler = make_handler(store, thresholds or Thresholds(), policy, quiet=quiet)
     if host == "::1":
-        class V6Server(ThreadingHTTPServer):
+        class V6Server(_Server):
             address_family = socket.AF_INET6
         return V6Server((host, port), handler)
-    return ThreadingHTTPServer(("127.0.0.1" if host == "localhost" else host, port), handler)
+    return _Server(("127.0.0.1" if host == "localhost" else host, port), handler)

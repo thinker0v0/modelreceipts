@@ -151,6 +151,24 @@ class TransportLimitsTest(_Server):
         self.assertLess(len(body), 4000)
 
 
+class ClientDisconnectTest(_Server):
+    def test_reset_connection_is_not_logged_as_a_traceback(self):
+        # Bug (rc1): a client that resets a keep-alive connection (e.g. `curl | head`)
+        # made socketserver print a full traceback with file paths to stderr.
+        import struct
+        import time
+        from contextlib import redirect_stderr
+        err = io.StringIO()
+        with redirect_stderr(err):
+            c = socket.create_connection(("127.0.0.1", self.port), timeout=10)
+            c.sendall(b"GET /healthz HTTP/1.1\r\nHost: t\r\n\r\n")
+            self.assertTrue(c.recv(65536).startswith(b"HTTP/1.1 200"))
+            c.setsockopt(socket.SOL_SOCKET, socket.SO_LINGER, struct.pack("ii", 1, 0))  # close with RST
+            c.close()
+            time.sleep(0.3)
+        self.assertNotIn("Traceback", err.getvalue())
+
+
 class InternalErrorTest(_Server):
     def test_unexpected_exception_is_a_generic_500(self):
         def boom():
