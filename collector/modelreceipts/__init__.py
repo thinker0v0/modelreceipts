@@ -11,7 +11,7 @@ __version__ = "0.0.2"
 
 SCHEMA_VERSION = "0.1.0"
 TAXONOMY_VERSION = "t0.1"
-CLASSIFIER_ID = "rules-v0"
+CLASSIFIER_ID = "rules-v1"
 
 # <repo>/collector/modelreceipts/__init__.py -> <repo>/schema/record.v0.1.schema.json
 DEFAULT_SCHEMA_PATH = Path(__file__).resolve().parents[2] / "schema" / "record.v0.1.schema.json"

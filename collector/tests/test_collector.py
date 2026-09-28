@@ -90,14 +90,19 @@ class TranscriptParsingTest(unittest.TestCase):
 
 
 class ClassifierTest(unittest.TestCase):
-    def _cls(self, prompt, edited=True):
+    def _cls(self, prompt, edited=True, classifier=None, tools=()):
+        from modelreceipts.transcript import ToolCall
         s = TurnSummary(prompt_text=prompt)
         if edited:
-            from modelreceipts.transcript import ToolCall
             s.tool_calls = [ToolCall(name="Edit", file_path="x.py")]
-        return classify(s)
+        s.tool_calls += [ToolCall(name=t) for t in tools]
+        return classify(s, classifier=classifier)
 
-    def test_rules(self):
+    def test_default_classifier_is_recorded_version(self):
+        from modelreceipts import CLASSIFIER_ID
+        self.assertEqual(CLASSIFIER_ID, "rules-v1")
+
+    def test_rules_v0_is_frozen(self):
         cases = {
             "로그인 버그 고쳐줘": "coding.bugfix",
             "Fix the failing CI job": "coding.bugfix",
@@ -110,6 +115,25 @@ class ClassifierTest(unittest.TestCase):
         }
         for prompt, expected in cases.items():
             with self.subTest(prompt=prompt):
+                self.assertEqual(self._cls(prompt, classifier="rules-v0"), ("coding", expected))
+        self.assertEqual(self._cls("hello there", edited=False, classifier="rules-v0"), ("other", None))
+
+    def test_rules_v1(self):
+        cases = {
+            "로그인 버그 고쳐줘": "coding.bugfix",
+            "Fix the crash when the list is empty": "coding.bugfix",
+            "Write unit tests for the parser": "coding.test",
+            "Add regression tests for yesterday's bug": "coding.test",
+            "이 모듈 리팩토링해줘": "coding.refactor",
+            "Add a CSV export endpoint": "coding.feature",
+            "README에 예시 추가해줘": "coding.docs",
+            "성능 최적화 해줘": "coding.performance",
+            "Dockerfile 만들고 배포 파이프라인 구성": "coding.config_devops",
+            "Upgrade React to 18 and fix breaking changes": "coding.migration",
+            "로그인 화면 레이아웃 정리해줘": "coding.ui",
+        }
+        for prompt, expected in cases.items():
+            with self.subTest(prompt=prompt):
                 self.assertEqual(self._cls(prompt), ("coding", expected))
 
     def test_readonly_explain_and_review(self):
@@ -118,7 +142,11 @@ class ClassifierTest(unittest.TestCase):
 
     def test_non_coding_has_null_l2(self):
         self.assertEqual(self._cls("이 이메일 번역해 줘", edited=False), ("writing", None))
-        self.assertEqual(self._cls("hello there", edited=False), ("other", None))
+        self.assertEqual(self._cls("hello there", edited=False), ("conversation", None))
+        self.assertEqual(self._cls("Write a haiku about rain", edited=False), ("creative", None))
+
+    def test_bash_alone_is_not_coding(self):
+        self.assertEqual(self._cls("다운로드 폴더 정리해줘", edited=False, tools=["Bash"]), ("agentic_ops", None))
 
 
 class RecordTest(unittest.TestCase):
