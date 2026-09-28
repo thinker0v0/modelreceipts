@@ -20,7 +20,7 @@ sys.path.insert(0, str(SERVER))
 
 from modelreceipts_server import REPO_ROOT  # noqa: E402
 from modelreceipts_server.aggregate import Thresholds, aggregate, wilson  # noqa: E402
-from modelreceipts_server.app import NotLoopback, make_server  # noqa: E402
+from modelreceipts_server.app import NotLoopback, Policy, make_server  # noqa: E402
 from modelreceipts_server.store import DuplicateRecord, InvalidRecord, Store  # noqa: E402
 
 EXAMPLE = json.loads((REPO_ROOT / "schema" / "examples" / "01-stop-hook-bugfix-tests-passed.json").read_text(encoding="utf-8"))
@@ -202,7 +202,9 @@ class HttpApiTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.store = Store(":memory:")
-        cls.httpd = make_server(cls.store, "127.0.0.1", 0, Thresholds.build(k=2, n=2), quiet=True)
+        # Legacy mode: unsigned submissions allowed, detail view open (local development).
+        cls.httpd = make_server(cls.store, "127.0.0.1", 0, Thresholds.build(k=2, n=2, max_share=1.0), quiet=True,
+                                policy=Policy(signatures="optional", gate=False))
         cls.base = f"http://127.0.0.1:{cls.httpd.server_address[1]}"
         cls.thread = threading.Thread(target=cls.httpd.serve_forever, daemon=True)
         cls.thread.start()
@@ -235,18 +237,22 @@ class HttpApiTest(unittest.TestCase):
         status, _, body = self.call("POST", "/v1/records", bad)
         self.assertEqual(status, 400)
         self.assertIn("unexpected property 'prompt'", body.decode())
-        status, headers, body = self.call("GET", "/v1/aggregates?source_type=field_report")
+        status, headers, body = self.call("GET", "/v1/aggregates/detail?source_type=field_report")
+        self.assertEqual(status, 200)
+        agg = json.loads(body)
+        self.assertEqual(agg["thresholds"]["field_report"],
+                         {"min_contributors": 2, "min_records": 2, "max_contributor_share": 1.0})
+        self.assertEqual([(c["model"], c["n"], c["k"]) for c in agg["cells"]], [("example-model-a", 2, 2)])
+        status, headers, body = self.call("GET", "/v1/overview")
         self.assertEqual(status, 200)
         self.assertEqual(headers.get("Access-Control-Allow-Origin"), "*")
-        agg = json.loads(body)
-        self.assertEqual(agg["thresholds"]["field_report"], {"min_contributors": 2, "min_records": 2})
-        self.assertEqual([(c["model"], c["n"], c["k"]) for c in agg["cells"]], [("example-model-a", 2, 2)])
+        self.assertEqual(json.loads(body)["view"], "overview")
 
     def test_rejects_bad_transport(self):
         self.assertEqual(self.call("POST", "/v1/records", b"{not json")[0], 400)
         self.assertEqual(self.call("POST", "/v1/records", b"{}", {"Content-Type": "text/plain"})[0], 415)
         self.assertEqual(self.call("POST", "/v1/records", b" " * (64 * 1024 + 1))[0], 413)
-        self.assertEqual(self.call("GET", "/v1/aggregates?source_type=nope")[0], 400)
+        self.assertEqual(self.call("GET", "/v1/aggregates/detail?source_type=nope")[0], 400)
 
     def test_no_update_or_delete_routes(self):
         for method in ("PUT", "DELETE", "PATCH"):

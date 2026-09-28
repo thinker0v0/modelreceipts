@@ -1,0 +1,57 @@
+{
+  "price_table_id": "synthetic-example@2026-09-27",
+  "currency": "USD",
+  "unit": "per_million_tokens",
+  "source": {
+    "name": "SYNTHETIC \u2014 made-up prices for example-model-* in the dashboard sample only",
+    "url": "about:synthetic",
+    "as_of": "2026-09-27",
+    "retrieved_at": "2026-09-27",
+    "retrieved_via": "written by hand for the sample; not a real price list",
+    "verified_live": false
+  },
+  "applies_to_routes": [
+    "unknown",
+    "direct"
+  ],
+  "notes": [
+    "Used only by make-sample. Never load this table in a real server."
+  ],
+  "models": [
+    {
+      "model": "example-model-a",
+      "input": 3.0,
+      "output": 15.0,
+      "cache_write": 3.75,
+      "cache_read": 0.3
+    },
+    {
+      "model": "example-model-b",
+      "input": 5.0,
+      "output": 25.0,
+      "cache_write": 6.25,
+      "cache_read": 0.5
+    },
+    {
+      "model": "example-model-c",
+      "input": 1.5,
+      "output": 7.5,
+      "cache_write": 1.875,
+      "cache_read": 0.15
+    },
+    {
+      "model": "example-model-d",
+      "input": 2.5,
+      "output": 12.5,
+      "cache_write": 3.125,
+      "cache_read": 0.25
+    },
+    {
+      "model": "example-model-e",
+      "input": 0.8,
+      "output": 4.0,
+      "cache_write": 1.0,
+      "cache_read": 0.08
+    }
+  ]
+}
