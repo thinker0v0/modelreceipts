@@ -7,7 +7,7 @@ explicit command (``submit --endpoint URL``) implemented only in ``submit.py``.
 
 from pathlib import Path
 
-__version__ = "0.0.2"
+__version__ = "1.0.0rc1"
 
 SCHEMA_VERSION = "0.2.0"
 TAXONOMY_VERSION = "t0.1"

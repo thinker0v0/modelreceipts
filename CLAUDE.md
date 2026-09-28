@@ -11,8 +11,20 @@ AI 에이전트가 실제 작업을 끝내면 (태스크 분류 코드, 모델, 
 - 공개: 코드·스키마·k-임계 집계. 원시 레코드는 비공개. 게이트 = 공개 개요 + 기여자 전용 세분 조회.
 - 근거: `research/2026-09-27-feasibility-report.md`, `research/notes/`.
 
-## 현재 단계: pre-alpha 약 10% (2026-09-27, Round 2)
-Round 1(<5%): 이름, README, 스키마 v0.1 + 검증기, dry-run 수집기, 대시보드 목업.
-Round 2(~10%): stdlib ingest 서버(`server/`, 127.0.0.1 전용, append-only SQLite, k·n 임계 집계), 수집기 opt-in `submit --endpoint`,
-Aider polyglot 시드(`seeds/`), 집계 JSON 기반 대시보드 + 라벨 붙은 샘플, CHANGELOG, CI 워크플로(미push).
-테스트: `python3 -m unittest discover -s {collector,server,seeds}/tests`. 배포·원격·push 없음.
+## 현재 단계: v1.0.0-rc1 코드 완성 후보 (2026-09-28)
+
+코드로 할 수 있는 로드맵 항목을 모두 구현했다. 목록:
+
+- 훅 설치/제거 스크립트: dry-run 기본, `--settings` 필수, 실제 `~/.claude/settings.json`은 건드리지 않음
+- 분류기 `rules-v1`과 합성 평가 세트
+- 재시도·자기주장 신호
+- 서버 가격표 비용(별도 테이블)
+- 스키마 v0.2와 `migrate`/`validate`
+- Ed25519 서명과 레이트 리밋
+- Arena 55k 집계 시드, OpenRouter 임포터(합성 픽스처)
+- 공개 개요 / 기여자 전용 상세 게이트
+- 페어 모드와 자기평가 vs 증거 데모(합성)
+
+남은 일은 사람이 할 일이다: [`docs/USER_TASKS.md`](docs/USER_TASKS.md) (배포, PyPI, 데이터 라이선스, 가격표 라이브 검증, OpenRouter 키, 기여자 모집, dogfooding).
+
+테스트: `python3 -m unittest discover -s {collector,server,seeds}/tests` (69 / 42 / 21). 배포·원격·push 없음.

@@ -8,7 +8,7 @@ a valid v0.1 record is.
 import sys
 from pathlib import Path
 
-__version__ = "0.0.2"
+__version__ = "1.0.0rc1"
 
 SERVER_DIR = Path(__file__).resolve().parents[1]
 REPO_ROOT = SERVER_DIR.parent

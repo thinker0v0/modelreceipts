@@ -176,7 +176,10 @@ class CliTest(unittest.TestCase):
         tmp = Path(tempfile.mkdtemp())
         try:
             out = tmp / "cells.jsonl"
-            self.assertEqual(main(["openrouter", "--out", str(out)]), 0)
+            import contextlib
+            import io as _io
+            with contextlib.redirect_stdout(_io.StringIO()):
+                self.assertEqual(main(["openrouter", "--out", str(out)]), 0)
             lines = out.read_text(encoding="utf-8").splitlines()
             self.assertEqual(len(lines), 5)
         finally:

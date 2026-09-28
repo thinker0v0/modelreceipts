@@ -4,24 +4,27 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "modelreceipts"
-version = "0.0.2"
-description = "Dry-run collector for ModelReceipts: evidence-first task-run records from Claude Code Stop hooks (pre-alpha; preview by default, opt-in submit)."
+version = "1.0.0rc1"
+description = "ModelReceipts collector: evidence-first task-run records from Claude Code Stop hooks (preview by default, opt-in signed submit)."
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "Apache-2.0" }
 authors = [{ name = "thinker0v0" }]
 dependencies = []  # stdlib only
 classifiers = [
-  "Development Status :: 2 - Pre-Alpha",
+  "Development Status :: 4 - Beta",
   "License :: OSI Approved :: Apache Software License",
   "Programming Language :: Python :: 3",
 ]
 
 [project.optional-dependencies]
-dev = ["jsonschema>=4.10"]  # optional cross-check in tests only
+dev = ["jsonschema>=4.10", "cryptography>=41"]  # optional cross-checks in tests only
 
 [project.scripts]
 modelreceipts = "modelreceipts.__main__:_entry"
 
 [tool.setuptools]
 packages = ["modelreceipts"]
+
+[tool.setuptools.package-data]
+modelreceipts = ["schemas/*.json"]

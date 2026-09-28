@@ -1,95 +1,160 @@
-# server — ingest API (pre-alpha, localhost only)
+# server — ingest API (v1.0.0-rc1, localhost only)
 
-`POST /v1/records`로 schema v0.1 레코드를 받아 SQLite에 **append-only**로 저장하고, `GET /v1/aggregates`로 k·n 임계값을 적용한 셀 통계를 돌려준다. 어디에도 배포하지 않는다. **127.0.0.1 / ::1 / localhost 외 주소에는 바인딩을 거부한다.**
+서버가 하는 일:
+
+- **받기:** `POST /v1/records`로 **Ed25519 서명된** 레코드(schema v0.1·v0.2)를 받아 SQLite에 **append-only**로 저장합니다.
+- **공개 개요:** `GET /v1/overview`로 누구나 볼 수 있는 집계를 돌려줍니다.
+- **기여자 상세:** `GET /v1/aggregates/detail`로 최근 기여자만 볼 수 있는 상세 집계를 돌려줍니다.
+
+어디에도 배포하지 않습니다. **127.0.0.1 / ::1 / localhost 외 주소에는 바인딩을 거부합니다.** 실제 배포는 TLS 종단 리버스 프록시 뒤에서 사람이 해야 합니다([`docs/USER_TASKS.md`](../docs/USER_TASKS.md) 참고).
 
 ## 왜 표준 라이브러리인가 (FastAPI 대신 `http.server` + `sqlite3`)
 
-- **의존성 0개.** 수집기와 같은 원칙(CONTRIBUTING: stdlib 우선). `pip install` 없이 체크아웃만으로 테스트·데모가 돈다. 공급망 표면이 없다.
-- **검증기 공유.** 서버는 수집기의 `modelreceipts.validate`를 그대로 import한다. 클라이언트와 서버가 "유효한 레코드"를 다르게 판단할 수 없다.
-- 지금 필요한 엔드포인트는 두 개이고 트래픽은 로컬 한 명이다. FastAPI+uvicorn(+pydantic)은 이 규모에서 얻는 것보다 고정·갱신할 의존성이 많다.
-- **한계:** Python 문서가 말하듯 `http.server`는 운영용이 아니다(기본 보안 검사만 함). 외부 공개가 필요해지는 시점(설치 키 서명, 레이트 리밋, TLS 종단)에 ASGI 프레임워크로 옮기고 버전을 고정한다. 저장 계층(`store.py`)과 집계(`aggregate.py`)는 HTTP와 분리돼 있어 그대로 재사용한다.
+- **의존성 0개.** 수집기와 같은 원칙입니다(CONTRIBUTING: stdlib 우선). `pip install` 없이 체크아웃만으로 테스트와 데모가 돌고, 공급망 표면이 없습니다. Ed25519도 수집기의 순수 Python 구현(`modelreceipts.ed25519`)을 씁니다.
+- **검증기 공유.** 서버는 수집기의 `modelreceipts.validate`와 `modelreceipts.signing`을 그대로 import합니다. 그래서 클라이언트와 서버가 "유효한 레코드"와 "유효한 서명"을 다르게 판단할 수 없습니다.
+- **한계:**
+  - `http.server`는 운영용이 아닙니다.
+  - 순수 Python Ed25519는 상수 시간이 아닙니다. 서버는 공개 키로 검증만 하므로 비밀이 새지는 않지만, 느립니다(서명 검증 1건에 수 ms).
+  - 트래픽이 커지면 ASGI 프레임워크와 `cryptography`로 옮깁니다. 저장 계층(`store.py`), 집계(`aggregate.py`), 가격(`prices.py`), 레이트 리밋(`ratelimit.py`)은 HTTP와 분리돼 있어 그대로 재사용할 수 있습니다.
 
 ## 실행
 
 ```bash
 # 저장소 루트에서. DB 기본 경로: server/var/modelreceipts.sqlite3 (gitignore)
-PYTHONPATH=server python3 -m modelreceipts_server import-seed aider-polyglot   # 선택: 시드 적재 (멱등)
-PYTHONPATH=server python3 -m modelreceipts_server serve --port 8787            # Ctrl+C로 종료
-# 브라우저: http://127.0.0.1:8787/  → 이 서버의 집계를 그리는 대시보드
+export PYTHONPATH=collector:seeds:server
+python3 -m modelreceipts_server import-seed aider-polyglot     # 선택: 시드 적재 (멱등)
+python3 -m modelreceipts_server import-seed arena-55k
+python3 -m modelreceipts_server import-seed openrouter         # 합성 픽스처. 실제 export는 --input FILE
+python3 -m modelreceipts_server serve --port 8787              # Ctrl+C로 종료
+python3 -m modelreceipts_server aggregates --view overview     # 서버 없이 집계 JSON 출력
+python3 -m modelreceipts_server make-sample                    # dashboard/data/*.sample.json + docs/figures/*.svg 재생성
+python3 -m modelreceipts_server migrate-db --from old.sqlite3 --to new.sqlite3
 ```
 
-임계값은 플래그나 환경변수로 바꾼다.
+### 설정
 
-| 플래그 | 환경변수 | 기본값 | 적용 대상 |
-|---|---|---|---|
-| `--min-contributors` | `MR_MIN_CONTRIBUTORS` | 5 | `field_report` 셀의 기여자 수 k |
-| `--min-records` | `MR_MIN_RECORDS` | 30 | `field_report` 셀의 레코드 수 n |
-| `--seed-min-contributors` | `MR_SEED_MIN_CONTRIBUTORS` | 1 | 시드 층(`benchmark`/`preference`/`usage`) k |
-| `--seed-min-records` | `MR_SEED_MIN_RECORDS` | 30 | 시드 층 n |
+| 플래그 | 기본값 | 의미 |
+|---|---|---|
+| `--signatures required\|optional` | required | `required`는 서명 없는 POST를 401로 거부합니다. `optional`(로컬 개발용)은 옛 `X-ModelReceipts-Install` 헤더나 `anonymous`로 받습니다. |
+| `--gate on\|off` | on | 상세 조회를 최근 90일 기여자에게만 엽니다. |
+| `--prices FILE` | `data/prices.json` | 서버 비용을 재계산할 가격표입니다. |
+| `--rate-per-hour` / `--burst` | 120 / 30 | 기여자별 토큰 버킷 |
+| `--cell-daily-cap` | 50 | 기여자·셀당 24시간 레코드 상한 |
+| `--min-contributors` (`MR_MIN_CONTRIBUTORS`) | 5 | `field_report` 셀의 k |
+| `--min-records` (`MR_MIN_RECORDS`) | 30 | `field_report` 셀의 n |
+| `--max-contributor-share` | 0.5 | 한 기여자가 셀 레코드의 이 비율을 넘으면 비공개(`dominated_by_one_contributor`) |
+| `--seed-min-contributors` / `--seed-min-records` | 1 / 30 | 시드 층(`benchmark`/`preference`)의 k·n. `usage`는 n=1입니다. |
+| `--pair-min-pairs` / `--pair-min-contributors` | 10 / 3 | 페어 모드 결과를 공개하는 기준 |
 
-k=5, n=30은 조사 보고서의 초기 제안값이다. 시드는 이미 공개된 데이터이고 게시자가 하나라 k가 보호하는 대상이 없으므로 기본 k=1, n은 작은 표본을 막기 위해 유지한다.
+k=5, n=30은 조사 보고서의 초기 제안값입니다. 시드는 이미 공개된 데이터이고 게시자가 하나라 k가 보호할 대상이 없으므로 k=1로 둡니다.
 
 ## API
 
 ### `POST /v1/records`
 
-- 본문: 레코드 JSON 1건, `Content-Type: application/json`, 최대 64 KiB.
-- 선택 헤더 `X-ModelReceipts-Install`: 클라이언트가 만든 무작위 설치 id. 서버는 **DB별 salt로 해시한 값만** 저장한다. 없으면 모든 레코드가 하나의 `anonymous` 기여자로 묶인다(k를 부풀릴 수 없게).
-- `source_type`은 `field_report`만 받는다. 시드 층은 HTTP로 넣을 수 없다.
+- **본문:** 레코드 JSON 1건. `Content-Type: application/json`, 최대 64 KiB.
+- **서명 헤더** (`modelreceipts submit`이 붙입니다):
+  - `X-ModelReceipts-Key`: 공개 키(base64url)
+  - `X-ModelReceipts-Timestamp`: 유닉스 초. ±300초 안이어야 합니다.
+  - `X-ModelReceipts-Signature`: 아래 메시지의 Ed25519 서명
+
+  서명하는 메시지:
+
+  ```text
+  modelreceipts-v1\nMETHOD\nPATH?QUERY\nTIMESTAMP\nsha256hex(body)
+  ```
+
+- **기여자:** DB별 salt로 해시한 공개 키를 씁니다(`k:…`). 비밀 키와 공개 키 원문은 저장하지 않습니다.
+- **처리 순서:** 서명 검증 → 토큰 버킷 → JSON → 스키마 검증 → 셀 일일 상한 → 저장.
+- **받는 `source_type`:** `field_report`만 받습니다. 시드 층은 운영자가 로컬에서 `import-seed`로만 넣습니다.
 
 | 응답 | 의미 |
 |---|---|
-| `201 {"status":"stored","record_id":…}` | 저장됨 |
+| `201 {"status":"stored","record_id":…,"signed":true,"server_cost":{…}}` | 저장됨 |
 | `400 schema_validation_failed` + `details` | 스키마 위반 (예: `$: unexpected property 'prompt'`) |
 | `400 invalid_json` / `415` / `411` / `413` | 전송 형식 문제 |
-| `409 duplicate_record_id` | 같은 id는 다시 쓸 수 없다 (덮어쓰기 없음) |
-| `405` | `PUT`/`PATCH`/`DELETE` — 수정·삭제 경로는 없다 |
+| `401 signature_required` / `401 bad_signature` | 서명 없음 / 서명·시각·본문 불일치 |
+| `409 duplicate_record_id` | 같은 id는 다시 쓸 수 없습니다 (덮어쓰기 없음) |
+| `429 rate_limited` / `429 cell_daily_cap` + `Retry-After` | 레이트 리밋 / 셀 일일 상한 |
+| `405` | `PUT`/`PATCH`/`DELETE`: 수정·삭제 경로는 없습니다 |
 
-### `GET /v1/aggregates`
+### `GET /v1/overview` (공개, `GET /v1/aggregates`는 별칭)
 
-쿼리: `source_type`(field_report|benchmark|preference|usage), `l1`, `l2`, `level`(l2 기본 | l1 롤업). 응답의 핵심 필드:
+- **현장 보고:** L1 × 모델로만 합쳐 `n`, `k`, `tests.tested`, `tests.pass_rate`(점추정), 지연 중앙값을 냅니다. L2, 하네스, CI, 비용, 자기평가, 재시도, 페어 모드는 빠집니다.
+- **시드:** 공개 데이터이므로 상세와 같은 형태로 냅니다(benchmark 셀, `seed_cells`).
+- **`gate` 블록:** 상세 조회 방법과 추가로 볼 수 있는 항목을 적어 둡니다.
+- **CORS:** `Access-Control-Allow-Origin: *`
+
+### `GET /v1/aggregates/detail` (기여자 전용)
+
+- **접근 조건:** `GET`을 설치 키로 서명해야 합니다(`modelreceipts query --endpoint URL`). 그 키로 최근 90일 안에 `field_report`를 한 건 이상 저장했어야 합니다.
+  - 서명 없음·잘못된 서명: `401 contributors_only`
+  - 기여 없음: `403 contributors_only`
+- **쿼리:** `source_type`, `l1`, `l2`, `level`(`l2` 기본, `l1`이면 롤업). 서명 메시지에는 쿼리 문자열도 들어갑니다.
+- **응답 필드:**
 
 ```jsonc
 {
-  "thresholds": {"field_report": {"min_contributors": 5, "min_records": 30}, "benchmark": {…}},
-  "totals": {"records_by_source_type": {"field_report": 1, "benchmark": 15518, …}},
-  "sources": [{"source_id": "aider-polyglot@cb6a152", "url": "…", "commit_sha": "…", "license": "Apache-2.0", …}],
+  "api": "modelreceipts.aggregates/v1", "view": "detail",
+  "thresholds": {"field_report": {"min_contributors": 5, "min_records": 30, "max_contributor_share": 0.5}, "pairs": {…}, …},
+  "price_table": {"price_table_id": "anthropic-api@2026-06-24", "source": {"url": "…", "as_of": "…", "verified_live": false}, "sha256": "…"},
   "cells": [{
     "source_type": "field_report", "l1": "coding", "l2": "coding.bugfix", "model": "…", "method": "claude-code",
     "n": 42, "k": 7,
     "tests": {"tested": 36, "passed": 25, "pass_rate": 0.6944, "ci95": [0.531, 0.82], "tested_share": 0.857},
-    "cost_usd_per_task": {"client_mean": 0.14, "server_mean": null, "reported": 42},
-    "cost_usd_per_success": 0.2, "latency_ms_median": 91000,
-    "commit_rate": 0.6, "tool_errors_mean": 1.1,
+    "cost_usd_per_task": {"client_mean": 0.14, "server_mean": 0.12, "reported": 20, "server_computed": 42},
+    "cost_usd_per_success": 0.2, "server_cost_usd_per_success": 0.18,
+    "retry_next_prompt": {"observed": 30, "rate": 0.2},
+    "commit_rate": 0.6, "tool_errors_mean": 1.1, "latency_ms_median": 91000,
     "self_assessment": {"n": 30, "mean": 0.9, "excluded_from_ranking": true}
   }],
-  "suppressed": [{"source_type": "field_report", "l1": "coding", "l2": "coding.test", "model": "…", "method": "…", "reason": "below_threshold"}]
+  "suppressed": [{"…": "…", "reason": "below_threshold | dominated_by_one_contributor"}],
+  "pairwise": {"results": [{"l2": "coding.bugfix", "model_a": "…", "model_b": "…", "pairs": 24, "k": 6,
+                            "a_wins": 1, "b_wins": 5, "ties": 12, "undecided": 6, "a_score": 0.39, "a_score_ci95": [0.2, 0.61]}]},
+  "self_vs_evidence": [{"task": "coding.bugfix", "models": [{"model": "…", "rank_by_self": 1, "rank_by_evidence": 3, …}],
+                        "rank_changes": 5, "top_differs": true}],
+  "seed_cells": {"cells": [{"source_type": "preference", "model": "…", "battles": 1403, "win_rate": 0.40, "win_rate_ci95": […]}], …}
 }
 ```
 
-- 셀 = `(source_type, l1, l2, model.id, method.harness)`. `source_type`이 키에 들어 있어 시드와 현장 보고가 **절대 합쳐지지 않는다.**
-- 임계 미만 셀은 키만 나오고 n·k 등 **어떤 수치도 내보내지 않는다.**
-- 순위 신호는 `tests.pass_rate`(마지막 테스트 명령 결과가 있는 레코드 기준)와 Wilson 95% CI. `self_assessment`는 참고로만 싣고 `excluded_from_ranking: true`.
-- benchmark 셀은 시드가 보고하지 않는 필드(`commit_rate`, `tool_errors_mean`, `self_assessment`)를 `null`로 둔다.
-- 집계는 공개 층이므로 `Access-Control-Allow-Origin: *`를 붙인다.
+- **셀 키:** `(source_type, l1, l2, model.id, method.harness)`. `source_type`이 키에 들어 있어 시드와 현장 보고가 **절대 합쳐지지 않습니다.**
+- **비공개 셀:** 키와 사유만 나오고 수치는 하나도 나오지 않습니다.
+- **순위 신호:** `tests.pass_rate`와 Wilson 95% CI를 씁니다. `self_assessment`는 참고로만 싣고 `excluded_from_ranking: true`로 표시합니다.
+- **페어 모드:** 같은 `pair_id`를 가진 두 레코드의 마지막 테스트 결과로 승패를 정합니다. 둘 다 통과하거나 둘 다 실패하면 무승부이고, 한쪽이라도 테스트가 없으면 판정 불가입니다. 모델 순서는 이름순으로 정규화합니다.
+- **`self_vs_evidence`:** 공개된 field_report 셀만 모델 단위로 합쳐 자기평가 평균 순위와 통과율 순위를 비교합니다.
 
 ### 기타
 
-`GET /healthz`, `GET /` → `/dashboard/?data=/v1/aggregates`, `GET /dashboard/*` → `dashboard/` 정적 파일(경로 탈출 차단).
-요청 로그에는 클라이언트 주소를 남기지 않는다.
+- `GET /healthz`
+- `GET /` → `/dashboard/?data=/v1/overview`
+- `GET /dashboard/*` → `dashboard/` 정적 파일(경로 탈출 차단)
+
+요청 로그에는 클라이언트 주소도, 헤더도 남기지 않습니다.
 
 ## 저장소
 
-- `records`, `seed_sources` 테이블에 `BEFORE UPDATE/DELETE` 트리거가 걸려 있어 SQL로도 수정·삭제가 막힌다(테스트로 확인).
-- 레코드 원문은 `body` 열에 그대로, 집계용 열(l1, l2, 모델, 하네스, 증거, 비용…)은 삽입 시 추출.
-- 시드 레코드는 `seed_source_id`로 출처(`seed_sources`: URL, 커밋, sha256, 라이선스)와 연결된다.
-
-## 아직 없는 것
-
-설치 키 서명(Sybil 방지 — 지금의 설치 id는 스스로 선언한 값이라 위조 가능), 레이트 리밋, 기여자 전용 세분 조회 게이트, 서버 가격표 기반 `cost_usd_server` 재계산, TLS, 배포.
+- **테이블:** `records`, `seed_sources`, `seed_cells`, `server_costs`, `self_assessments`. 모두 `BEFORE UPDATE/DELETE` 트리거가 걸려 있어 SQL로도 수정·삭제가 막힙니다(테스트로 확인).
+- **신호 분리:**
+  - 레코드 원문은 받은 그대로 `body`에 저장합니다.
+  - 서버가 가격표로 재계산한 비용은 `server_costs`에 따로 둡니다. 재계산이 안 되면 `cost_usd = NULL`과 함께 `reason`(`route_not_covered` / `model_not_in_table` / `tokens_missing`)을 남깁니다.
+  - 자기평가는 `self_assessments`에 따로 둡니다.
+  - 클라이언트가 보고한 비용은 바꾸지 않습니다.
+- **가격표** (`modelreceipts_server/data/prices.json`):
+  - `price_table_id`: `anthropic-api@2026-06-24`
+  - 출처 URL과 기준일을 기록합니다.
+  - `verified_live: false`: 라이브 페이지와 대조하는 일은 사람이 해야 합니다.
+  - `route=direct`에만 적용합니다. Bedrock·Vertex 등은 가격이 달라 NULL로 둡니다.
+  - 모델 id는 가장 긴 접두사로 매칭합니다.
+- **스키마 업그레이드:**
+  - 옛 DB(v1)를 열면 새 열과 테이블을 **추가만** 합니다(`user_version = 2`).
+  - 옛 DB는 `committed` 등에 NOT NULL이 남아 있습니다. 그래서 v0.2의 null 레코드를 넣으면 `LegacyDatabase` 오류와 함께 `migrate-db` 안내가 나옵니다.
+  - `migrate-db`는 원본을 읽기 전용으로 열고 **새 파일로 복사**합니다. 이때 본문을 v0.2로 바꾸고 salt를 유지하며, 기존 파일은 덮어쓰지 않습니다.
 
 ## 테스트
 
 ```bash
 python3 -m unittest discover -s server/tests -v
 ```
+
+- `test_server.py`: 저장, 집계, HTTP 기본
+- `test_v1.py`: 서명, 게이트, 레이트 리밋, 셀 상한, 서버 비용, 신호 분리, 지배 기여자, 페어 모드, 시드 셀, DB 마이그레이션, 샘플·그림 최신 여부

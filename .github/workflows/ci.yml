@@ -32,11 +32,25 @@ jobs:
         run: python -m unittest discover -s server/tests -v
       - name: Seed tests
         run: python -m unittest discover -s seeds/tests -v
-      - name: Validate schema examples
-        run: PYTHONPATH=collector python -m modelreceipts validate schema/examples/*.json
-      - name: Validate every Aider seed record
-        run: PYTHONPATH=seeds python -m modelreceipts_seeds aider-polyglot
-      - name: Sample aggregates are up to date
+      - name: Validate schema examples (v0.1, v0.2, seed cells)
         run: |
-          PYTHONPATH=server python -m modelreceipts_server make-sample --out /tmp/aggregates.sample.json
-          diff -u dashboard/data/aggregates.sample.json /tmp/aggregates.sample.json
+          PYTHONPATH=collector python -m modelreceipts validate schema/examples/*.json schema/examples/v0.1/*.json
+          PYTHONPATH=collector python -m modelreceipts validate --allow-seed-cells schema/examples/seed-cells/*.json
+      - name: Packaged schemas match schema/
+        run: |
+          for f in schema/*.schema.json; do cmp "$f" "collector/modelreceipts/schemas/$(basename "$f")"; done
+      - name: Validate every seed record and cell
+        run: |
+          PYTHONPATH=seeds python -m modelreceipts_seeds aider-polyglot
+          PYTHONPATH=seeds python -m modelreceipts_seeds arena-55k
+          PYTHONPATH=seeds python -m modelreceipts_seeds openrouter
+      - name: Classifier eval report is up to date
+        run: |
+          PYTHONPATH=collector python -m modelreceipts eval-classifier --markdown > /tmp/RESULTS.md
+          diff -u collector/eval/RESULTS.md /tmp/RESULTS.md
+      - name: Samples and demo figure are up to date
+        run: |
+          PYTHONPATH=server python -m modelreceipts_server make-sample --out-dir /tmp/sample --figure /tmp/sample/figure.svg
+          diff -u dashboard/data/aggregates.sample.json /tmp/sample/aggregates.sample.json
+          diff -u dashboard/data/overview.sample.json /tmp/sample/overview.sample.json
+          diff -u docs/figures/self-vs-evidence.synthetic.svg /tmp/sample/figure.svg

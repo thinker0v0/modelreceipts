@@ -1,8 +1,107 @@
 # Changelog
 
-형식은 [Keep a Changelog](https://keepachangelog.com/ko/1.1.0/)를 따른다. 버전은 pre-alpha 동안 `0.0.x`.
+형식은 [Keep a Changelog](https://keepachangelog.com/ko/1.1.0/)를 따른다. 버전은 pre-alpha 동안 `0.0.x`였고, 코드 완성 후보부터 `1.0.0-rcN`이다. 스키마 버전(`0.x`)은 따로 관리한다.
 
 ## [Unreleased]
+
+## [1.0.0-rc1] - 2026-09-28 — 코드 완성 후보
+
+로드맵에서 코드로 할 수 있는 항목을 모두 구현했다. 남은 일은 사람이 해야 하는 일로, 배포, PyPI 게시, 데이터 라이선스, 기여자 모집, 실데이터 수집이다([`docs/USER_TASKS.md`](docs/USER_TASKS.md)). 실제 사용자 데이터는 아직 없고, 샘플의 현장 보고는 모두 합성이다.
+
+테스트: collector 69, server 42, seeds 21 (Python 3.12, 로컬 실행).
+
+### Added
+
+**수집기 (`collector`)**
+- `install-hook` / `uninstall-hook`: Claude Code 설정 파일에 미리보기 전용 Stop 훅을 넣고 뺀다.
+  - `--settings` 필수, 기본은 dry-run diff. `--apply`를 주면 터미널 확인을 받은 뒤 타임스탬프 백업과 원자적 쓰기를 한다.
+  - 멱등하고, 우리 항목만 깨끗하게 제거하며, 다른 훅과 키는 보존한다. 테스트는 임시 디렉터리만 쓴다.
+- 분류기:
+  - `rules-v1`: 가중 키워드 점수, 우선순위 동점 처리, 좁힌 코딩 게이트. **기본값**이 되었다.
+  - `rules-v0`은 재현용으로 보존한다.
+- 분류기 평가:
+  - 합성 평가 세트 240개(`collector/eval/`, dev 120 / test 120, test는 rules-v1 작업 전에 고정)와 `eval-classifier` 명령
+  - 고정 test 분할 결과: rules-v0 정확도 0.508 / L1 0.800, rules-v1 0.675 / 0.883. rules-v1은 dev에서 1.000으로 과적합이다.
+- 품질 신호:
+  - `retry-rules-v1`: 다음 프롬프트가 불만·재시도 표현이거나 직전 프롬프트와 거의 같으면 표시한다. `--preview-dir` 상태 파일로 직전 레코드에 소급 기록한다.
+  - `claim-rules-v1`: 에이전트 마지막 메시지의 성공 주장 점수를 `self_assessment`에 넣는다(`rater: self_claim`, 랭킹 제외).
+- Ed25519 설치 키: 순수 Python RFC 8032 구현으로, 테스트 벡터 1–3과 `cryptography` 교차검증을 통과한다.
+  - `keygen` 명령을 추가했다.
+  - `submit`이 모든 요청에 서명한다(`--key-file`이 `--install-id-file`을 대체). 키 파일은 `0600`이고 `.gitignore`에 `install_key*`를 넣었다.
+- `query`: 서명된 `GET /v1/aggregates/detail`로 기여자 전용 상세 조회를 한다.
+- `pair A B [--apply]`: 두 미리보기 레코드를 페어 모드 쌍으로 표시한다.
+- 검증과 변환:
+  - `validate`가 `.jsonl`을 읽고, `schema_version`과 `kind`로 스키마를 자동 선택한다(`--allow-seed-cells`, `--only-version`).
+  - `migrate` 명령: v0.1 → v0.2, 입력 파일을 바꾸지 않는다.
+- 스키마를 패키지 데이터(`modelreceipts/schemas/`)로 포함했다.
+
+**스키마**
+- `record.v0.2.schema.json`:
+  - 시드가 모르는 값(토큰, `turns`, `test_runs`, `committed`, `tool_error_count`)을 nullable로 바꿨다.
+  - `evidence.retry_detector`와 `self_assessment.extractor`를 필수로 추가했다.
+  - `rater`에 `self_claim`을 추가했다.
+  - `cost_usd_server`와 `install_key_sig`를 `null`로 고정했다(서버 쪽으로 이동).
+- `seed_cell.v0.2.schema.json`: 선호(승·패·무)와 사용량(토큰·점유율·순위) 집계 셀
+- 예시를 v0.2로 바꾸고 v0.1 원본을 `examples/v0.1/`에 보존했다. 합성 시드 셀 예시도 추가했다.
+
+**서버 (`server`)**
+- 서명과 한도:
+  - Ed25519 서명 검증. `--signatures required`가 기본이고, 기여자 = salt 해시한 공개 키다.
+  - 기여자별 토큰 버킷(120/h, 버스트 30)과 기여자·셀별 24시간 상한(50). 초과하면 `429` + `Retry-After`를 돌려준다.
+- 서버 비용:
+  - 가격표 JSON(`data/prices.json`: 출처 URL, 기준일 2026-06-24, `verified_live: false`, `route=direct`만)을 추가했다.
+  - 서버가 재계산한 비용은 `server_costs` 테이블에 따로 저장하고, 재계산이 안 되면 사유를 남긴다. 클라이언트 보고값은 그대로 둔다.
+- `self_assessments` 테이블: 자기평가를 랭킹 열과 분리해 저장한다.
+- 조회:
+  - 공개 `GET /v1/overview`: L1 × 모델 점추정과 공개 시드. `/v1/aggregates`는 이 경로의 별칭이다.
+  - 기여자 전용 `GET /v1/aggregates/detail`: 서명이 필요하고, 최근 90일 안에 현장 보고가 있어야 한다. 서명이 없으면 401, 기여가 없으면 403이다.
+  - 셀 공개 조건에 한 기여자 비중 상한(기본 0.5, `dominated_by_one_contributor`)을 추가했다.
+- 집계:
+  - 페어 모드 맞대결 집계: 마지막 테스트 결과 기준, 쌍 ≥ 10이고 기여자 ≥ 3일 때 공개한다.
+  - `self_vs_evidence` 순위 비교
+  - 셀별 서버 비용과 다음 프롬프트 재시도율
+- 시드 셀:
+  - `seed_cells` 테이블을 추가했다. 선호 셀에는 Wilson CI를 붙이고 대결 30회 미만은 비공개로 한다.
+  - `import-seed arena-55k | openrouter [--input]`
+- DB 업그레이드:
+  - 옛 DB를 열면 열과 테이블을 추가만 한다(`user_version = 2`).
+  - `migrate-db --from --to`: 복사 방식이고 salt를 유지한다.
+  - 옛 NOT NULL 열에 v0.2 null을 넣으려 하면 `LegacyDatabase` 오류와 함께 안내가 나온다.
+- `make-sample`이 상세·개요 샘플 두 개와 `docs/figures/self-vs-evidence.synthetic.svg`(표준 라이브러리 SVG, 합성 라벨)를 만든다.
+
+**시드 (`seeds`)**
+- LMArena `arena-human-preference-55k`:
+  - 대상: 리비전 18c2983, Apache-2.0, 원본 sha256 기록, 원본은 재배포하지 않는다.
+  - 57,477 대결을 로컬 `rules-v1`로 분류해 1,373개 `(L1, L2, 모델)` 셀의 **개수만** 커밋했다(sha256 고정).
+  - `--rebuild-from train.csv`로 다시 만들 수 있다.
+- OpenRouter 사용 비중 임포터:
+  - 실제 데이터는 API 키와 약관 확인이 필요해 받지 않았다.
+  - **합성 픽스처**로 시험했고, 운영자가 받은 export는 `--input`으로 적재한다.
+
+**대시보드**
+- 보기 전환: 공개 개요 / 기여자 상세 샘플
+- 새 카드: 페어 모드 맞대결 카드(표 보기 포함), 시드 층 카드(선호 승률 + CI, 사용량 점유율)
+- 비용 표시: 서버 비용 대체 표시와 가격표 출처
+- 셀 표: 재시도 열, 비공개 사유
+- 스크린샷 4장을 다시 찍었다.
+
+**문서**
+- `docs/USER_TASKS.md`: 사람이 해야 하는 일
+- README(상태, 로드맵, 빠른 시작, 구조)와 각 폴더 README를 갱신했다.
+
+### Changed
+- 수집기가 schema v0.2 레코드를 만든다. 서버와 검증기는 v0.1도 계속 받는다.
+- Aider 시드가 v0.2 `null`을 쓴다. 자리표시값 `false`/`0`을 없앴다.
+- CI:
+  - v0.1·v0.2·시드 셀 예시를 검증하고, 패키지 스키마 사본이 같은지 확인한다.
+  - Arena·OpenRouter 시드를 검증한다.
+  - 분류기 보고서와 두 샘플, 데모 그림이 최신인지 확인한다.
+- 버전: 수집기와 서버 모두 `1.0.0rc1`, 개발 상태 Beta.
+
+### Security
+- 서명 없는 제출은 기본 거부한다. 설치 id를 스스로 선언하던 방식은 `--signatures optional`(로컬 개발용)에서만 남는다.
+- 서명 메시지에 메서드, 경로와 쿼리, 시각(±300초), 본문 sha256을 넣어 다른 요청으로 재사용할 수 없게 했다.
+- 순수 Python Ed25519는 상수 시간이 아니다. 서버는 검증만 하고, 설치 키는 Sybil 방지용 식별자라는 전제를 문서에 적었다.
 
 ## [0.0.2] - 2026-09-27 — pre-alpha ~10%
 
