@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="614" viewBox="0 0 960 614" font-family="system-ui, -apple-system, 'Segoe UI', 'Noto Sans KR', sans-serif" role="img" aria-labelledby="t d">
+<title id="t">SYNTHETIC demo: self-assessment ranking vs evidence ranking (coding.bugfix)</title>
+<desc id="d">Drawn from dashboard/data/aggregates.sample.json. All field reports are synthetic (example-model-*); not a measurement of any real model.</desc>
+<rect width="960" height="614" fill="#fcfcfb"/>
+<text x="24.0" y="30.0" font-size="18" text-anchor="start" fill="#0b0b0b" font-weight="650">자기평가 순위 vs 증거 순위 — coding.bugfix</text>
+<rect x="434" y="15" width="92" height="20" rx="5" fill="#fff4d6"/>
+<text x="480.0" y="30.0" font-size="12" text-anchor="middle" fill="#6b4a00" font-weight="700">SYNTHETIC</text>
+<text x="24.0" y="52.0" font-size="12" text-anchor="start" fill="#52514e" font-weight="400">왼쪽: 에이전트가 스스로 주장한 성공 점수(self_claim)의 순위 · 오른쪽: 마지막 테스트 통과율의 순위. 빨강 = 자기평가가 과대평가, 파랑 = 증거가 더 높음.</text>
+<text x="300.0" y="78.0" font-size="12" text-anchor="end" fill="#52514e" font-weight="600">자기평가 순위</text>
+<text x="660.0" y="78.0" font-size="12" text-anchor="start" fill="#52514e" font-weight="600">증거 순위 (테스트 통과율)</text>
+<line x1="308" x2="308" y1="86" y2="310" stroke="#c3c2b7"/>
+<line x1="652" x2="652" y1="86" y2="310" stroke="#c3c2b7"/>
+<line x1="308" y1="200.0" x2="652" y2="112.0" stroke="#2a78d6" stroke-width="2" stroke-linecap="round"/>
+<circle cx="308" cy="200.0" r="5" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"/>
+<circle cx="652" cy="112.0" r="5" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"/>
+<text x="294.0" y="204.0" font-size="13" text-anchor="end" fill="#0b0b0b" font-weight="400">example-model-d  78%</text>
+<text x="666.0" y="116.0" font-size="13" text-anchor="start" fill="#0b0b0b" font-weight="400">67%  example-model-d ▲</text>
+<line x1="308" y1="244.0" x2="652" y2="156.0" stroke="#2a78d6" stroke-width="2" stroke-linecap="round"/>
+<circle cx="308" cy="244.0" r="5" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"/>
+<circle cx="652" cy="156.0" r="5" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"/>
+<text x="294.0" y="248.0" font-size="13" text-anchor="end" fill="#0b0b0b" font-weight="400">example-model-b  76%</text>
+<text x="666.0" y="160.0" font-size="13" text-anchor="start" fill="#0b0b0b" font-weight="400">66%  example-model-b ▲</text>
+<line x1="308" y1="112.0" x2="652" y2="200.0" stroke="#e34948" stroke-width="2" stroke-linecap="round"/>
+<circle cx="308" cy="112.0" r="5" fill="#e34948" stroke="#fcfcfb" stroke-width="2"/>
+<circle cx="652" cy="200.0" r="5" fill="#e34948" stroke="#fcfcfb" stroke-width="2"/>
+<text x="294.0" y="116.0" font-size="13" text-anchor="end" fill="#0b0b0b" font-weight="400">example-model-a  90%</text>
+<text x="666.0" y="204.0" font-size="13" text-anchor="start" fill="#0b0b0b" font-weight="400">62%  example-model-a ▼</text>
+<line x1="308" y1="288.0" x2="652" y2="244.0" stroke="#2a78d6" stroke-width="2" stroke-linecap="round"/>
+<circle cx="308" cy="288.0" r="5" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"/>
+<circle cx="652" cy="244.0" r="5" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"/>
+<text x="294.0" y="292.0" font-size="13" text-anchor="end" fill="#0b0b0b" font-weight="400">example-model-e  52%</text>
+<text x="666.0" y="248.0" font-size="13" text-anchor="start" fill="#0b0b0b" font-weight="400">57%  example-model-e ▲</text>
+<line x1="308" y1="156.0" x2="652" y2="288.0" stroke="#e34948" stroke-width="2" stroke-linecap="round"/>
+<circle cx="308" cy="156.0" r="5" fill="#e34948" stroke="#fcfcfb" stroke-width="2"/>
+<circle cx="652" cy="288.0" r="5" fill="#e34948" stroke="#fcfcfb" stroke-width="2"/>
+<text x="294.0" y="160.0" font-size="13" text-anchor="end" fill="#0b0b0b" font-weight="400">example-model-c  87%</text>
+<text x="666.0" y="292.0" font-size="13" text-anchor="start" fill="#0b0b0b" font-weight="400">56%  example-model-c ▼</text>
+<text x="24.0" y="360.0" font-size="15" text-anchor="start" fill="#0b0b0b" font-weight="650">페어 모드 맞대결 — coding.bugfix (같은 태스크를 두 모델로 돌린 쌍, 마지막 테스트 결과)</text>
+<rect x="24" y="372" width="14" height="10" rx="3" fill="#2a78d6"/>
+<text x="44.0" y="381.0" font-size="12" text-anchor="start" fill="#52514e" font-weight="400">A 승</text>
+<rect x="114" y="372" width="14" height="10" rx="3" fill="#d3d1c8"/>
+<text x="134.0" y="381.0" font-size="12" text-anchor="start" fill="#52514e" font-weight="400">무승부</text>
+<rect x="204" y="372" width="14" height="10" rx="3" fill="#e34948"/>
+<text x="224.0" y="381.0" font-size="12" text-anchor="start" fill="#52514e" font-weight="400">B 승</text>
+<text x="24.0" y="419.0" font-size="13" text-anchor="start" fill="#0b0b0b" font-weight="600">A model-a  vs  B model-b</text>
+<rect x="300.0" y="404" width="26.1" height="20" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"/>
+<rect x="326.1" y="404" width="313.3" height="20" fill="#d3d1c8" stroke="#fcfcfb" stroke-width="2"/>
+<rect x="639.4" y="404" width="130.6" height="20" fill="#e34948" stroke="#fcfcfb" stroke-width="2"/>
+<text x="780.0" y="419.0" font-size="12" text-anchor="start" fill="#52514e" font-weight="400">A 점수 39% (20%–61%)</text>
+<text x="300.0" y="440.0" font-size="11" text-anchor="start" fill="#6f6d68" font-weight="400">A 1승 · 무승부 12 · B 5승 · 판정 불가 6 · 24쌍 · 기여자 6</text>
+<text x="24.0" y="477.0" font-size="13" text-anchor="start" fill="#0b0b0b" font-weight="600">A model-b  vs  B model-d</text>
+<rect x="300.0" y="462" width="22.4" height="20" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"/>
+<rect x="322.4" y="462" width="335.7" height="20" fill="#d3d1c8" stroke="#fcfcfb" stroke-width="2"/>
+<rect x="658.1" y="462" width="111.9" height="20" fill="#e34948" stroke="#fcfcfb" stroke-width="2"/>
+<text x="780.0" y="477.0" font-size="12" text-anchor="start" fill="#52514e" font-weight="400">A 점수 40% (21%–59%)</text>
+<text x="300.0" y="498.0" font-size="11" text-anchor="start" fill="#6f6d68" font-weight="400">A 1승 · 무승부 15 · B 5승 · 판정 불가 5 · 26쌍 · 기여자 6</text>
+<text x="24.0" y="535.0" font-size="13" text-anchor="start" fill="#0b0b0b" font-weight="600">A model-c  vs  B model-d</text>
+<rect x="300.0" y="520" width="39.2" height="20" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"/>
+<rect x="339.2" y="520" width="156.7" height="20" fill="#d3d1c8" stroke="#fcfcfb" stroke-width="2"/>
+<rect x="495.8" y="520" width="274.2" height="20" fill="#e34948" stroke="#fcfcfb" stroke-width="2"/>
+<text x="780.0" y="535.0" font-size="12" text-anchor="start" fill="#52514e" font-weight="400">A 점수 25% (9%–53%)</text>
+<text x="300.0" y="556.0" font-size="11" text-anchor="start" fill="#6f6d68" font-weight="400">A 1승 · 무승부 4 · B 7승 · 판정 불가 3 · 15쌍 · 기여자 6</text>
+<text x="24.0" y="598.0" font-size="11" text-anchor="start" fill="#6f6d68" font-weight="400">SYNTHETIC — 샘플 생성기가 만든 가짜 현장 보고(example-model-*)입니다. 실제 모델의 측정값이 아닙니다. 출처: dashboard/data/aggregates.sample.json</text>
+</svg>

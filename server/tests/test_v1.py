@@ -400,6 +400,10 @@ class SampleUpToDateTest(unittest.TestCase):
             with self.subTest(name=name):
                 self.assertEqual(json.dumps(obj, ensure_ascii=False, indent=1) + "\n", committed,
                                  "run: PYTHONPATH=server python3 -m modelreceipts_server make-sample")
+        from modelreceipts_server.figure import render
+        svg = render(detail)
+        self.assertIn("SYNTHETIC", svg)
+        self.assertEqual(svg, (REPO_ROOT / "docs" / "figures" / "self-vs-evidence.synthetic.svg").read_text(encoding="utf-8"))
 
 
 if __name__ == "__main__":

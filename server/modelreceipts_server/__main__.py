@@ -4,7 +4,8 @@ commands:
   serve         run the ingest API on 127.0.0.1 (loopback only)
   import-seed   load a seed source into the database (local operator action; not exposed over HTTP)
   aggregates    print the public overview or the detailed aggregates JSON for a database
-  make-sample   regenerate dashboard/data/*.sample.json (real seeds + SYNTHETIC field reports and pairs)
+  make-sample   regenerate dashboard/data/*.sample.json and docs/figures/*.synthetic.svg
+                (real seeds + SYNTHETIC field reports and pairs)
   migrate-db    copy a database into a NEW file with every record converted to schema v0.2
 """
 
@@ -100,6 +101,8 @@ def main(argv: list[str]) -> int:
 
     p_sample = sub.add_parser("make-sample", help="regenerate the dashboard sample JSON files")
     p_sample.add_argument("--out-dir", type=Path, default=DASHBOARD_DIR / "data")
+    p_sample.add_argument("--figure", type=Path, default=DASHBOARD_DIR.parent / "docs" / "figures" / "self-vs-evidence.synthetic.svg",
+                          help="also write the SYNTHETIC self-vs-evidence demo figure here")
     _add_threshold_args(p_sample)
 
     p_mig = sub.add_parser("migrate-db", help="copy a database into a new file with v0.2 record bodies")
@@ -169,6 +172,9 @@ def main(argv: list[str]) -> int:
         a.out_dir.mkdir(parents=True, exist_ok=True)
         for name, obj in (("aggregates.sample.json", detail), ("overview.sample.json", public)):
             (a.out_dir / name).write_text(json.dumps(obj, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+        from .figure import render
+        a.figure.parent.mkdir(parents=True, exist_ok=True)
+        a.figure.write_text(render(detail), encoding="utf-8")
         print(f"wrote {a.out_dir}: detail cells={len(detail['cells'])} suppressed={len(detail['suppressed'])} "
               f"pairwise={len(detail['pairwise']['results'])} seed_cells={len(detail['seed_cells']['cells'])}; "
               f"overview cells={len(public['cells'])}")
