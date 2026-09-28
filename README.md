@@ -128,7 +128,7 @@ flowchart LR
 - [`dashboard/`](dashboard/): 대시보드
 - [`docs/USER_TASKS.md`](docs/USER_TASKS.md): 사람이 해야 할 일
 
-런타임 코드는 전부 Python 표준 라이브러리만 씁니다. Ed25519도 순수 Python으로 구현했고, RFC 8032 테스트 벡터와 `cryptography` 교차검증을 통과합니다. 서버와 수집기는 같은 검증기를 씁니다. FastAPI 대신 `http.server`를 고른 이유는 [`server/README.md`](server/README.md)에 있습니다.
+런타임 코드는 전부 Python 표준 라이브러리만 씁니다. Ed25519도 순수 Python으로 구현했고, RFC 8032 테스트 벡터와 `cryptography` 교차검증을 통과합니다. 단, 이 구현은 상수 시간(constant-time)이 아니고 보안 감사를 받지 않았습니다. 실제 운영 배포 전에는 `cryptography` 같은 검증된 라이브러리로 바꾸세요. 서버와 수집기는 같은 검증기를 씁니다. FastAPI 대신 `http.server`를 고른 이유는 [`server/README.md`](server/README.md)에 있습니다.
 
 ## 현재 상태: v1.0.0-rc1 — 코드 완성 후보
 
