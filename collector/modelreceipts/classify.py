@@ -63,8 +63,7 @@ def _match(text: str, regex: str, korean: tuple[str, ...]) -> bool:
     return bool(re.search(regex, text, re.IGNORECASE)) or any(k in text for k in korean)
 
 
-def classify(summary: TurnSummary) -> tuple[str, str | None]:
-    """Return (l1, l2) closed codes for the last turn."""
+def _classify_v0(summary: TurnSummary) -> tuple[str, str | None]:
     text = summary.prompt_text or ""
     tools = set(summary.tools_used)
     edited = summary.files_touched > 0
@@ -85,3 +84,15 @@ def classify(summary: TurnSummary) -> tuple[str, str | None]:
         if _match(text, rx, ko):
             return "coding", code
     return "coding", "coding.other"
+
+
+# Registered classifiers. Old versions stay available so archived records can be
+# re-evaluated against the exact rules that produced them.
+CLASSIFIERS = {"rules-v0": _classify_v0}
+
+
+def classify(summary: TurnSummary, classifier: str | None = None) -> tuple[str, str | None]:
+    """Return (l1, l2) closed codes for the last turn using ``classifier`` (default: current)."""
+    from . import CLASSIFIER_ID
+
+    return CLASSIFIERS[classifier or CLASSIFIER_ID](summary)

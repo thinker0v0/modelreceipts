@@ -1,0 +1,240 @@
+{"id": "d001", "split": "dev", "prompt": "로그인하면 500 에러가 나. 원인 찾아서 고쳐줘", "files_touched": 2, "tools": ["Bash", "Edit", "Read"], "test_calls": 1, "l1": "coding", "l2": "coding.bugfix"}
+{"id": "d002", "split": "dev", "prompt": "The checkout page crashes when the cart is empty, please fix it", "files_touched": 1, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.bugfix"}
+{"id": "d003", "split": "dev", "prompt": "pytest에서 test_parse_date가 실패하는데 고쳐줄래?", "files_touched": 1, "tools": ["Bash", "Edit", "Read"], "test_calls": 2, "l1": "coding", "l2": "coding.bugfix"}
+{"id": "d004", "split": "dev", "prompt": "Null pointer exception in UserService.getProfile after the last merge", "files_touched": 1, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.bugfix"}
+{"id": "d005", "split": "dev", "prompt": "왜 결과값이 하나씩 밀려서 나오지? off-by-one 같은데 수정해줘", "files_touched": 1, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.bugfix"}
+{"id": "d006", "split": "dev", "prompt": "Users report the export button does nothing on Safari. Fix it.", "files_touched": 1, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.bugfix"}
+{"id": "d007", "split": "dev", "prompt": "빌드가 깨졌어. 컴파일 에러 해결해줘", "files_touched": 3, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.bugfix"}
+{"id": "d008", "split": "dev", "prompt": "회원가입 폼에 이메일 인증 기능을 추가해줘", "files_touched": 4, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.feature"}
+{"id": "d009", "split": "dev", "prompt": "Implement pagination for the /orders endpoint", "files_touched": 3, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.feature"}
+{"id": "d010", "split": "dev", "prompt": "CSV로 내보내기 기능 만들어줘", "files_touched": 2, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.feature"}
+{"id": "d011", "split": "dev", "prompt": "Add a --verbose flag to the CLI that prints each step", "files_touched": 1, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.feature"}
+{"id": "d012", "split": "dev", "prompt": "알림 설정에서 방해 금지 시간대를 지정할 수 있게 해줘", "files_touched": 3, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.feature"}
+{"id": "d013", "split": "dev", "prompt": "Support uploading multiple files at once in the attachment API", "files_touched": 2, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.feature"}
+{"id": "d014", "split": "dev", "prompt": "장바구니에 쿠폰 적용 로직 구현해줘", "files_touched": 2, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.feature"}
+{"id": "d015", "split": "dev", "prompt": "이 함수가 너무 길어. 작은 함수들로 쪼개줘", "files_touched": 1, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.refactor"}
+{"id": "d016", "split": "dev", "prompt": "Refactor the payment module to use dependency injection", "files_touched": 5, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.refactor"}
+{"id": "d017", "split": "dev", "prompt": "중복 코드 좀 정리해줘. utils로 빼고", "files_touched": 3, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.refactor"}
+{"id": "d018", "split": "dev", "prompt": "Rename getData to fetchUserProfile everywhere", "files_touched": 6, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.refactor"}
+{"id": "d019", "split": "dev", "prompt": "Extract the validation logic into its own class", "files_touched": 2, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.refactor"}
+{"id": "d020", "split": "dev", "prompt": "타입 힌트 추가하고 변수명 알아보기 쉽게 바꿔줘", "files_touched": 2, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.refactor"}
+{"id": "d021", "split": "dev", "prompt": "Clean up the dead code in the legacy importer", "files_touched": 2, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.refactor"}
+{"id": "d022", "split": "dev", "prompt": "UserRepository에 대한 단위 테스트 작성해줘", "files_touched": 1, "tools": ["Bash", "Edit", "Read"], "test_calls": 1, "l1": "coding", "l2": "coding.test"}
+{"id": "d023", "split": "dev", "prompt": "Write unit tests for the date parser, cover edge cases", "files_touched": 1, "tools": ["Bash", "Edit", "Read"], "test_calls": 1, "l1": "coding", "l2": "coding.test"}
+{"id": "d024", "split": "dev", "prompt": "이 모듈 테스트 커버리지가 40%밖에 안 돼. 올려줘", "files_touched": 2, "tools": ["Bash", "Edit", "Read"], "test_calls": 2, "l1": "coding", "l2": "coding.test"}
+{"id": "d025", "split": "dev", "prompt": "Add an integration test that hits the real sqlite db", "files_touched": 1, "tools": ["Bash", "Edit", "Read"], "test_calls": 1, "l1": "coding", "l2": "coding.test"}
+{"id": "d026", "split": "dev", "prompt": "결제 흐름 e2e 테스트 만들어줘", "files_touched": 1, "tools": ["Bash", "Edit", "Read"], "test_calls": 1, "l1": "coding", "l2": "coding.test"}
+{"id": "d027", "split": "dev", "prompt": "Can you add regression tests for the bug we fixed yesterday?", "files_touched": 1, "tools": ["Bash", "Edit", "Read"], "test_calls": 1, "l1": "coding", "l2": "coding.test"}
+{"id": "d028", "split": "dev", "prompt": "테스트 fixture를 pytest parametrize로 바꿔서 케이스 늘려줘", "files_touched": 1, "tools": ["Bash", "Edit", "Read"], "test_calls": 1, "l1": "coding", "l2": "coding.test"}
+{"id": "d029", "split": "dev", "prompt": "GitHub Actions 워크플로에 캐시 추가해줘", "files_touched": 1, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.config_devops"}
+{"id": "d030", "split": "dev", "prompt": "Write a Dockerfile for this Flask app", "files_touched": 1, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.config_devops"}
+{"id": "d031", "split": "dev", "prompt": "nginx 리버스 프록시 설정 좀 잡아줘", "files_touched": 1, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.config_devops"}
+{"id": "d032", "split": "dev", "prompt": "Set up pre-commit hooks with ruff and black", "files_touched": 2, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.config_devops"}
+{"id": "d033", "split": "dev", "prompt": "배포 스크립트가 staging 환경 변수를 못 읽어. 확인해줘", "files_touched": 1, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.config_devops"}
+{"id": "d034", "split": "dev", "prompt": "Add a Makefile target for linting", "files_touched": 1, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.config_devops"}
+{"id": "d035", "split": "dev", "prompt": "k8s 매니페스트에 리소스 리밋 넣어줘", "files_touched": 2, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.config_devops"}
+{"id": "d036", "split": "dev", "prompt": "README에 설치 방법 섹션 추가해줘", "files_touched": 1, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.docs"}
+{"id": "d037", "split": "dev", "prompt": "Write docstrings for all public functions in api.py", "files_touched": 1, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.docs"}
+{"id": "d038", "split": "dev", "prompt": "CHANGELOG 업데이트해줘", "files_touched": 1, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.docs"}
+{"id": "d039", "split": "dev", "prompt": "Document the environment variables the server reads", "files_touched": 1, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.docs"}
+{"id": "d040", "split": "dev", "prompt": "API 사용법 문서 만들어줘", "files_touched": 2, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.docs"}
+{"id": "d041", "split": "dev", "prompt": "Add comments explaining the retry logic", "files_touched": 1, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.docs"}
+{"id": "d042", "split": "dev", "prompt": "기여 가이드(CONTRIBUTING.md) 초안 써줘", "files_touched": 1, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.docs"}
+{"id": "d043", "split": "dev", "prompt": "이 PR 리뷰해줘", "files_touched": 0, "tools": ["Bash", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.review"}
+{"id": "d044", "split": "dev", "prompt": "Review my changes in the auth module for security issues", "files_touched": 0, "tools": ["Grep", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.review"}
+{"id": "d045", "split": "dev", "prompt": "코드 검토 부탁해. 뭔가 놓친 거 있나 봐줘", "files_touched": 0, "tools": ["Grep", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.review"}
+{"id": "d046", "split": "dev", "prompt": "Can you audit this SQL for injection risks?", "files_touched": 0, "tools": ["Grep", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.review"}
+{"id": "d047", "split": "dev", "prompt": "내 구현에 문제 없는지 봐줄래?", "files_touched": 0, "tools": ["Grep", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.review"}
+{"id": "d048", "split": "dev", "prompt": "Look over the diff before I merge", "files_touched": 0, "tools": ["Bash"], "test_calls": 0, "l1": "coding", "l2": "coding.review"}
+{"id": "d049", "split": "dev", "prompt": "Any bugs in this function?", "files_touched": 0, "tools": ["Read"], "test_calls": 0, "l1": "coding", "l2": "coding.review"}
+{"id": "d050", "split": "dev", "prompt": "이 함수 어떻게 동작하는지 설명해줘", "files_touched": 0, "tools": ["Grep", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.explain"}
+{"id": "d051", "split": "dev", "prompt": "What does this regex do?", "files_touched": 0, "tools": [], "test_calls": 0, "l1": "coding", "l2": "coding.explain"}
+{"id": "d052", "split": "dev", "prompt": "Walk me through the request lifecycle in this codebase", "files_touched": 0, "tools": ["Grep", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.explain"}
+{"id": "d053", "split": "dev", "prompt": "useEffect 의존성 배열이 왜 필요한지 알려줘", "files_touched": 0, "tools": [], "test_calls": 0, "l1": "coding", "l2": "coding.explain"}
+{"id": "d054", "split": "dev", "prompt": "이 에러 메시지가 무슨 뜻이야?", "files_touched": 0, "tools": ["Read"], "test_calls": 0, "l1": "coding", "l2": "coding.explain"}
+{"id": "d055", "split": "dev", "prompt": "Explain the difference between these two sorting implementations", "files_touched": 0, "tools": ["Grep", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.explain"}
+{"id": "d056", "split": "dev", "prompt": "프로젝트 구조 좀 파악해서 요약해줘", "files_touched": 0, "tools": ["Glob", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.explain"}
+{"id": "d057", "split": "dev", "prompt": "Python 3.8에서 3.12로 마이그레이션해줘", "files_touched": 5, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.migration"}
+{"id": "d058", "split": "dev", "prompt": "Upgrade React from 17 to 18 and fix breaking changes", "files_touched": 8, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.migration"}
+{"id": "d059", "split": "dev", "prompt": "moment.js를 date-fns로 교체해줘", "files_touched": 4, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.migration"}
+{"id": "d060", "split": "dev", "prompt": "Port this script from bash to Python", "files_touched": 1, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.migration"}
+{"id": "d061", "split": "dev", "prompt": "Gradle 버전 올려줘", "files_touched": 1, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.migration"}
+{"id": "d062", "split": "dev", "prompt": "Migrate the database schema to add a nullable column", "files_touched": 2, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.migration"}
+{"id": "d063", "split": "dev", "prompt": "jQuery 코드를 바닐라 JS로 옮겨줘", "files_touched": 3, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.migration"}
+{"id": "d064", "split": "dev", "prompt": "이 쿼리 너무 느려. 인덱스 추가해서 빠르게 해줘", "files_touched": 1, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.performance"}
+{"id": "d065", "split": "dev", "prompt": "Optimize the image resizing loop, it takes 10s per image", "files_touched": 1, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.performance"}
+{"id": "d066", "split": "dev", "prompt": "메모리 사용량 줄여줘", "files_touched": 2, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.performance"}
+{"id": "d067", "split": "dev", "prompt": "Reduce the bundle size of the web app", "files_touched": 3, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.performance"}
+{"id": "d068", "split": "dev", "prompt": "API 응답 속도 개선해줘", "files_touched": 2, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.performance"}
+{"id": "d069", "split": "dev", "prompt": "Speed up the test suite, it runs for 20 minutes", "files_touched": 3, "tools": ["Bash", "Edit", "Read"], "test_calls": 1, "l1": "coding", "l2": "coding.performance"}
+{"id": "d070", "split": "dev", "prompt": "N+1 쿼리 문제 해결해줘", "files_touched": 2, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.performance"}
+{"id": "d071", "split": "dev", "prompt": "버튼 색상을 브랜드 컬러로 바꿔줘", "files_touched": 1, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.ui"}
+{"id": "d072", "split": "dev", "prompt": "Make the settings page responsive on mobile", "files_touched": 2, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.ui"}
+{"id": "d073", "split": "dev", "prompt": "다크 모드 지원 추가해줘", "files_touched": 4, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.ui"}
+{"id": "d074", "split": "dev", "prompt": "Center the modal and add a fade-in animation", "files_touched": 1, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.ui"}
+{"id": "d075", "split": "dev", "prompt": "로그인 화면 레이아웃 정리해줘", "files_touched": 1, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.ui"}
+{"id": "d076", "split": "dev", "prompt": "Change the font to Inter and increase line height", "files_touched": 1, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.ui"}
+{"id": "d077", "split": "dev", "prompt": "폼 입력칸에 placeholder랑 에러 스타일 넣어줘", "files_touched": 1, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.ui"}
+{"id": "d078", "split": "dev", "prompt": "Resolve the merge conflicts in main.py", "files_touched": 1, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.other"}
+{"id": "d079", "split": "dev", "prompt": "main 브랜치에 rebase하고 충돌 해결해줘", "files_touched": 2, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.other"}
+{"id": "d080", "split": "dev", "prompt": "Write a regex that matches Korean phone numbers", "files_touched": 0, "tools": [], "test_calls": 0, "l1": "coding", "l2": "coding.other"}
+{"id": "d081", "split": "dev", "prompt": "이 JSON 스키마에 맞는 샘플 데이터 5개 만들어줘", "files_touched": 1, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.other"}
+{"id": "d082", "split": "dev", "prompt": "Commit these changes with a good message", "files_touched": 0, "tools": ["Bash"], "test_calls": 0, "l1": "coding", "l2": "coding.other"}
+{"id": "d083", "split": "dev", "prompt": "프로젝트 의존성 설치하고 실행되는지만 확인해줘", "files_touched": 0, "tools": ["Bash"], "test_calls": 0, "l1": "coding", "l2": "coding.other"}
+{"id": "d084", "split": "dev", "prompt": "Convert this curl command to Python requests code", "files_touched": 0, "tools": [], "test_calls": 0, "l1": "coding", "l2": "coding.other"}
+{"id": "d085", "split": "dev", "prompt": "팀 공지 이메일 초안 써줘", "files_touched": 0, "tools": [], "test_calls": 0, "l1": "writing", "l2": null}
+{"id": "d086", "split": "dev", "prompt": "Rewrite this paragraph to sound more professional", "files_touched": 0, "tools": [], "test_calls": 0, "l1": "writing", "l2": null}
+{"id": "d087", "split": "dev", "prompt": "이 기사를 세 줄로 요약해줘", "files_touched": 0, "tools": [], "test_calls": 0, "l1": "writing", "l2": null}
+{"id": "d088", "split": "dev", "prompt": "Translate this cover letter into English", "files_touched": 0, "tools": [], "test_calls": 0, "l1": "writing", "l2": null}
+{"id": "d089", "split": "dev", "prompt": "PostgreSQL과 MySQL의 라이선스 차이 알려줘", "files_touched": 0, "tools": [], "test_calls": 0, "l1": "research_qa", "l2": null}
+{"id": "d090", "split": "dev", "prompt": "Find out which EU countries require eSIM registration", "files_touched": 0, "tools": ["WebSearch"], "test_calls": 0, "l1": "research_qa", "l2": null}
+{"id": "d091", "split": "dev", "prompt": "전기차 보조금 조건 조사해줘", "files_touched": 0, "tools": ["WebSearch"], "test_calls": 0, "l1": "research_qa", "l2": null}
+{"id": "d092", "split": "dev", "prompt": "Compare the top three note-taking apps for students", "files_touched": 0, "tools": [], "test_calls": 0, "l1": "research_qa", "l2": null}
+{"id": "d093", "split": "dev", "prompt": "이 확률 문제 풀어줘: 주사위 두 개 합이 7일 확률", "files_touched": 0, "tools": [], "test_calls": 0, "l1": "analysis_math", "l2": null}
+{"id": "d094", "split": "dev", "prompt": "Calculate the monthly payment for a 300k loan at 4% over 30 years", "files_touched": 0, "tools": [], "test_calls": 0, "l1": "analysis_math", "l2": null}
+{"id": "d095", "split": "dev", "prompt": "Prove that the square root of 2 is irrational", "files_touched": 0, "tools": [], "test_calls": 0, "l1": "analysis_math", "l2": null}
+{"id": "d096", "split": "dev", "prompt": "매출 데이터 추세 분석해줘", "files_touched": 0, "tools": [], "test_calls": 0, "l1": "analysis_math", "l2": null}
+{"id": "d097", "split": "dev", "prompt": "Clean this CSV: remove duplicate rows and normalize dates", "files_touched": 0, "tools": [], "test_calls": 0, "l1": "data", "l2": null}
+{"id": "d098", "split": "dev", "prompt": "엑셀 시트 두 개 합쳐서 정리해줘", "files_touched": 0, "tools": [], "test_calls": 0, "l1": "data", "l2": null}
+{"id": "d099", "split": "dev", "prompt": "Convert this spreadsheet to JSON", "files_touched": 0, "tools": [], "test_calls": 0, "l1": "data", "l2": null}
+{"id": "d100", "split": "dev", "prompt": "고객 데이터셋에서 결측치 비율 알려줘", "files_touched": 0, "tools": [], "test_calls": 0, "l1": "data", "l2": null}
+{"id": "d101", "split": "dev", "prompt": "내 받은편지함에서 뉴스레터 다 보관처리해줘", "files_touched": 0, "tools": ["mcp"], "test_calls": 0, "l1": "agentic_ops", "l2": null}
+{"id": "d102", "split": "dev", "prompt": "Book a meeting with the design team next Tuesday at 3pm", "files_touched": 0, "tools": ["mcp"], "test_calls": 0, "l1": "agentic_ops", "l2": null}
+{"id": "d103", "split": "dev", "prompt": "다운로드 폴더에서 오래된 파일 정리해줘", "files_touched": 0, "tools": ["Bash"], "test_calls": 0, "l1": "agentic_ops", "l2": null}
+{"id": "d104", "split": "dev", "prompt": "Rename all photos in this folder by date taken", "files_touched": 0, "tools": ["Bash"], "test_calls": 0, "l1": "agentic_ops", "l2": null}
+{"id": "d105", "split": "dev", "prompt": "고양이가 주인공인 짧은 동화 써줘", "files_touched": 0, "tools": [], "test_calls": 0, "l1": "creative", "l2": null}
+{"id": "d106", "split": "dev", "prompt": "Write a haiku about autumn rain", "files_touched": 0, "tools": [], "test_calls": 0, "l1": "creative", "l2": null}
+{"id": "d107", "split": "dev", "prompt": "판타지 소설 세계관 설정 아이디어 줘", "files_touched": 0, "tools": [], "test_calls": 0, "l1": "creative", "l2": null}
+{"id": "d108", "split": "dev", "prompt": "Come up with 10 names for a coffee shop", "files_touched": 0, "tools": [], "test_calls": 0, "l1": "creative", "l2": null}
+{"id": "d109", "split": "dev", "prompt": "안녕! 오늘 기분이 좀 별로야", "files_touched": 0, "tools": [], "test_calls": 0, "l1": "conversation", "l2": null}
+{"id": "d110", "split": "dev", "prompt": "Thanks, that was helpful!", "files_touched": 0, "tools": [], "test_calls": 0, "l1": "conversation", "l2": null}
+{"id": "d111", "split": "dev", "prompt": "심심한데 얘기나 하자", "files_touched": 0, "tools": [], "test_calls": 0, "l1": "conversation", "l2": null}
+{"id": "d112", "split": "dev", "prompt": "How's it going?", "files_touched": 0, "tools": [], "test_calls": 0, "l1": "conversation", "l2": null}
+{"id": "d113", "split": "dev", "prompt": "미적분의 기본 정리를 고등학생 수준으로 설명해줘", "files_touched": 0, "tools": [], "test_calls": 0, "l1": "education", "l2": null}
+{"id": "d114", "split": "dev", "prompt": "Teach me the basics of Spanish verb conjugation", "files_touched": 0, "tools": [], "test_calls": 0, "l1": "education", "l2": null}
+{"id": "d115", "split": "dev", "prompt": "영어 단어 암기 퀴즈 10문제 만들어줘", "files_touched": 0, "tools": [], "test_calls": 0, "l1": "education", "l2": null}
+{"id": "d116", "split": "dev", "prompt": "Explain photosynthesis like I'm 10", "files_touched": 0, "tools": [], "test_calls": 0, "l1": "education", "l2": null}
+{"id": "d117", "split": "dev", "prompt": "오늘 저녁 메뉴 추천해줘", "files_touched": 0, "tools": [], "test_calls": 0, "l1": "other", "l2": null}
+{"id": "d118", "split": "dev", "prompt": "Pick a random number between 1 and 100", "files_touched": 0, "tools": [], "test_calls": 0, "l1": "other", "l2": null}
+{"id": "d119", "split": "dev", "prompt": "이 이미지에 뭐가 있어?", "files_touched": 0, "tools": [], "test_calls": 0, "l1": "other", "l2": null}
+{"id": "d120", "split": "dev", "prompt": "Suggest a workout routine for beginners", "files_touched": 0, "tools": [], "test_calls": 0, "l1": "other", "l2": null}
+{"id": "t001", "split": "test", "prompt": "회원 탈퇴하면 세션이 안 지워지는 버그 고쳐줘", "files_touched": 2, "tools": ["Bash", "Edit", "Read"], "test_calls": 1, "l1": "coding", "l2": "coding.bugfix"}
+{"id": "t002", "split": "test", "prompt": "TypeError: cannot read properties of undefined (reading 'map') — fix this", "files_touched": 1, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.bugfix"}
+{"id": "t003", "split": "test", "prompt": "The cron job runs twice every night, figure out why and fix it", "files_touched": 1, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.bugfix"}
+{"id": "t004", "split": "test", "prompt": "정렬이 가끔 이상하게 나와. 수정 부탁해", "files_touched": 1, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.bugfix"}
+{"id": "t005", "split": "test", "prompt": "Login redirects loop forever after the OAuth change", "files_touched": 2, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.bugfix"}
+{"id": "t006", "split": "test", "prompt": "CI에서만 테스트가 실패해. 원인 찾아서 고쳐", "files_touched": 2, "tools": ["Bash", "Edit", "Read"], "test_calls": 2, "l1": "coding", "l2": "coding.bugfix"}
+{"id": "t007", "split": "test", "prompt": "Dates show one day off for users in UTC-5; fix the timezone handling", "files_touched": 1, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.bugfix"}
+{"id": "t008", "split": "test", "prompt": "게시글에 좋아요 기능 넣어줘", "files_touched": 3, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.feature"}
+{"id": "t009", "split": "test", "prompt": "Add rate limiting to the public API", "files_touched": 2, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.feature"}
+{"id": "t010", "split": "test", "prompt": "Implement OAuth login with Google", "files_touched": 4, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.feature"}
+{"id": "t011", "split": "test", "prompt": "사용자별 알림 설정 저장하는 API 만들어줘", "files_touched": 3, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.feature"}
+{"id": "t012", "split": "test", "prompt": "Let admins export the audit log as JSON", "files_touched": 2, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.feature"}
+{"id": "t013", "split": "test", "prompt": "검색창에 자동완성 붙여줘", "files_touched": 2, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.feature"}
+{"id": "t014", "split": "test", "prompt": "Allow users to reset their password via email", "files_touched": 3, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.feature"}
+{"id": "t015", "split": "test", "prompt": "이 클래스 책임이 너무 많아. 분리해줘", "files_touched": 3, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.refactor"}
+{"id": "t016", "split": "test", "prompt": "Refactor the reducer into smaller pure functions", "files_touched": 1, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.refactor"}
+{"id": "t017", "split": "test", "prompt": "Replace the nested if/else chain with a lookup table", "files_touched": 1, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.refactor"}
+{"id": "t018", "split": "test", "prompt": "리팩토링: 전역 변수 없애고 설정 객체로 넘기게 해줘", "files_touched": 4, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.refactor"}
+{"id": "t019", "split": "test", "prompt": "Simplify this function without changing behavior", "files_touched": 1, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.refactor"}
+{"id": "t020", "split": "test", "prompt": "Move the shared helpers into a common package", "files_touched": 5, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.refactor"}
+{"id": "t021", "split": "test", "prompt": "코드 중복 제거하고 공통 로직 합쳐줘", "files_touched": 3, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.refactor"}
+{"id": "t022", "split": "test", "prompt": "로그인 API 테스트 코드 작성해줘", "files_touched": 1, "tools": ["Bash", "Edit", "Read"], "test_calls": 1, "l1": "coding", "l2": "coding.test"}
+{"id": "t023", "split": "test", "prompt": "Add unit tests for the cart total calculation", "files_touched": 1, "tools": ["Bash", "Edit", "Read"], "test_calls": 1, "l1": "coding", "l2": "coding.test"}
+{"id": "t024", "split": "test", "prompt": "Write tests that reproduce the race condition", "files_touched": 1, "tools": ["Bash", "Edit", "Read"], "test_calls": 1, "l1": "coding", "l2": "coding.test"}
+{"id": "t025", "split": "test", "prompt": "스냅샷 테스트 추가해줘", "files_touched": 1, "tools": ["Bash", "Edit", "Read"], "test_calls": 1, "l1": "coding", "l2": "coding.test"}
+{"id": "t026", "split": "test", "prompt": "Increase test coverage for the parser module", "files_touched": 2, "tools": ["Bash", "Edit", "Read"], "test_calls": 1, "l1": "coding", "l2": "coding.test"}
+{"id": "t027", "split": "test", "prompt": "Mock the HTTP client in the payment tests so they don't hit the network", "files_touched": 1, "tools": ["Bash", "Edit", "Read"], "test_calls": 1, "l1": "coding", "l2": "coding.test"}
+{"id": "t028", "split": "test", "prompt": "property-based 테스트로 정렬 함수 검증해줘", "files_touched": 1, "tools": ["Bash", "Edit", "Read"], "test_calls": 1, "l1": "coding", "l2": "coding.test"}
+{"id": "t029", "split": "test", "prompt": "Docker Compose에 redis 서비스 추가해줘", "files_touched": 1, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.config_devops"}
+{"id": "t030", "split": "test", "prompt": "Set up a GitHub Actions workflow that runs lint on PRs", "files_touched": 1, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.config_devops"}
+{"id": "t031", "split": "test", "prompt": "Terraform으로 S3 버킷 만들어줘", "files_touched": 1, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.config_devops"}
+{"id": "t032", "split": "test", "prompt": "Configure ESLint to allow unused vars starting with _", "files_touched": 1, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.config_devops"}
+{"id": "t033", "split": "test", "prompt": "환경 변수를 .env 파일에서 읽도록 설정해줘", "files_touched": 2, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.config_devops"}
+{"id": "t034", "split": "test", "prompt": "Add a health check probe to the Kubernetes deployment", "files_touched": 1, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.config_devops"}
+{"id": "t035", "split": "test", "prompt": "빌드 캐시가 안 먹어서 CI가 느려. 캐시 설정 고쳐줘", "files_touched": 1, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.config_devops"}
+{"id": "t036", "split": "test", "prompt": "README 영어 버전도 만들어줘", "files_touched": 1, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.docs"}
+{"id": "t037", "split": "test", "prompt": "Update the API docs for the new endpoint", "files_touched": 1, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.docs"}
+{"id": "t038", "split": "test", "prompt": "함수마다 주석 달아줘", "files_touched": 2, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.docs"}
+{"id": "t039", "split": "test", "prompt": "Write a migration guide for users upgrading to v2", "files_touched": 1, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.docs"}
+{"id": "t040", "split": "test", "prompt": "설치 가이드에 윈도우 설명 추가해줘", "files_touched": 1, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.docs"}
+{"id": "t041", "split": "test", "prompt": "Generate a man page for the CLI", "files_touched": 1, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.docs"}
+{"id": "t042", "split": "test", "prompt": "변경 이력 정리해서 CHANGELOG에 넣어줘", "files_touched": 1, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.docs"}
+{"id": "t043", "split": "test", "prompt": "이 코드 리뷰 좀 해줘", "files_touched": 0, "tools": ["Grep", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.review"}
+{"id": "t044", "split": "test", "prompt": "Review this migration script before I run it on prod", "files_touched": 0, "tools": ["Grep", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.review"}
+{"id": "t045", "split": "test", "prompt": "보안 관점에서 검토해줘", "files_touched": 0, "tools": ["Grep", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.review"}
+{"id": "t046", "split": "test", "prompt": "Is this implementation thread-safe? Point out problems.", "files_touched": 0, "tools": ["Grep", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.review"}
+{"id": "t047", "split": "test", "prompt": "PR #42 diff 보고 개선점 알려줘", "files_touched": 0, "tools": ["Bash"], "test_calls": 0, "l1": "coding", "l2": "coding.review"}
+{"id": "t048", "split": "test", "prompt": "Critique my API design", "files_touched": 0, "tools": ["Grep", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.review"}
+{"id": "t049", "split": "test", "prompt": "코드 스멜 있는지 봐줘", "files_touched": 0, "tools": ["Grep", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.review"}
+{"id": "t050", "split": "test", "prompt": "이 SQL 쿼리가 뭘 하는지 설명해줘", "files_touched": 0, "tools": [], "test_calls": 0, "l1": "coding", "l2": "coding.explain"}
+{"id": "t051", "split": "test", "prompt": "How does the caching layer invalidate entries?", "files_touched": 0, "tools": ["Grep", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.explain"}
+{"id": "t052", "split": "test", "prompt": "Explain what this bash one-liner does", "files_touched": 0, "tools": [], "test_calls": 0, "l1": "coding", "l2": "coding.explain"}
+{"id": "t053", "split": "test", "prompt": "왜 여기서 async를 써야 해?", "files_touched": 0, "tools": ["Read"], "test_calls": 0, "l1": "coding", "l2": "coding.explain"}
+{"id": "t054", "split": "test", "prompt": "What's the difference between these two config files?", "files_touched": 0, "tools": ["Read"], "test_calls": 0, "l1": "coding", "l2": "coding.explain"}
+{"id": "t055", "split": "test", "prompt": "이 저장소 처음 보는데 전체 구조 설명해줘", "files_touched": 0, "tools": ["Glob", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.explain"}
+{"id": "t056", "split": "test", "prompt": "Help me understand this stack trace", "files_touched": 0, "tools": [], "test_calls": 0, "l1": "coding", "l2": "coding.explain"}
+{"id": "t057", "split": "test", "prompt": "Vue 2에서 Vue 3로 마이그레이션해줘", "files_touched": 10, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.migration"}
+{"id": "t058", "split": "test", "prompt": "Upgrade the project to Node 20", "files_touched": 2, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.migration"}
+{"id": "t059", "split": "test", "prompt": "Move from setup.py to pyproject.toml", "files_touched": 2, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.migration"}
+{"id": "t060", "split": "test", "prompt": "안드로이드 targetSdk 버전 올려줘", "files_touched": 1, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.migration"}
+{"id": "t061", "split": "test", "prompt": "Convert the codebase from JavaScript to TypeScript", "files_touched": 12, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.migration"}
+{"id": "t062", "split": "test", "prompt": "requests 라이브러리를 httpx로 교체해줘", "files_touched": 4, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.migration"}
+{"id": "t063", "split": "test", "prompt": "Bump Django to 5.1 and fix deprecations", "files_touched": 5, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.migration"}
+{"id": "t064", "split": "test", "prompt": "이미지 로딩 너무 느려. 최적화해줘", "files_touched": 2, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.performance"}
+{"id": "t065", "split": "test", "prompt": "Profile the report generator and make it faster", "files_touched": 2, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.performance"}
+{"id": "t066", "split": "test", "prompt": "Cache the results of the expensive API call", "files_touched": 1, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.performance"}
+{"id": "t067", "split": "test", "prompt": "첫 화면 렌더링 시간 줄여줘", "files_touched": 2, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.performance"}
+{"id": "t068", "split": "test", "prompt": "Reduce p99 latency of the search endpoint", "files_touched": 2, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.performance"}
+{"id": "t069", "split": "test", "prompt": "이 루프 성능 개선해줘", "files_touched": 1, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.performance"}
+{"id": "t070", "split": "test", "prompt": "Batch the database writes instead of inserting one row at a time", "files_touched": 1, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.performance"}
+{"id": "t071", "split": "test", "prompt": "카드 컴포넌트 그림자랑 둥근 모서리 넣어줘", "files_touched": 1, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.ui"}
+{"id": "t072", "split": "test", "prompt": "Make the table scroll horizontally on small screens", "files_touched": 1, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.ui"}
+{"id": "t073", "split": "test", "prompt": "헤더 로고 크기 줄이고 가운데 정렬해줘", "files_touched": 1, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.ui"}
+{"id": "t074", "split": "test", "prompt": "Add a loading spinner while data is fetched", "files_touched": 1, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.ui"}
+{"id": "t075", "split": "test", "prompt": "Style the sign-up page to match the Figma mockup", "files_touched": 2, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.ui"}
+{"id": "t076", "split": "test", "prompt": "버튼 hover 효과 넣어줘", "files_touched": 1, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.ui"}
+{"id": "t077", "split": "test", "prompt": "Improve the layout of the dashboard cards", "files_touched": 1, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.ui"}
+{"id": "t078", "split": "test", "prompt": "Squash the last three commits into one", "files_touched": 0, "tools": ["Bash"], "test_calls": 0, "l1": "coding", "l2": "coding.other"}
+{"id": "t079", "split": "test", "prompt": "충돌 난 파일들 머지해줘", "files_touched": 2, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.other"}
+{"id": "t080", "split": "test", "prompt": "이 패키지 설치하고 hello world 돌려봐", "files_touched": 0, "tools": ["Bash"], "test_calls": 0, "l1": "coding", "l2": "coding.other"}
+{"id": "t081", "split": "test", "prompt": "Tag this release as v1.2.0 and push the tag", "files_touched": 0, "tools": ["Bash"], "test_calls": 0, "l1": "coding", "l2": "coding.other"}
+{"id": "t082", "split": "test", "prompt": "Write a SQL query that returns the top 5 customers by revenue", "files_touched": 0, "tools": [], "test_calls": 0, "l1": "coding", "l2": "coding.other"}
+{"id": "t083", "split": "test", "prompt": "스크립트에 실행 권한 주고 한 번 돌려줘", "files_touched": 0, "tools": ["Bash"], "test_calls": 0, "l1": "coding", "l2": "coding.other"}
+{"id": "t084", "split": "test", "prompt": "Format all files with prettier", "files_touched": 10, "tools": ["Edit", "Read"], "test_calls": 0, "l1": "coding", "l2": "coding.other"}
+{"id": "t085", "split": "test", "prompt": "사과 메일 정중하게 다시 써줘", "files_touched": 0, "tools": [], "test_calls": 0, "l1": "writing", "l2": null}
+{"id": "t086", "split": "test", "prompt": "Draft a LinkedIn post announcing my new job", "files_touched": 0, "tools": [], "test_calls": 0, "l1": "writing", "l2": null}
+{"id": "t087", "split": "test", "prompt": "회의록 요약해줘", "files_touched": 0, "tools": [], "test_calls": 0, "l1": "writing", "l2": null}
+{"id": "t088", "split": "test", "prompt": "Proofread this essay for grammar mistakes", "files_touched": 0, "tools": [], "test_calls": 0, "l1": "writing", "l2": null}
+{"id": "t089", "split": "test", "prompt": "요즘 많이 쓰는 노트북 비교해줘", "files_touched": 0, "tools": ["WebSearch"], "test_calls": 0, "l1": "research_qa", "l2": null}
+{"id": "t090", "split": "test", "prompt": "What is the difference between a Roth IRA and a traditional IRA?", "files_touched": 0, "tools": [], "test_calls": 0, "l1": "research_qa", "l2": null}
+{"id": "t091", "split": "test", "prompt": "서울에서 부산까지 KTX 소요 시간 찾아줘", "files_touched": 0, "tools": ["WebSearch"], "test_calls": 0, "l1": "research_qa", "l2": null}
+{"id": "t092", "split": "test", "prompt": "Look up when the next solar eclipse visible from Korea is", "files_touched": 0, "tools": ["WebSearch"], "test_calls": 0, "l1": "research_qa", "l2": null}
+{"id": "t093", "split": "test", "prompt": "이 연립방정식 풀어줘", "files_touched": 0, "tools": [], "test_calls": 0, "l1": "analysis_math", "l2": null}
+{"id": "t094", "split": "test", "prompt": "What's the expected value of this lottery ticket?", "files_touched": 0, "tools": [], "test_calls": 0, "l1": "analysis_math", "l2": null}
+{"id": "t095", "split": "test", "prompt": "t-검정 결과 해석해줘", "files_touched": 0, "tools": [], "test_calls": 0, "l1": "analysis_math", "l2": null}
+{"id": "t096", "split": "test", "prompt": "Calculate compound interest on 10,000 at 5% for 7 years", "files_touched": 0, "tools": [], "test_calls": 0, "l1": "analysis_math", "l2": null}
+{"id": "t097", "split": "test", "prompt": "이 CSV에서 중복 제거해줘", "files_touched": 0, "tools": [], "test_calls": 0, "l1": "data", "l2": null}
+{"id": "t098", "split": "test", "prompt": "Pivot this spreadsheet by month and region", "files_touched": 0, "tools": [], "test_calls": 0, "l1": "data", "l2": null}
+{"id": "t099", "split": "test", "prompt": "주소 데이터 정리해서 시/구/동으로 나눠줘", "files_touched": 0, "tools": [], "test_calls": 0, "l1": "data", "l2": null}
+{"id": "t100", "split": "test", "prompt": "Merge these two datasets on customer_id", "files_touched": 0, "tools": [], "test_calls": 0, "l1": "data", "l2": null}
+{"id": "t101", "split": "test", "prompt": "캘린더에 다음 주 월요일 치과 예약 넣어줘", "files_touched": 0, "tools": ["mcp"], "test_calls": 0, "l1": "agentic_ops", "l2": null}
+{"id": "t102", "split": "test", "prompt": "Send the weekly report to the team Slack channel", "files_touched": 0, "tools": ["mcp"], "test_calls": 0, "l1": "agentic_ops", "l2": null}
+{"id": "t103", "split": "test", "prompt": "데스크톱에 있는 스크린샷들 폴더로 옮겨줘", "files_touched": 0, "tools": ["Bash"], "test_calls": 0, "l1": "agentic_ops", "l2": null}
+{"id": "t104", "split": "test", "prompt": "Unsubscribe me from marketing emails in my inbox", "files_touched": 0, "tools": ["mcp"], "test_calls": 0, "l1": "agentic_ops", "l2": null}
+{"id": "t105", "split": "test", "prompt": "우주 배경 SF 단편 줄거리 짜줘", "files_touched": 0, "tools": [], "test_calls": 0, "l1": "creative", "l2": null}
+{"id": "t106", "split": "test", "prompt": "Write song lyrics about a rainy Monday", "files_touched": 0, "tools": [], "test_calls": 0, "l1": "creative", "l2": null}
+{"id": "t107", "split": "test", "prompt": "캐릭터 이름 다섯 개 지어줘", "files_touched": 0, "tools": [], "test_calls": 0, "l1": "creative", "l2": null}
+{"id": "t108", "split": "test", "prompt": "Invent a board game for a family of four", "files_touched": 0, "tools": [], "test_calls": 0, "l1": "creative", "l2": null}
+{"id": "t109", "split": "test", "prompt": "고마워, 덕분에 살았다", "files_touched": 0, "tools": [], "test_calls": 0, "l1": "conversation", "l2": null}
+{"id": "t110", "split": "test", "prompt": "I'm bored, tell me something fun", "files_touched": 0, "tools": [], "test_calls": 0, "l1": "conversation", "l2": null}
+{"id": "t111", "split": "test", "prompt": "잘 자!", "files_touched": 0, "tools": [], "test_calls": 0, "l1": "conversation", "l2": null}
+{"id": "t112", "split": "test", "prompt": "Good morning! What's up?", "files_touched": 0, "tools": [], "test_calls": 0, "l1": "conversation", "l2": null}
+{"id": "t113", "split": "test", "prompt": "광합성 원리를 초등학생에게 설명하듯 알려줘", "files_touched": 0, "tools": [], "test_calls": 0, "l1": "education", "l2": null}
+{"id": "t114", "split": "test", "prompt": "Quiz me on world capitals", "files_touched": 0, "tools": [], "test_calls": 0, "l1": "education", "l2": null}
+{"id": "t115", "split": "test", "prompt": "일본어 히라가나 외우는 방법 가르쳐줘", "files_touched": 0, "tools": [], "test_calls": 0, "l1": "education", "l2": null}
+{"id": "t116", "split": "test", "prompt": "Explain Newton's second law with an example", "files_touched": 0, "tools": [], "test_calls": 0, "l1": "education", "l2": null}
+{"id": "t117", "split": "test", "prompt": "주말에 갈 만한 캠핑장 추천해줘", "files_touched": 0, "tools": [], "test_calls": 0, "l1": "other", "l2": null}
+{"id": "t118", "split": "test", "prompt": "Flip a coin for me", "files_touched": 0, "tools": [], "test_calls": 0, "l1": "other", "l2": null}
+{"id": "t119", "split": "test", "prompt": "이 사진 속 식물 이름이 뭐야?", "files_touched": 0, "tools": [], "test_calls": 0, "l1": "other", "l2": null}
+{"id": "t120", "split": "test", "prompt": "Pick a movie for tonight", "files_touched": 0, "tools": [], "test_calls": 0, "l1": "other", "l2": null}
