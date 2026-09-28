@@ -8,9 +8,14 @@
 * Pre-alpha safety: only loopback endpoints (127.0.0.1, ::1, localhost) are
   allowed unless ``--allow-non-loopback`` is also given. There is no public
   ModelReceipts server yet.
-* Contributor counting (k-threshold) uses a random install id kept in a local
-  file and sent as ``X-ModelReceipts-Install``; the server stores only a salted
-  hash. ``--anonymous`` sends none. The file is created only when actually sending.
+* Contributor counting (k-threshold) uses a local Ed25519 install key
+  (``signing.py``): the request is signed and the server counts verified public
+  keys (stored as a salted hash). ``--anonymous`` sends an unsigned request,
+  which servers in the default ``--signatures required`` mode refuse. The key
+  file is created only when actually sending.
+
+``query`` (same module, because it uses the network) fetches the
+contributor-only detailed aggregates with a signed GET.
 
 The ``hook`` command never imports this module.
 """
@@ -20,16 +25,13 @@ from __future__ import annotations
 import argparse
 import ipaddress
 import json
-import os
 import sys
-import uuid
 from pathlib import Path
-from urllib.parse import urlsplit
+from urllib.parse import urlencode, urlsplit
 
+from .signing import DEFAULT_KEY_FILE, InstallKey, load_or_create_key, sign_request
 from .validate import load_validator
 
-DEFAULT_INSTALL_ID_FILE = Path(os.environ.get("XDG_STATE_HOME", Path.home() / ".local" / "state")) / "modelreceipts" / "install_id"
-INSTALL_HEADER = "X-ModelReceipts-Install"
 PREVIEW_BANNER = "[modelreceipts] PREVIEW — this is exactly what would be sent:"
 
 
@@ -55,32 +57,10 @@ def records_url(endpoint: str) -> str:
     return base if base.endswith("/v1/records") else base + "/v1/records"
 
 
-def load_install_id(path: Path) -> str:
-    try:
-        value = path.read_text(encoding="utf-8").strip()
-        if value:
-            return value
-    except OSError:
-        pass
-    value = str(uuid.uuid4())
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(value + "\n", encoding="utf-8")
-    try:
-        path.chmod(0o600)
-    except OSError:
-        pass
-    return value
-
-
-def send(record: dict, endpoint: str, install_id: str | None, timeout: float = 10.0) -> tuple[int, dict]:
+def _open(req, timeout: float, endpoint: str) -> tuple[int, dict]:
     import urllib.error
     import urllib.request
 
-    body = json.dumps(record, ensure_ascii=False).encode("utf-8")
-    headers = {"Content-Type": "application/json", "User-Agent": "modelreceipts-collector"}
-    if install_id:
-        headers[INSTALL_HEADER] = install_id
-    req = urllib.request.Request(records_url(endpoint), data=body, headers=headers, method="POST")
     try:
         with urllib.request.urlopen(req, timeout=timeout) as resp:
             return resp.status, json.loads(resp.read() or b"{}")
@@ -92,6 +72,31 @@ def send(record: dict, endpoint: str, install_id: str | None, timeout: float = 1
         return err.code, detail
     except (urllib.error.URLError, OSError) as exc:
         raise SubmitError(f"could not reach {endpoint}: {exc}") from None
+
+
+def send(record: dict, endpoint: str, key: InstallKey | None, timeout: float = 10.0) -> tuple[int, dict]:
+    import urllib.request
+
+    url = records_url(endpoint)
+    body = json.dumps(record, ensure_ascii=False).encode("utf-8")
+    headers = {"Content-Type": "application/json", "User-Agent": "modelreceipts-collector"}
+    if key is not None:
+        headers.update(sign_request(key, "POST", urlsplit(url).path, body))
+    req = urllib.request.Request(url, data=body, headers=headers, method="POST")
+    return _open(req, timeout, endpoint)
+
+
+def fetch_detail(endpoint: str, key: InstallKey, params: dict, timeout: float = 10.0) -> tuple[int, dict]:
+    import urllib.request
+
+    parts = urlsplit(endpoint)
+    if parts.scheme not in {"http", "https"} or not parts.hostname:
+        raise SubmitError(f"endpoint must be an http(s) URL, got {endpoint!r}")
+    query = urlencode({k: v for k, v in params.items() if v})
+    path = "/v1/aggregates/detail" + (f"?{query}" if query else "")
+    headers = {"User-Agent": "modelreceipts-collector", **sign_request(key, "GET", path)}
+    req = urllib.request.Request(endpoint.rstrip("/") + path, headers=headers, method="GET")
+    return _open(req, timeout, endpoint)
 
 
 def _load_record(args) -> dict:
@@ -116,9 +121,10 @@ def main(argv: list[str]) -> int:
     parser.add_argument("--endpoint", help="server base URL, e.g. http://127.0.0.1:8787 — without it nothing is sent")
     parser.add_argument("--allow-non-loopback", action="store_true", help="permit endpoints other than 127.0.0.1/::1/localhost")
     ident = parser.add_mutually_exclusive_group()
-    ident.add_argument("--install-id-file", type=Path, default=DEFAULT_INSTALL_ID_FILE,
-                       help=f"random install id used for contributor counting (default {DEFAULT_INSTALL_ID_FILE})")
-    ident.add_argument("--anonymous", action="store_true", help="send no install id (counts as the shared 'anonymous' contributor)")
+    ident.add_argument("--key-file", type=Path, default=DEFAULT_KEY_FILE,
+                       help=f"local Ed25519 install key, created on first send (default {DEFAULT_KEY_FILE})")
+    ident.add_argument("--anonymous", action="store_true",
+                       help="send unsigned (servers requiring signatures refuse it; otherwise counts as one shared contributor)")
     args = parser.parse_args(argv)
 
     try:
@@ -145,13 +151,41 @@ def main(argv: list[str]) -> int:
         if not args.allow_non_loopback and not is_loopback(url):
             raise SubmitError(f"refusing non-loopback endpoint {args.endpoint!r} (pre-alpha); "
                               "pass --allow-non-loopback if you really mean it")
-        install_id = None if args.anonymous else load_install_id(args.install_id_file)
-        status, reply = send(record, url, install_id)
-    except SubmitError as exc:
+        key = None if args.anonymous else load_or_create_key(args.key_file)
+        status, reply = send(record, url, key)
+    except (SubmitError, OSError, ValueError) as exc:
         print(f"[modelreceipts] not sent: {exc}", file=sys.stderr)
         return 2
     print(f"[modelreceipts] POST {url} -> {status} {json.dumps(reply, ensure_ascii=False)}", file=sys.stderr)
     return 0 if status == 201 else 1
+
+
+def query_main(argv: list[str]) -> int:
+    parser = argparse.ArgumentParser(
+        prog="modelreceipts query",
+        description="Fetch the contributor-only detailed aggregates (signed GET /v1/aggregates/detail).")
+    parser.add_argument("--endpoint", required=True, help="server base URL, e.g. http://127.0.0.1:8787")
+    parser.add_argument("--allow-non-loopback", action="store_true")
+    parser.add_argument("--key-file", type=Path, default=DEFAULT_KEY_FILE,
+                        help="the install key you contributed with (must already exist)")
+    for name in ("source-type", "l1", "l2", "level"):
+        parser.add_argument(f"--{name}")
+    args = parser.parse_args(argv)
+    if not args.allow_non_loopback and not is_loopback(args.endpoint):
+        print(f"[modelreceipts] refusing non-loopback endpoint {args.endpoint!r}", file=sys.stderr)
+        return 2
+    if not args.key_file.exists():
+        print(f"[modelreceipts] no install key at {args.key_file}; contribute a record first", file=sys.stderr)
+        return 2
+    from .signing import load_key
+    try:
+        status, reply = fetch_detail(args.endpoint, load_key(args.key_file),
+                                     {"source_type": args.source_type, "l1": args.l1, "l2": args.l2, "level": args.level})
+    except (SubmitError, OSError, ValueError) as exc:
+        print(f"[modelreceipts] {exc}", file=sys.stderr)
+        return 2
+    print(json.dumps(reply, ensure_ascii=False, indent=2))
+    return 0 if status == 200 else 1
 
 
 if __name__ == "__main__":

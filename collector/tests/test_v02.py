@@ -253,3 +253,97 @@ class RetryBackfillTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class Ed25519Test(unittest.TestCase):
+    # RFC 8032 section 7.1, TEST 1-3 (secret, public, message, signature)
+    VECTORS = [
+        ("9d61b19deffd5a60ba844af492ec2cc44449c5697b326919703bac031cae7f60",
+         "d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a", "",
+         "e5564300c360ac729086e2cc806e828a84877f1eb8e5d974d873e065224901555fb8821590a33bacc61e39701cf9b46bd25bf5f0595bbe24655141438e7a100b"),
+        ("4ccd089b28ff96da9db6c346ec114e0f5b8a319f35aba624da8cf6ed4fb8a6fb",
+         "3d4017c3e843895a92b70aa74d1b7ebc9c982ccf2ec4968cc0cd55f12af4660c", "72",
+         "92a009a9f0d4cab8720e820b5f642540a2b27b5416503f8fb3762223ebdb69da085ac1e43e15996e458f3613d0f11d8c387b2eaeb4302aeeb00d291612bb0c00"),
+        ("c5aa8df43f9f837bedb7442f31dcb7b166d38535076f094b85ce3a2e0b4458f7",
+         "fc51cd8e6218a1a38da47ed00230f0580816ed13ba3303ac5deb911548908025", "af82",
+         "6291d657deec24024827e69c3abe01a30ce548a284743a445e3680d7db5ac3ac18ff9b538d16f290ae67f760984dc6594a7c15e9716ed28dc027beceea1ec40a"),
+    ]
+
+    def test_rfc8032_vectors(self):
+        from modelreceipts import ed25519
+        for sk, pk, msg, sig in self.VECTORS:
+            with self.subTest(pk=pk[:8]):
+                sk_b, msg_b = bytes.fromhex(sk), bytes.fromhex(msg)
+                self.assertEqual(ed25519.public_key(sk_b).hex(), pk)
+                self.assertEqual(ed25519.sign(sk_b, msg_b).hex(), sig)
+                self.assertTrue(ed25519.verify(bytes.fromhex(pk), msg_b, bytes.fromhex(sig)))
+                self.assertFalse(ed25519.verify(bytes.fromhex(pk), msg_b + b"x", bytes.fromhex(sig)))
+                bad = bytearray.fromhex(sig)
+                bad[5] ^= 1
+                self.assertFalse(ed25519.verify(bytes.fromhex(pk), msg_b, bytes(bad)))
+
+    def test_agrees_with_cryptography_if_installed(self):
+        try:
+            from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey, Ed25519PublicKey
+            from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
+        except ImportError:
+            self.skipTest("cryptography not installed (optional cross-check)")
+        from modelreceipts import ed25519
+        for i in range(3):
+            sk = ed25519.generate_secret()
+            ref = Ed25519PrivateKey.from_private_bytes(sk)
+            pk = ref.public_key().public_bytes(Encoding.Raw, PublicFormat.Raw)
+            msg = f"modelreceipts {i}".encode()
+            self.assertEqual(ed25519.public_key(sk), pk)
+            self.assertEqual(ed25519.sign(sk, msg), ref.sign(msg))  # Ed25519 is deterministic
+            Ed25519PublicKey.from_public_bytes(pk).verify(ed25519.sign(sk, msg), msg)
+
+
+class SigningTest(unittest.TestCase):
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp())
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp)
+
+    def test_key_file_is_private_stable_and_never_overwritten(self):
+        from modelreceipts.signing import load_or_create_key, save_key, generate_key
+        path = self.tmp / "state" / "install_key"
+        k1 = load_or_create_key(path)
+        self.assertEqual(path.stat().st_mode & 0o777, 0o600)
+        self.assertEqual(load_or_create_key(path), k1)
+        with self.assertRaises(FileExistsError):
+            save_key(generate_key(), path)
+
+    def test_request_signature_binds_method_path_body_and_time(self):
+        from modelreceipts.signing import SignatureError, generate_key, sign_request, verify_request
+        key = generate_key()
+        h = sign_request(key, "POST", "/v1/records", b'{"a":1}', now=1_000_000)
+        self.assertEqual(verify_request(h, "POST", "/v1/records", b'{"a":1}', now=1_000_100), key.public)
+        for args in [("POST", "/v1/records", b'{"a":2}'), ("GET", "/v1/records", b'{"a":1}'),
+                     ("POST", "/v1/other", b'{"a":1}')]:
+            with self.subTest(args=args[:2]), self.assertRaises(SignatureError):
+                verify_request(h, *args, now=1_000_000)
+        with self.assertRaises(SignatureError):
+            verify_request(h, "POST", "/v1/records", b'{"a":1}', now=1_000_000 + 3600)
+        with self.assertRaises(SignatureError):
+            verify_request({**h, "X-ModelReceipts-Key": "!!"}, "POST", "/v1/records", b'{"a":1}', now=1_000_000)
+
+
+class PairTest(unittest.TestCase):
+    def test_pairing_rules(self):
+        from modelreceipts.pair import check_pair, make_pair
+        a = _load(EXAMPLES / "01-stop-hook-bugfix-tests-passed.json")
+        b = json.loads(json.dumps(a))
+        b["record_id"] = "5b1f7c2e-9a41-4d3e-8c0a-2f6b9e1d4a11"
+        self.assertTrue(any("same primary model" in p for p in check_pair(a, b)))
+        b["model"]["id"] = "example-model-other"
+        self.assertEqual(check_pair(a, b), [])
+        pa, pb = make_pair(a, b)
+        self.assertEqual(pa["pairing"]["pair_id"], pb["pairing"]["pair_id"])
+        self.assertEqual(pa["source"]["collector"], "pair-mode")
+        self.assertEqual(load_validator().errors(pa), [])
+        self.assertTrue(any("already paired" in p for p in check_pair(pa, pb)))
+        c = json.loads(json.dumps(b))
+        c["task"]["l2"] = "coding.docs"
+        self.assertTrue(any("task codes differ" in p for p in check_pair(a, c)))

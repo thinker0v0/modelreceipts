@@ -282,7 +282,7 @@ class _Capture(BaseHTTPRequestHandler):
 
     def do_POST(self):
         body = self.rfile.read(int(self.headers["Content-Length"]))
-        type(self).received.append((self.path, self.headers, json.loads(body)))
+        type(self).received.append((self.path, self.headers, json.loads(body), body))
         out = json.dumps({"status": "stored"}).encode()
         self.send_response(201)
         self.send_header("Content-Type", "application/json")
@@ -300,7 +300,7 @@ class SubmitTest(unittest.TestCase):
         self.record_file = self.tmp / "record.json"
         self.record_file.write_text((DEFAULT_SCHEMA_PATH.parent / "examples" / "01-stop-hook-bugfix-tests-passed.json")
                                     .read_text(encoding="utf-8"), encoding="utf-8")
-        self.id_file = self.tmp / "state" / "install_id"
+        self.id_file = self.tmp / "state" / "install_key"
         self.calls = []
         import socket
         import urllib.request
@@ -322,7 +322,7 @@ class SubmitTest(unittest.TestCase):
     def _run(self, *extra):
         out, err = io.StringIO(), io.StringIO()
         with redirect_stdout(out), redirect_stderr(err):
-            code = submit_main(["--record", str(self.record_file), "--install-id-file", str(self.id_file), *extra])
+            code = submit_main(["--record", str(self.record_file), "--key-file", str(self.id_file), *extra])
         return code, out.getvalue(), err.getvalue()
 
     def test_without_endpoint_it_previews_and_sends_nothing(self):
@@ -378,10 +378,16 @@ class SubmitTest(unittest.TestCase):
             httpd.server_close()
         self.assertEqual(code, 0, err)
         self.assertEqual(len(_Capture.received), 1)
-        path, headers, body = _Capture.received[0]
+        path, headers, body, raw = _Capture.received[0]
         self.assertEqual(path, "/v1/records")
         self.assertEqual(body, json.loads(out))
-        self.assertEqual(headers.get("X-ModelReceipts-Install"), self.id_file.read_text().strip())
+        from modelreceipts.signing import load_key, verify_request
+        key = load_key(self.id_file)
+        self.assertEqual(verify_request(dict(headers), "POST", "/v1/records", raw), key.public)
+        self.assertEqual(self.id_file.stat().st_mode & 0o777, 0o600)
+        secret_b64 = json.loads(self.id_file.read_text())["secret"]
+        self.assertNotIn(secret_b64, "".join(f"{k}{v}" for k, v in headers.items()) + raw.decode())
+        self.assertIsNone(headers.get("X-ModelReceipts-Install"))
         self.assertIn("-> 201", err)
 
 

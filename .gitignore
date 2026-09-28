@@ -36,3 +36,4 @@ server/var/
 *.sqlite3
 *.sqlite3-*
 seeds/out/
+install_key*
