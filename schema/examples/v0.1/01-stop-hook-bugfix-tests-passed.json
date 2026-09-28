@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.2.0",
+  "schema_version": "0.1.0",
   "record_id": "5b1f7c2e-9a41-4d3e-8c0a-2f6b9e1d4a10",
   "submitted_at": "2026-09-27T09:12:44Z",
   "source": {
@@ -16,26 +16,13 @@
     "taxonomy_version": "t0.1",
     "classifier": "rules-v0",
     "interaction_type": "agentic",
-    "difficulty_prior": {
-      "files_touched": 2,
-      "context_tokens": 38120
-    }
+    "difficulty_prior": { "files_touched": 2, "context_tokens": 38120 }
   },
-  "model": {
-    "provider": "anthropic",
-    "id": "claude-opus-5-5",
-    "route": "direct",
-    "effort": "high"
-  },
+  "model": { "provider": "anthropic", "id": "claude-opus-5-5", "route": "direct", "effort": "high" },
   "method": {
     "harness": "claude-code",
     "workflow_tags": [],
-    "tools_used": [
-      "Bash",
-      "Edit",
-      "Grep",
-      "Read"
-    ]
+    "tools_used": ["Bash", "Edit", "Grep", "Read"]
   },
   "usage": {
     "input_tokens": 1840,
@@ -56,16 +43,10 @@
       "committed": true,
       "tool_error_count": 1,
       "reverted_within_7d": null,
-      "user_retry_next_prompt": null,
-      "retry_detector": null
+      "user_retry_next_prompt": null
     },
     "self_assessment": null
   },
-  "pairing": {
-    "pair_id": null
-  },
-  "privacy": {
-    "content_included": false,
-    "identifiers_included": false
-  }
+  "pairing": { "pair_id": null },
+  "privacy": { "content_included": false, "identifiers_included": false }
 }

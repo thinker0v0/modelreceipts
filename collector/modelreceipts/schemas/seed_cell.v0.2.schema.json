@@ -1,0 +1,297 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/thinker0v0/modelreceipts/schema/seed_cell.v0.2.schema.json",
+  "title": "ModelReceipts aggregate seed cell v0.2",
+  "description": "One AGGREGATE cell from a public seed source (preference win counts, usage share). Seed sources that are not task runs (pairwise votes, token usage) are stored as cells, never expanded into fake per-run records. Contains no prompts, responses or user identifiers.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "kind",
+    "cell_id",
+    "source",
+    "task",
+    "model",
+    "method",
+    "period",
+    "metrics",
+    "privacy"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "0.2.0"
+    },
+    "kind": {
+      "const": "seed_cell"
+    },
+    "cell_id": {
+      "$ref": "#/$defs/uuid"
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_type",
+        "source_id"
+      ],
+      "properties": {
+        "source_type": {
+          "description": "Seed layer. field_report is never a seed cell.",
+          "enum": [
+            "benchmark",
+            "preference",
+            "usage"
+          ]
+        },
+        "source_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9._@-]{0,95}$"
+        }
+      }
+    },
+    "task": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "l1",
+        "l2",
+        "taxonomy_version",
+        "classifier"
+      ],
+      "properties": {
+        "l1": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/l1"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "null = all tasks (the source has no task split, e.g. usage share)."
+        },
+        "l2": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/l2_coding"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "taxonomy_version": {
+          "const": "t0.1"
+        },
+        "classifier": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^(rules-v[0-9]+|seed:[a-z0-9._-]{1,64}|manual)$"
+        }
+      }
+    },
+    "model": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "provider",
+        "id"
+      ],
+      "properties": {
+        "provider": {
+          "$ref": "#/$defs/slug"
+        },
+        "id": {
+          "$ref": "#/$defs/model_id"
+        }
+      }
+    },
+    "method": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "harness"
+      ],
+      "properties": {
+        "harness": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/slug"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "period": {
+      "description": "Collection window of the source, if known.",
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "start",
+            "end"
+          ],
+          "properties": {
+            "start": {
+              "$ref": "#/$defs/date"
+            },
+            "end": {
+              "$ref": "#/$defs/date"
+            }
+          }
+        }
+      ]
+    },
+    "metrics": {
+      "anyOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "battles",
+            "wins",
+            "losses",
+            "ties",
+            "win_rate"
+          ],
+          "properties": {
+            "kind": {
+              "const": "preference"
+            },
+            "battles": {
+              "$ref": "#/$defs/count"
+            },
+            "wins": {
+              "$ref": "#/$defs/count"
+            },
+            "losses": {
+              "$ref": "#/$defs/count"
+            },
+            "ties": {
+              "$ref": "#/$defs/count"
+            },
+            "win_rate": {
+              "description": "(wins + ties/2) / battles",
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "tokens",
+            "share",
+            "rank"
+          ],
+          "properties": {
+            "kind": {
+              "const": "usage"
+            },
+            "tokens": {
+              "$ref": "#/$defs/count"
+            },
+            "share": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "rank": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 1
+            }
+          }
+        }
+      ]
+    },
+    "privacy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "content_included",
+        "identifiers_included"
+      ],
+      "properties": {
+        "content_included": {
+          "description": "Prompt/output text is never part of a record.",
+          "const": false
+        },
+        "identifiers_included": {
+          "description": "No paths, repo names, emails, hostnames or session ids.",
+          "const": false
+        }
+      }
+    }
+  },
+  "$defs": {
+    "uuid": {
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "slug": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$"
+    },
+    "model_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@-]{0,127}$"
+    },
+    "count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "l1": {
+      "description": "Closed L1 codes, taxonomy t0.1.",
+      "enum": [
+        "coding",
+        "writing",
+        "research_qa",
+        "analysis_math",
+        "data",
+        "agentic_ops",
+        "creative",
+        "conversation",
+        "education",
+        "other"
+      ]
+    },
+    "l2_coding": {
+      "description": "Closed coding L2 codes, taxonomy t0.1.",
+      "enum": [
+        "coding.bugfix",
+        "coding.feature",
+        "coding.refactor",
+        "coding.test",
+        "coding.config_devops",
+        "coding.docs",
+        "coding.review",
+        "coding.explain",
+        "coding.migration",
+        "coding.performance",
+        "coding.ui",
+        "coding.other"
+      ]
+    },
+    "date": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+    }
+  }
+}

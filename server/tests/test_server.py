@@ -33,7 +33,7 @@ def record(i: int, *, model="example-model-a", harness="claude-code", l2="coding
     r["method"]["harness"] = harness
     r["task"]["l2"] = l2
     r["outcome"]["evidence"]["tests_passed"] = passed
-    r["outcome"]["self_assessment"] = None if self_score is None else {"score": self_score, "rater": "self_llm", "judge_model": None}
+    r["outcome"]["self_assessment"] = None if self_score is None else {"score": self_score, "rater": "self_llm", "judge_model": None, "extractor": None}
     return r
 
 

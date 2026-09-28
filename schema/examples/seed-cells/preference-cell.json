@@ -1,0 +1,12 @@
+{
+  "schema_version": "0.2.0",
+  "kind": "seed_cell",
+  "cell_id": "5a0d7c1e-8b6f-5e2a-9c3d-2f1e0a9b8c71",
+  "source": {"source_type": "preference", "source_id": "example-preference@synthetic"},
+  "task": {"l1": "coding", "l2": null, "taxonomy_version": "t0.1", "classifier": "rules-v1"},
+  "model": {"provider": "example", "id": "example-model-a"},
+  "method": {"harness": null},
+  "period": null,
+  "metrics": {"kind": "preference", "battles": 412, "wins": 188, "losses": 161, "ties": 63, "win_rate": 0.5328},
+  "privacy": {"content_included": false, "identifiers_included": false}
+}

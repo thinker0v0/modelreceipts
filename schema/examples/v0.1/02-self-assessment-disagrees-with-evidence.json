@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.2.0",
+  "schema_version": "0.1.0",
   "record_id": "c3e8a0d4-1f27-4b6a-9e55-7d0c2b8f6a31",
   "submitted_at": "2026-09-27T10:03:10Z",
   "source": {
@@ -16,28 +16,13 @@
     "taxonomy_version": "t0.1",
     "classifier": "rules-v0",
     "interaction_type": "agentic",
-    "difficulty_prior": {
-      "files_touched": 5,
-      "context_tokens": 61500
-    }
+    "difficulty_prior": { "files_touched": 5, "context_tokens": 61500 }
   },
-  "model": {
-    "provider": "example",
-    "id": "example-model-b",
-    "route": "proxy",
-    "effort": null
-  },
+  "model": { "provider": "example", "id": "example-model-b", "route": "proxy", "effort": null },
   "method": {
     "harness": "claude-code",
-    "workflow_tags": [
-      "plan-mode"
-    ],
-    "tools_used": [
-      "Bash",
-      "Edit",
-      "Read",
-      "Write"
-    ]
+    "workflow_tags": ["plan-mode"],
+    "tools_used": ["Bash", "Edit", "Read", "Write"]
   },
   "usage": {
     "input_tokens": 5120,
@@ -45,7 +30,7 @@
     "cache_read_tokens": 388000,
     "cache_write_tokens": 30100,
     "cost_usd_client": null,
-    "cost_usd_server": null,
+    "cost_usd_server": 0.87,
     "latency_ms": 212000,
     "turns": 17
   },
@@ -58,21 +43,10 @@
       "committed": false,
       "tool_error_count": 4,
       "reverted_within_7d": null,
-      "user_retry_next_prompt": true,
-      "retry_detector": "retry-rules-v1"
+      "user_retry_next_prompt": true
     },
-    "self_assessment": {
-      "score": 1.0,
-      "rater": "self_claim",
-      "judge_model": null,
-      "extractor": "claim-rules-v1"
-    }
+    "self_assessment": { "score": 0.95, "rater": "self_llm", "judge_model": null }
   },
-  "pairing": {
-    "pair_id": null
-  },
-  "privacy": {
-    "content_included": false,
-    "identifiers_included": false
-  }
+  "pairing": { "pair_id": null },
+  "privacy": { "content_included": false, "identifiers_included": false }
 }

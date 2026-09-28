@@ -165,7 +165,9 @@ class RecordTest(unittest.TestCase):
         self.assertEqual(r["usage"]["turns"], 7)
         ev = r["outcome"]["evidence"]
         self.assertEqual((ev["test_runs"], ev["tests_passed"], ev["committed"]), (2, True, True))
-        self.assertIsNone(r["outcome"]["self_assessment"])
+        # "Done! Everything works perfectly." -> the agent's own claim, isolated as self-assessment
+        self.assertEqual(r["outcome"]["self_assessment"],
+                         {"score": 1.0, "rater": "self_claim", "judge_model": None, "extractor": "claim-rules-v1"})
         self.assertEqual(r["submitted_at"], "2026-09-27T09:01:00Z")
 
     def test_no_text_paths_or_identifiers_leak(self):
@@ -272,7 +274,7 @@ class NoNetworkTest(unittest.TestCase):
         self.assertEqual(proc.returncode, 0, proc.stderr)
         result = json.loads(proc.stderr.strip().splitlines()[-1])
         self.assertEqual(result, {"rc": 0, "bad": []})
-        self.assertIn('"schema_version": "0.1.0"', proc.stdout)
+        self.assertIn('"schema_version": "0.2.0"', proc.stdout)
 
 
 class _Capture(BaseHTTPRequestHandler):
@@ -420,16 +422,23 @@ class SchemaExamplesTest(unittest.TestCase):
             import jsonschema
         except ImportError:
             self.skipTest("jsonschema not installed (optional cross-check)")
-        schema = json.loads(DEFAULT_SCHEMA_PATH.read_text(encoding="utf-8"))
-        jsonschema.Draft202012Validator.check_schema(schema)
-        ref = jsonschema.Draft202012Validator(schema, format_checker=jsonschema.FormatChecker())
-        mine = load_validator()
-        base = json.loads(self.EXAMPLES[0].read_text(encoding="utf-8"))
-        samples = [(p.name, json.loads(p.read_text(encoding="utf-8"))) for p in self.EXAMPLES]
-        samples += list(self._mutations(base))
-        for label, inst in samples:
-            with self.subTest(sample=label):
-                self.assertEqual(bool(mine.errors(inst)), any(True for _ in ref.iter_errors(inst)))
+        from modelreceipts import SCHEMA_DIR
+        mine = load_validator(allow_seed_cells=True)
+        groups = {
+            "record.v0.2.schema.json": self.EXAMPLES,
+            "record.v0.1.schema.json": sorted((self.EXAMPLES[0].parent / "v0.1").glob("*.json")),
+            "seed_cell.v0.2.schema.json": sorted(self.EXAMPLES[0].parent.glob("seed-cells/*.json")),
+        }
+        for schema_file, files in groups.items():
+            schema = json.loads((SCHEMA_DIR / schema_file).read_text(encoding="utf-8"))
+            jsonschema.Draft202012Validator.check_schema(schema)
+            ref = jsonschema.Draft202012Validator(schema, format_checker=jsonschema.FormatChecker())
+            samples = [(p.name, json.loads(p.read_text(encoding="utf-8"))) for p in files]
+            if files and schema_file.startswith("record"):
+                samples += list(self._mutations(json.loads(files[0].read_text(encoding="utf-8"))))
+            for label, inst in samples:
+                with self.subTest(schema=schema_file, sample=label):
+                    self.assertEqual(bool(mine.errors(inst)), any(True for _ in ref.iter_errors(inst)))
 
 
 if __name__ == "__main__":

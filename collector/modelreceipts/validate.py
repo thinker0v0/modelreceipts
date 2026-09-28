@@ -5,9 +5,13 @@ FAILS LOUDLY on any other keyword, so the schema cannot silently outgrow it.
 If the third-party ``jsonschema`` package is installed, the test-suite also
 cross-checks results against it.
 
+The schema is chosen per document: ``kind: "seed_cell"`` -> seed-cell schema,
+otherwise ``schema_version`` 0.1.0 / 0.2.0 -> the matching record schema.
+
 CLI::
 
     python3 -m modelreceipts validate schema/examples/*.json
+    python3 -m modelreceipts validate --allow-seed-cells seeds/out/*.jsonl
 """
 
 from __future__ import annotations
@@ -19,7 +23,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Iterator
 
-from . import DEFAULT_SCHEMA_PATH
+from . import SCHEMA_DIR, SCHEMA_FILES
 
 # Keywords that carry no validation meaning here.
 _ANNOTATIONS = {"$schema", "$id", "$defs", "$comment", "title", "description", "default", "examples"}
@@ -167,35 +171,98 @@ class Validator:
         return list(self.iter_errors(instance))
 
 
-def load_validator(schema_path: Path | str = DEFAULT_SCHEMA_PATH) -> Validator:
+class AutoValidator:
+    """Pick the schema per document from ``kind`` / ``schema_version``."""
+
+    def __init__(self, versions: tuple[str, ...] = ("0.1.0", "0.2.0"), allow_seed_cells: bool = False,
+                 schema_dir: Path = SCHEMA_DIR):
+        self.versions = versions
+        self.allow_seed_cells = allow_seed_cells
+        self.schema_dir = Path(schema_dir)
+        self._cache: dict[tuple[str, str], Validator] = {}
+
+    def schema_key(self, instance: Any) -> tuple[str, str] | None:
+        if not isinstance(instance, dict):
+            return None
+        kind = "seed_cell" if instance.get("kind") == "seed_cell" else "record"
+        return kind, str(instance.get("schema_version"))
+
+    def _validator(self, key: tuple[str, str]) -> Validator:
+        if key not in self._cache:
+            with open(self.schema_dir / SCHEMA_FILES[key], encoding="utf-8") as fh:
+                self._cache[key] = Validator(json.load(fh))
+        return self._cache[key]
+
+    def errors(self, instance: Any) -> list[str]:
+        key = self.schema_key(instance)
+        if key is None:
+            return ["$: expected a JSON object"]
+        if key[0] == "seed_cell" and not self.allow_seed_cells:
+            return ["$.kind: seed cells are not accepted here"]
+        if key not in SCHEMA_FILES or (key[0] == "record" and key[1] not in self.versions):
+            allowed = [v for (k, v) in SCHEMA_FILES if k == key[0] and (k != "record" or v in self.versions)]
+            return [f"$.schema_version: {key[1]!r} is not supported for {key[0]} (supported: {allowed})"]
+        return self._validator(key).errors(instance)
+
+
+def load_validator(schema_path: Path | str | None = None, **kwargs):
+    """A fixed-schema ``Validator`` if ``schema_path`` is given, else an ``AutoValidator``."""
+    if schema_path is None:
+        return AutoValidator(**kwargs)
     with open(schema_path, encoding="utf-8") as fh:
         return Validator(json.load(fh))
+
+
+def iter_documents(path: Path) -> Iterator[tuple[str, Any]]:
+    """Yield (label, document) from a .json file or each line of a .jsonl file."""
+    if path.suffix == ".jsonl":
+        with open(path, encoding="utf-8") as fh:
+            for i, line in enumerate(fh, 1):
+                if line.strip():
+                    yield f"{path}:{i}", json.loads(line)
+    else:
+        with open(path, encoding="utf-8") as fh:
+            yield str(path), json.load(fh)
 
 
 def main(argv: list[str]) -> int:
     import argparse
 
-    parser = argparse.ArgumentParser(prog="modelreceipts validate", description="Validate record JSON files.")
+    parser = argparse.ArgumentParser(
+        prog="modelreceipts validate",
+        description="Validate record / seed-cell JSON (.json) or JSON Lines (.jsonl) files. "
+                    "The schema is picked per document from kind/schema_version unless --schema is given.")
     parser.add_argument("files", nargs="+", type=Path)
-    parser.add_argument("--schema", type=Path, default=DEFAULT_SCHEMA_PATH)
+    parser.add_argument("--schema", type=Path, help="force one schema file for every document")
+    parser.add_argument("--allow-seed-cells", action="store_true", help="accept kind=seed_cell documents")
+    parser.add_argument("--only-version", choices=["0.1.0", "0.2.0"], help="reject records of other versions")
+    parser.add_argument("--quiet", action="store_true", help="print failures and the summary only")
     args = parser.parse_args(argv)
 
-    validator = load_validator(args.schema)
-    failed = 0
+    if args.schema:
+        validator = load_validator(args.schema)
+    else:
+        versions = (args.only_version,) if args.only_version else ("0.1.0", "0.2.0")
+        validator = load_validator(versions=versions, allow_seed_cells=args.allow_seed_cells)
+    total = failed = 0
     for path in args.files:
         try:
-            with open(path, encoding="utf-8") as fh:
-                errs = validator.errors(json.load(fh))
+            docs = list(iter_documents(path))
         except (OSError, json.JSONDecodeError) as exc:
-            errs = [f"cannot read: {exc}"]
-        if errs:
-            failed += 1
-            print(f"FAIL {path}")
-            for e in errs:
-                print(f"  - {e}")
-        else:
-            print(f"OK   {path}")
-    print(f"{len(args.files) - failed}/{len(args.files)} valid")
+            docs = [(str(path), exc)]
+        for label, doc in docs:
+            total += 1
+            errs = [f"cannot read: {doc}"] if isinstance(doc, Exception) else validator.errors(doc)
+            if errs:
+                failed += 1
+                print(f"FAIL {label}")
+                for e in errs:
+                    print(f"  - {e}")
+            elif not args.quiet:
+                version = doc.get("schema_version") if isinstance(doc, dict) else "?"
+                kind = "seed_cell" if isinstance(doc, dict) and doc.get("kind") == "seed_cell" else "record"
+                print(f"OK   {label}  ({kind} {version})")
+    print(f"{total - failed}/{total} valid")
     return 1 if failed else 0
 
 

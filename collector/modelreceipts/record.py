@@ -1,4 +1,4 @@
-"""Build a schema v0.1 record from a Stop-hook payload and a turn summary.
+"""Build a schema v0.2 record from a Stop-hook payload and a turn summary.
 
 Whitelist design: the record is constructed field by field from derived
 values. Nothing from the payload (session id, cwd, paths, messages) is copied.
@@ -11,8 +11,9 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any, Mapping
 
-from . import CLASSIFIER_ID, SCHEMA_VERSION, TAXONOMY_VERSION
+from . import CLAIM_EXTRACTOR_ID, CLASSIFIER_ID, SCHEMA_VERSION, TAXONOMY_VERSION
 from .classify import classify
+from .signals import extract_claim
 from .transcript import SUBAGENT_TOOLS, TurnSummary
 
 _EFFORT_RE = re.compile(r"^[a-z]{1,16}$")
@@ -66,6 +67,13 @@ def _status(summary: TurnSummary) -> str:
     if summary.api_error and summary.api_calls == 0:
         return "error"
     return "completed"
+
+
+def _self_claim(summary: TurnSummary) -> dict | None:
+    score = extract_claim(summary.final_text)
+    if score is None:
+        return None
+    return {"score": score, "rater": "self_claim", "judge_model": None, "extractor": CLAIM_EXTRACTOR_ID}
 
 
 def build_record(
@@ -136,7 +144,7 @@ def build_record(
             "cache_read_tokens": summary.cache_read_tokens,
             "cache_write_tokens": summary.cache_write_tokens,
             "cost_usd_client": None,  # not present in transcripts; OTel enrichment is a later step
-            "cost_usd_server": None,  # recomputed server-side from a price table (not in v0.1)
+            "cost_usd_server": None,  # v0.2: always null in the body; the server stores its own value
             "latency_ms": summary.latency_ms,
             "turns": summary.api_calls,
         },
@@ -149,10 +157,14 @@ def build_record(
                 "committed": summary.committed,
                 "tool_error_count": summary.tool_error_count,
                 "reverted_within_7d": None,
+                # Filled locally when the NEXT turn of the session ends (hook --preview-dir).
                 "user_retry_next_prompt": None,
+                "retry_detector": None,
             },
-            # The collector never asks a model to grade itself.
-            "self_assessment": None,
+            # The collector never ASKS a model to grade itself. If the agent's own final
+            # message claims success/failure, that claim is scored by local rules and kept
+            # here, isolated from the evidence (excluded from rankings by default).
+            "self_assessment": _self_claim(summary),
         },
         "pairing": {"pair_id": None},
         "privacy": {"content_included": False, "identifiers_included": False},

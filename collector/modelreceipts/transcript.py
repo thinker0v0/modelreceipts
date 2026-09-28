@@ -47,6 +47,8 @@ class ToolCall:
 @dataclass
 class TurnSummary:
     prompt_text: str = ""  # LOCAL ONLY: used for classification, never serialised
+    previous_prompt_text: str = ""  # LOCAL ONLY: retry detection (near-duplicate check)
+    final_text: str = ""  # LOCAL ONLY: last assistant text of the turn, for the claim extractor
     prior_prompts: int = 0
     models: Counter = field(default_factory=Counter)  # model id -> output tokens
     api_calls: int = 0
@@ -156,18 +158,18 @@ def _read_entries(lines: Iterable[str]) -> Iterable[dict]:
 def summarize_last_turn(lines: Iterable[str]) -> TurnSummary:
     """Stream the transcript, keeping only entries of the last turn in memory."""
     turn: list[dict] = []
-    prompt = ""
+    prompt = previous = ""
     prompts_seen = 0
     for entry in _read_entries(lines):
         text = _prompt_text(entry)
         if text is not None and not text.startswith(INTERRUPT_MARKER):
             prompts_seen += 1
-            prompt = text
+            previous, prompt = prompt, text
             turn = [entry]
         else:
             turn.append(entry)
 
-    s = TurnSummary(prompt_text=prompt, prior_prompts=max(prompts_seen - 1, 0))
+    s = TurnSummary(prompt_text=prompt, previous_prompt_text=previous, prior_prompts=max(prompts_seen - 1, 0))
     per_message: dict[str, dict] = {}  # message.id -> best usage/model seen
     calls: dict[str, ToolCall] = {}
     order: list[str] = []
@@ -201,6 +203,10 @@ def summarize_last_turn(lines: Iterable[str]) -> TurnSummary:
             # keep the most complete copy (highest output_tokens).
             if prev is None or (usage.get("output_tokens") or 0) >= (prev["usage"].get("output_tokens") or 0):
                 per_message[mid] = {"usage": usage, "model": msg.get("model")}
+            texts = [b.get("text", "") for b in _content_blocks(entry)
+                     if b.get("type") == "text" and isinstance(b.get("text"), str)]
+            if any(t.strip() for t in texts) and not entry.get("isApiErrorMessage"):
+                s.final_text = "\n".join(texts)
             for block in _content_blocks(entry):
                 if block.get("type") == "tool_use" and isinstance(block.get("name"), str):
                     inp = block.get("input") if isinstance(block.get("input"), dict) else {}

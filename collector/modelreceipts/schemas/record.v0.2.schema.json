@@ -1,0 +1,532 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/thinker0v0/modelreceipts/schema/record.v0.2.schema.json",
+  "title": "ModelReceipts task-run record v0.2",
+  "description": "One agent task run: closed task codes, model, method (harness), usage/cost and verifiable outcome evidence. Contains NO prompt text, model output, file paths, repository names or user identifiers. Self-assessment is stored in an isolated sub-object and is excluded from default rankings. v0.2: fields a seed source cannot report are nullable (null = unknown), the server-side cost and the install-key signature are no longer carried in the body, and the retry detector and self-assessment extractor versions are recorded.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "record_id",
+    "submitted_at",
+    "source",
+    "task",
+    "model",
+    "method",
+    "usage",
+    "outcome",
+    "pairing",
+    "privacy"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "0.2.0"
+    },
+    "record_id": {
+      "$ref": "#/$defs/uuid"
+    },
+    "submitted_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_type",
+        "client",
+        "client_version",
+        "collector",
+        "submit_mode",
+        "install_key_sig"
+      ],
+      "properties": {
+        "source_type": {
+          "description": "Keeps user field reports separate from seed layers. Only field_report rows count as user-contributed evidence.",
+          "enum": [
+            "field_report",
+            "benchmark",
+            "preference",
+            "usage"
+          ]
+        },
+        "client": {
+          "$ref": "#/$defs/slug"
+        },
+        "client_version": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[0-9A-Za-z.+-]{1,32}$"
+        },
+        "collector": {
+          "enum": [
+            "stop-hook",
+            "pair-mode",
+            "seed-import",
+            "manual"
+          ]
+        },
+        "submit_mode": {
+          "description": "all_runs = every run is submitted (less selection bias); selected = user picked runs.",
+          "enum": [
+            "all_runs",
+            "selected"
+          ]
+        },
+        "install_key_sig": {
+          "description": "Always null in v0.2. The Ed25519 install-key signature travels in the X-ModelReceipts-Signature header, because a body cannot contain its own signature.",
+          "type": "null"
+        }
+      }
+    },
+    "task": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "l1",
+        "l2",
+        "taxonomy_version",
+        "classifier",
+        "interaction_type",
+        "difficulty_prior"
+      ],
+      "properties": {
+        "l1": {
+          "$ref": "#/$defs/l1"
+        },
+        "l2": {
+          "description": "Closed L2 code. Only coding L2 codes exist in taxonomy t0.1; other L1 use null.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/l2_coding"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "taxonomy_version": {
+          "const": "t0.1"
+        },
+        "classifier": {
+          "description": "Which local classifier produced the codes, for reproducibility.",
+          "type": "string",
+          "pattern": "^(rules-v[0-9]+|local-llm:[A-Za-z0-9._-]{1,64}|seed:[a-z0-9._-]{1,64}|manual)$"
+        },
+        "interaction_type": {
+          "enum": [
+            "single_turn",
+            "multi_turn",
+            "agentic"
+          ]
+        },
+        "difficulty_prior": {
+          "description": "Confounder covariates (harder tasks tend to be routed to stronger models).",
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "files_touched",
+            "context_tokens"
+          ],
+          "properties": {
+            "files_touched": {
+              "$ref": "#/$defs/count_or_null"
+            },
+            "context_tokens": {
+              "$ref": "#/$defs/count_or_null"
+            }
+          }
+        }
+      },
+      "if": {
+        "properties": {
+          "l1": {
+            "const": "coding"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "l2": {
+            "$ref": "#/$defs/l2_coding"
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "l2": {
+            "type": "null"
+          }
+        }
+      }
+    },
+    "model": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "provider",
+        "id",
+        "route",
+        "effort"
+      ],
+      "properties": {
+        "provider": {
+          "$ref": "#/$defs/slug"
+        },
+        "id": {
+          "$ref": "#/$defs/model_id"
+        },
+        "other_ids": {
+          "description": "Other models that served part of the run (e.g. a fallback). Primary id = most output tokens.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/model_id"
+          },
+          "maxItems": 8,
+          "uniqueItems": true
+        },
+        "route": {
+          "description": "Serving path. The same weights can score differently per route.",
+          "enum": [
+            "direct",
+            "bedrock",
+            "vertex",
+            "openrouter",
+            "proxy",
+            "unknown"
+          ]
+        },
+        "effort": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[a-z]{1,16}$"
+        }
+      }
+    },
+    "method": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "harness",
+        "workflow_tags",
+        "tools_used"
+      ],
+      "properties": {
+        "harness": {
+          "$ref": "#/$defs/slug"
+        },
+        "workflow_tags": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/slug"
+          },
+          "maxItems": 16,
+          "uniqueItems": true
+        },
+        "tools_used": {
+          "description": "Tool names only. Never tool arguments or results.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_.:-]{1,64}$"
+          },
+          "maxItems": 64,
+          "uniqueItems": true
+        }
+      }
+    },
+    "usage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "input_tokens",
+        "output_tokens",
+        "cache_read_tokens",
+        "cache_write_tokens",
+        "cost_usd_client",
+        "cost_usd_server",
+        "latency_ms",
+        "turns"
+      ],
+      "properties": {
+        "input_tokens": {
+          "description": "null = the source did not report it (seeds).",
+          "$ref": "#/$defs/count_or_null"
+        },
+        "output_tokens": {
+          "description": "null = the source did not report it (seeds).",
+          "$ref": "#/$defs/count_or_null"
+        },
+        "cache_read_tokens": {
+          "description": "null = the source did not report it (seeds).",
+          "$ref": "#/$defs/count_or_null"
+        },
+        "cache_write_tokens": {
+          "description": "null = the source did not report it (seeds).",
+          "$ref": "#/$defs/count_or_null"
+        },
+        "cost_usd_client": {
+          "description": "Cost as reported by the client, if any.",
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "cost_usd_server": {
+          "description": "Always null in the body. The server recomputes cost from tokens x its price table and stores it in a separate table with the price-table id; it never overwrites the client value.",
+          "type": "null"
+        },
+        "latency_ms": {
+          "$ref": "#/$defs/count_or_null"
+        },
+        "turns": {
+          "description": "Number of model API calls in the run. null = not reported (seeds).",
+          "$ref": "#/$defs/count_or_null"
+        }
+      }
+    },
+    "outcome": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "evidence"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "completed",
+            "aborted",
+            "error"
+          ]
+        },
+        "evidence": {
+          "description": "FIRST-CLASS quality signal: verifiable, behaviour-based evidence. Used by default rankings. null = unknown (not the same as false).",
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "test_cmd_detected",
+            "test_runs",
+            "tests_passed",
+            "committed",
+            "tool_error_count",
+            "reverted_within_7d",
+            "user_retry_next_prompt",
+            "retry_detector"
+          ],
+          "properties": {
+            "test_cmd_detected": {
+              "type": "boolean"
+            },
+            "test_runs": {
+              "$ref": "#/$defs/count_or_null"
+            },
+            "tests_passed": {
+              "description": "Result of the LAST detected test command in the run. null if no test ran.",
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "committed": {
+              "description": "null = unknown (e.g. a benchmark seed has no git history).",
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "tool_error_count": {
+              "description": "null = not reported (seeds).",
+              "$ref": "#/$defs/count_or_null"
+            },
+            "reverted_within_7d": {
+              "description": "Filled later by a follow-up check. Always null at Stop time.",
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "user_retry_next_prompt": {
+              "description": "Whether the NEXT user prompt in the same session was a retry/complaint, detected locally by rules on that prompt. The collector fills it in the stored preview when the next turn ends; null = unknown (last turn of a session, or never observed).",
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "retry_detector": {
+              "description": "Which local rule set produced user_retry_next_prompt (e.g. retry-rules-v1). null when user_retry_next_prompt is null.",
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^(retry-rules-v[0-9]+|manual)$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          }
+        },
+        "self_assessment": {
+          "description": "ISOLATED. Stored for research (self-report vs evidence gap) but EXCLUDED from default rankings. Agents report 13-89% of failures as success depending on the model (arXiv 2606.09863). The server also stores it in a separate table, never in the ranking columns.",
+          "x-ranking": "excluded-by-default",
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "score",
+                "rater",
+                "judge_model",
+                "extractor"
+              ],
+              "properties": {
+                "score": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "rater": {
+                  "description": "self_claim = the agent's own final message, scored locally by rules (the model is never asked to grade itself); self_llm = the model was asked; judge_llm = another model; user = a person.",
+                  "enum": [
+                    "self_claim",
+                    "self_llm",
+                    "judge_llm",
+                    "user"
+                  ]
+                },
+                "judge_model": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/model_id"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "extractor": {
+                  "description": "Local rule set that turned the agent's final message into a score (e.g. claim-rules-v1); null for other raters.",
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "pattern": "^(claim-rules-v[0-9]+|synthetic)$"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "pairing": {
+      "description": "Same task run with two models (pair mode). Pairs get a higher weight because they control confounding.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "pair_id"
+      ],
+      "properties": {
+        "pair_id": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/uuid"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Shared by the records of the same task run with different models (pair mode). Set locally with `modelreceipts pair`."
+        }
+      }
+    },
+    "privacy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "content_included",
+        "identifiers_included"
+      ],
+      "properties": {
+        "content_included": {
+          "description": "Prompt/output text is never part of a record.",
+          "const": false
+        },
+        "identifiers_included": {
+          "description": "No paths, repo names, emails, hostnames or session ids.",
+          "const": false
+        }
+      }
+    }
+  },
+  "$defs": {
+    "uuid": {
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "slug": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$"
+    },
+    "model_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@-]{0,127}$"
+    },
+    "count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "count_or_null": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "l1": {
+      "description": "Closed L1 codes, taxonomy t0.1.",
+      "enum": [
+        "coding",
+        "writing",
+        "research_qa",
+        "analysis_math",
+        "data",
+        "agentic_ops",
+        "creative",
+        "conversation",
+        "education",
+        "other"
+      ]
+    },
+    "l2_coding": {
+      "description": "Closed coding L2 codes, taxonomy t0.1.",
+      "enum": [
+        "coding.bugfix",
+        "coding.feature",
+        "coding.refactor",
+        "coding.test",
+        "coding.config_devops",
+        "coding.docs",
+        "coding.review",
+        "coding.explain",
+        "coding.migration",
+        "coding.performance",
+        "coding.ui",
+        "coding.other"
+      ]
+    }
+  }
+}
