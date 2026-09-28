@@ -11,6 +11,8 @@ commands:
   submit     preview a record; send it ONLY if --endpoint URL is given (opt-in, loopback-only by default)
   validate   validate record / seed-cell JSON or JSONL (schema picked by schema_version)
   migrate    convert schema v0.1 records to v0.2 (inputs are never modified)
+  install-hook    add the preview-only Stop hook to a settings file (--settings PATH required; dry run unless --apply)
+  uninstall-hook  remove it again (same safety rules)
   eval-classifier  per-class precision/recall of the local task classifier on the SYNTHETIC eval set
   version    print the collector version
 """
@@ -30,6 +32,9 @@ def main(argv: list[str]) -> int:
     if cmd == "validate":
         from .validate import main as validate_main
         return validate_main(rest)
+    if cmd in {"install-hook", "uninstall-hook"}:
+        from .install_hook import main as install_main
+        return install_main(rest, action=cmd.split("-")[0])
     if cmd == "migrate":
         from .migrate import main as migrate_main
         return migrate_main(rest)
