@@ -4,209 +4,314 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ModelReceipts Dashboard</title>
-<meta name="description" content="ModelReceipts 집계 뷰어: /v1/aggregates JSON을 읽어 자기평가 대 결과 증거 순위, k·n 임계 셀 브라우저, 시드 출처를 보여 준다. 기본 데이터는 라벨이 붙은 샘플.">
+<meta name="description" content="ModelReceipts 집계 뷰어: 자기평가 순위와 결과 증거 순위 비교, 신뢰구간이 있는 셀 리더보드, 비용 대 성공률 산점도, 시드 층과 출처. 기본 데이터는 라벨이 붙은 샘플(현장 보고는 합성).">
+<meta name="color-scheme" content="light dark">
 <style>
+/* ---------- tokens ---------- */
 :root {
   color-scheme: light;
-  --page: #f9f9f7;
+  --page: #f6f6f3;
   --surface: #fcfcfb;
-  --surface-2: #f3f2ee;
+  --surface-2: #f1f0ec;
   --ink: #0b0b0b;
   --ink-2: #52514e;
-  --muted: #6f6d68;
-  --grid: #e1e0d9;
+  --muted: #6b6964;          /* 5.3:1 on --surface */
+  --grid: #e4e3dc;
   --axis: #c3c2b7;
   --border: rgba(11,11,11,0.10);
-  --over: #e34948;      /* self-assessment ranks the model HIGHER than evidence */
-  --under: #2a78d6;     /* evidence ranks the model higher than self-assessment */
+  --border-strong: rgba(11,11,11,0.18);
+  --accent: #1f64b8;         /* links, focus, selected: 5.9:1 on --surface */
+  --accent-soft: #e3effc;
+  --seq: #2a78d6;            /* single-series marks */
+  --seq-soft: #9ec5f4;       /* CI bands */
+  --over: #d23f3e;           /* self-assessment ranks the model HIGHER than evidence */
+  --under: #2a78d6;          /* evidence ranks the model higher */
   --same: #898781;
-  --seq: #2a78d6;
-  --seq-soft: #cde2fb;
-  --mock-bg: #fff4d6;
-  --mock-ink: #6b4a00;
-  --live-bg: #e3effc;
-  --live-ink: #103c70;
-  --focus: #2a78d6;
-  --div-a: #2a78d6;     /* pair mode: model A won */
-  --div-b: #e34948;     /* pair mode: model B won */
-  --div-mid: #d3d1c8;   /* ties (neutral midpoint) */
+  --over-text: #b3302f; --under-text: #1f64b8;   /* AA text variants of --over / --under */
+  --div-a: #2a78d6; --div-b: #e34948; --div-mid: #d3d1c8;
+  --cat-1: #2a78d6; --cat-2: #eb6834; --cat-3: #1baf7a; --cat-4: #eda100; --cat-5: #e87ba4; --cat-other: #c3c2b7;
+  --syn-bg: #fff1c7; --syn-ink: #5c3f00; --syn-line: #e8c56a;
+  --pub-bg: #e3effc; --pub-ink: #0f3a6b;
+  --shadow: 0 1px 2px rgba(0,0,0,.04), 0 8px 24px rgba(0,0,0,.06);
+  --tip-shadow: 0 6px 20px rgba(0,0,0,.14);
+  --radius: 12px;
+  --fs-xs: 12px; --fs-sm: 13px; --fs-base: 14px; --fs-md: 16px; --fs-lg: 20px; --fs-xl: 28px; --fs-hero: 44px;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     color-scheme: dark;
-    --page: #0d0d0d; --surface: #1a1a19; --surface-2: #232321;
-    --ink: #ffffff; --ink-2: #c3c2b7; --muted: #9a988f;
-    --grid: #2c2c2a; --axis: #383835; --border: rgba(255,255,255,0.10);
-    --over: #e66767; --under: #3987e5; --same: #898781;
-    --seq: #3987e5; --seq-soft: #184f95;
-    --mock-bg: #3a2c05; --mock-ink: #ffd776; --focus: #6da7ec;
-    --live-bg: #11294a; --live-ink: #cde2fb;
+    --page: #0d0d0d; --surface: #171716; --surface-2: #21211f;
+    --ink: #f5f5f2; --ink-2: #c3c2b7; --muted: #9d9b92;
+    --grid: #2a2a28; --axis: #3d3d3a; --border: rgba(255,255,255,0.09); --border-strong: rgba(255,255,255,0.18);
+    --accent: #7db1f0; --accent-soft: #11294a;
+    --seq: #3987e5; --seq-soft: #1c5cab;
+    --over: #e66767; --under: #3987e5; --same: #8f8d86; --over-text: #ef8585; --under-text: #7db1f0;
     --div-a: #3987e5; --div-b: #e66767; --div-mid: #4a4945;
+    --cat-1: #3987e5; --cat-2: #d95926; --cat-3: #199e70; --cat-4: #c98500; --cat-5: #d55181; --cat-other: #4a4945;
+    --syn-bg: #3a2c05; --syn-ink: #ffd776; --syn-line: #6b5210;
+    --pub-bg: #11294a; --pub-ink: #cde2fb;
+    --shadow: 0 1px 2px rgba(0,0,0,.4); --tip-shadow: 0 6px 20px rgba(0,0,0,.5);
   }
 }
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --page: #0d0d0d; --surface: #1a1a19; --surface-2: #232321;
-  --ink: #ffffff; --ink-2: #c3c2b7; --muted: #9a988f;
-  --grid: #2c2c2a; --axis: #383835; --border: rgba(255,255,255,0.10);
-  --over: #e66767; --under: #3987e5; --same: #898781;
-  --seq: #3987e5; --seq-soft: #184f95;
-  --mock-bg: #3a2c05; --mock-ink: #ffd776; --focus: #6da7ec;
-  --live-bg: #11294a; --live-ink: #cde2fb;
+  --page: #0d0d0d; --surface: #171716; --surface-2: #21211f;
+  --ink: #f5f5f2; --ink-2: #c3c2b7; --muted: #9d9b92;
+  --grid: #2a2a28; --axis: #3d3d3a; --border: rgba(255,255,255,0.09); --border-strong: rgba(255,255,255,0.18);
+  --accent: #7db1f0; --accent-soft: #11294a;
+  --seq: #3987e5; --seq-soft: #1c5cab;
+  --over: #e66767; --under: #3987e5; --same: #8f8d86; --over-text: #ef8585; --under-text: #7db1f0;
   --div-a: #3987e5; --div-b: #e66767; --div-mid: #4a4945;
+  --cat-1: #3987e5; --cat-2: #d95926; --cat-3: #199e70; --cat-4: #c98500; --cat-5: #d55181; --cat-other: #4a4945;
+  --syn-bg: #3a2c05; --syn-ink: #ffd776; --syn-line: #6b5210;
+  --pub-bg: #11294a; --pub-ink: #cde2fb;
+  --shadow: 0 1px 2px rgba(0,0,0,.4); --tip-shadow: 0 6px 20px rgba(0,0,0,.5);
 }
+
+/* ---------- base ---------- */
 * { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
 body {
   margin: 0; background: var(--page); color: var(--ink);
-  font: 15px/1.55 system-ui, -apple-system, "Segoe UI", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+  font: var(--fs-base)/1.55 system-ui, -apple-system, "Segoe UI", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
 }
-.wrap { max-width: 1080px; margin: 0 auto; padding: 0 16px 48px; }
-.mock-banner {
-  background: var(--mock-bg); color: var(--mock-ink); text-align: center;
-  font-weight: 600; font-size: 13px; padding: 8px 16px; letter-spacing: .01em;
-  border-bottom: 1px solid var(--border);
-}
-header.top { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; padding: 24px 0 8px; }
-.brand h1 { margin: 0; font-size: 22px; letter-spacing: -.01em; }
-.brand p { margin: 2px 0 0; color: var(--ink-2); font-size: 14px; }
-.pill { display: inline-block; font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--border); color: var(--ink-2); background: var(--surface); }
-.theme-toggle { display: inline-flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: var(--surface); }
-.theme-toggle button { border: 0; background: transparent; color: var(--ink-2); padding: 6px 10px; font: inherit; font-size: 13px; cursor: pointer; }
-.theme-toggle button[aria-pressed="true"] { background: var(--surface-2); color: var(--ink); font-weight: 600; }
-.card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-top: 16px; }
-.card h2 { margin: 0 0 4px; font-size: 18px; }
-.card .sub { margin: 0 0 16px; color: var(--ink-2); font-size: 14px; }
-.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-top: 16px; }
-.tile { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; }
-.tile .label { color: var(--ink-2); font-size: 13px; }
-.tile .value { font-size: 26px; font-weight: 650; margin-top: 2px; }
-.tile .note { color: var(--muted); font-size: 12px; }
-.filters { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: end; margin-bottom: 14px; }
-.filters label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--ink-2); font-weight: 600; }
+a { color: var(--accent); text-underline-offset: 2px; }
+code { font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; background: var(--surface-2); border-radius: 4px; padding: 1px 4px; overflow-wrap: anywhere; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+svg text { font-family: inherit; }
+h1, h2, h3, p, .cap, .note, .caption { word-break: keep-all; overflow-wrap: anywhere; }
+[hidden] { display: none !important; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.skip { position: absolute; left: 16px; top: -48px; background: var(--surface); color: var(--ink); padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-strong); z-index: 20; }
+.skip:focus { top: 8px; }
+.wrap { max-width: 1120px; margin: 0 auto; padding: 0 16px 56px; }
+
+/* ---------- synthetic strip ---------- */
+.strip { border-bottom: 1px solid var(--syn-line); background: var(--syn-bg); color: var(--syn-ink); }
+.strip.live { background: var(--pub-bg); color: var(--pub-ink); border-color: var(--border); }
+.strip.error { background: var(--surface-2); color: var(--ink); border-color: var(--border); }
+.strip .inner { max-width: 1120px; margin: 0 auto; padding: 8px 16px; display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: baseline; font-size: var(--fs-sm); }
+.strip b { font-weight: 700; letter-spacing: .02em; }
+.strip details { font-size: var(--fs-xs); }
+.strip summary { cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
+.strip details p { margin: 6px 0 2px; max-width: 900px; }
+
+/* ---------- top bar ---------- */
+header.top { display: flex; flex-wrap: wrap; gap: 12px 16px; align-items: center; justify-content: space-between; padding: 20px 0 4px; }
+.brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.logo { width: 28px; height: 28px; border-radius: 8px; background: var(--ink); color: var(--surface); display: grid; place-items: center; font-weight: 800; font-size: 14px; flex: none; }
+.brand-name { font-size: var(--fs-md); font-weight: 700; letter-spacing: -.01em; }
+.pill { display: inline-block; font-size: 11px; font-weight: 600; padding: 1px 8px; border-radius: 999px; border: 1px solid var(--border-strong); color: var(--ink-2); background: var(--surface); vertical-align: 1px; }
+.controls { display: flex; flex-wrap: wrap; gap: 8px; }
+.seg { display: inline-flex; border: 1px solid var(--border-strong); border-radius: 8px; overflow: hidden; background: var(--surface); }
+.seg a, .seg button { border: 0; background: transparent; color: var(--ink-2); padding: 6px 11px; font: inherit; font-size: var(--fs-sm); cursor: pointer; text-decoration: none; line-height: 1.4; }
+.seg a + a, .seg button + button { border-left: 1px solid var(--border); }
+.seg [aria-pressed="true"], .seg [aria-current="page"] { background: var(--surface-2); color: var(--ink); font-weight: 650; }
+
+/* ---------- hero ---------- */
+.hero { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 16px; margin-top: 16px; }
+.hero-main { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px 24px; box-shadow: var(--shadow); }
+.eyebrow { font-size: var(--fs-xs); color: var(--muted); font-weight: 600; letter-spacing: .02em; }
+.hero-main h1 { font-size: var(--fs-xl); line-height: 1.25; letter-spacing: -.02em; margin: 6px 0 14px; font-weight: 750; }
+.hero-num { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.hero-num .big { font-size: var(--fs-hero); font-weight: 750; letter-spacing: -.03em; line-height: 1; }
+.hero-num .cap { color: var(--ink-2); font-size: var(--fs-base); max-width: 360px; }
+.hero-insight { margin: 14px 0 0; font-size: var(--fs-base); color: var(--ink-2); }
+.hero-insight b { color: var(--ink); }
+.kpis { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.kpi { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; min-width: 0; }
+.kpi .label { color: var(--ink-2); font-size: var(--fs-sm); display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.kpi .value { font-size: 26px; font-weight: 700; letter-spacing: -.02em; margin-top: 2px; }
+.kpi .note { color: var(--muted); font-size: var(--fs-xs); }
+
+/* ---------- cards ---------- */
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px 22px; margin-top: 16px; }
+.card-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 8px 16px; }
+.card h2 { margin: 0; font-size: var(--fs-lg); letter-spacing: -.01em; line-height: 1.3; }
+.card .sub { margin: 6px 0 14px; color: var(--ink-2); font-size: var(--fs-base); max-width: 820px; }
+.card.signature { border-color: var(--border-strong); box-shadow: var(--shadow); }
+.kicker { font-size: var(--fs-xs); color: var(--accent); font-weight: 700; letter-spacing: .04em; text-transform: uppercase; margin-bottom: 4px; }
+.tag { display: inline-block; font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 6px; letter-spacing: .02em; vertical-align: 2px; white-space: nowrap; }
+.tag.syn { background: var(--syn-bg); color: var(--syn-ink); box-shadow: inset 0 0 0 1px var(--syn-line); }
+.tag.pub { background: var(--pub-bg); color: var(--pub-ink); }
+.empty { color: var(--ink-2); font-size: var(--fs-base); padding: 16px; border: 1px dashed var(--axis); border-radius: 10px; margin: 0; }
+details.tbl { margin-top: 12px; }
+details.tbl summary, .more { cursor: pointer; color: var(--ink-2); font-size: var(--fs-sm); }
+.more { margin-top: 10px; font: inherit; font-size: var(--fs-sm); color: var(--ink); background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; padding: 6px 12px; }
+
+/* ---------- filters ---------- */
+.filters { display: flex; flex-wrap: wrap; gap: 10px 12px; align-items: end; margin: 4px 0 14px; }
+.filters label { display: flex; flex-direction: column; gap: 4px; font-size: var(--fs-xs); color: var(--ink-2); font-weight: 600; }
 select {
-  font: inherit; font-size: 14px; color: var(--ink); background: var(--surface-2);
-  border: 1px solid var(--border); border-radius: 8px; padding: 6px 28px 6px 10px; min-width: 140px; max-width: 100%;
+  font: inherit; font-size: var(--fs-base); color: var(--ink); background: var(--surface-2);
+  border: 1px solid var(--border-strong); border-radius: 8px; padding: 6px 10px; min-width: 150px; max-width: 100%;
 }
-:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
-.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--ink-2); margin: 4px 0 8px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 2px 0 12px; }
+.chip { font: inherit; font-size: var(--fs-sm); border: 1px solid var(--border-strong); background: var(--surface); color: var(--ink-2); border-radius: 999px; padding: 4px 12px; cursor: pointer; }
+.chip[aria-pressed="true"] { background: var(--ink); color: var(--surface); border-color: var(--ink); font-weight: 650; }
+.chip .flip { font-weight: 700; margin-left: 4px; }
+
+/* ---------- legends & tooltip ---------- */
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: var(--fs-sm); color: var(--ink-2); margin: 0 0 8px; }
 .legend span { display: inline-flex; align-items: center; gap: 6px; }
 .legend i { display: inline-block; width: 18px; height: 2px; border-radius: 1px; }
-.slope-wrap { position: relative; }
-svg text { font-family: inherit; }
+.legend i.box { height: 10px; width: 12px; border-radius: 3px; }
+.legend i.dot { width: 10px; height: 10px; border-radius: 50%; }
+.chart { position: relative; }
+.chart svg { display: block; width: 100%; height: auto; overflow: visible; }
 .tip {
   position: absolute; pointer-events: none; z-index: 5; background: var(--surface); color: var(--ink);
-  border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-size: 13px;
-  box-shadow: 0 4px 16px rgba(0,0,0,.12); min-width: 170px; display: none;
+  border: 1px solid var(--border-strong); border-radius: 8px; padding: 8px 10px; font-size: var(--fs-sm);
+  box-shadow: var(--tip-shadow); min-width: 180px; max-width: 280px; display: none;
 }
-.tip strong { font-size: 15px; }
+.tip .t { font-weight: 650; margin-bottom: 4px; overflow-wrap: anywhere; }
 .tip .row { display: flex; justify-content: space-between; gap: 12px; color: var(--ink-2); }
 .tip .row b { color: var(--ink); font-variant-numeric: tabular-nums; }
+.caption { font-size: var(--fs-sm); color: var(--ink-2); margin: 10px 0 0; }
+.caption b { color: var(--ink); }
+.mark-line, .mark-dot { transition: none; }
+@media (prefers-reduced-motion: no-preference) {
+  .mark-line { transition: stroke-width .12s ease, opacity .12s ease; }
+  .mark-dot { transition: r .12s ease; }
+  .chip, .seg a, .seg button { transition: background-color .12s ease, color .12s ease; }
+}
+.dim .mark-line, .dim .mark-dot, .dim .slope-label { opacity: .25; }
+.dim .active .mark-line, .dim .active .mark-dot, .dim .active .slope-label { opacity: 1; }
+
+/* ---------- tables ---------- */
 .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; border: 1px solid var(--border); border-radius: 10px; }
-table { border-collapse: collapse; width: 100%; font-size: 14px; }
-th, td { padding: 9px 12px; text-align: left; white-space: nowrap; border-bottom: 1px solid var(--grid); }
-th { font-size: 12px; color: var(--ink-2); font-weight: 600; background: var(--surface-2); position: sticky; top: 0; }
+table { border-collapse: collapse; width: 100%; font-size: var(--fs-base); }
+th, td { padding: 9px 8px; text-align: left; white-space: nowrap; border-bottom: 1px solid var(--grid); vertical-align: middle; }
+th { font-size: var(--fs-xs); color: var(--ink-2); font-weight: 650; background: var(--surface-2); position: sticky; top: 0; }
 td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
-tr:last-child td { border-bottom: 0; }
-tr.hidden-cell td { color: var(--muted); }
-.ci { display: inline-flex; align-items: center; gap: 8px; }
-.ci svg { display: block; }
-.badge-lock { font-size: 12px; color: var(--muted); }
-.gap-over { color: var(--over); font-weight: 600; }
-.gap-under { color: var(--under); font-weight: 600; }
-details { margin-top: 12px; }
-summary { cursor: pointer; color: var(--ink-2); font-size: 14px; }
-.foot { color: var(--muted); font-size: 12px; margin-top: 24px; line-height: 1.6; }
-.l1-note { font-size: 12px; color: var(--muted); }
-.mock-banner.live { background: var(--live-bg); color: var(--live-ink); }
-.mock-banner.error { background: var(--surface-2); color: var(--ink); }
-.src-line { font-size: 13px; color: var(--ink-2); margin: 6px 0 0; word-break: break-word; }
-.src-line code { font-size: 12px; }
-.sources { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
-.sources li { border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; background: var(--surface-2); }
-.sources .name { font-weight: 650; }
-.sources dl { display: grid; grid-template-columns: max-content 1fr; gap: 2px 12px; margin: 6px 0 0; font-size: 13px; }
+tbody tr:last-child td { border-bottom: 0; }
+tbody tr:hover td { background: color-mix(in srgb, var(--surface-2) 60%, transparent); }
+.rank { font-weight: 700; font-variant-numeric: tabular-nums; width: 1%; }
+.rank small { display: block; font-weight: 500; color: var(--muted); font-size: 11px; }
+.model { font-weight: 600; }
+.model small { display: block; color: var(--muted); font-weight: 500; font-size: var(--fs-xs); }
+.badges { display: inline-flex; gap: 4px; }
+.badge { display: inline-block; font-size: 11px; font-weight: 650; padding: 1px 6px; border-radius: 6px; background: var(--surface-2); color: var(--ink-2); font-variant-numeric: tabular-nums; border: 1px solid var(--border); }
+.ci-cell { display: flex; align-items: center; gap: 10px; }
+.ci-cell svg { flex: none; }
+.ci-cell .v { font-variant-numeric: tabular-nums; min-width: 96px; }
+.ci-cell .v b { font-weight: 700; }
+.ci-cell .v span { color: var(--muted); font-size: var(--fs-xs); }
+tr.locked td { color: var(--muted); }
+.lock { font-size: var(--fs-xs); color: var(--muted); }
+.server { font-size: 11px; color: var(--muted); margin-left: 1px; vertical-align: 3px; }
+.lock-badge { display: inline-block; font-size: 11px; font-weight: 700; padding: 1px 6px; border-radius: 6px; border: 1px dashed var(--axis); color: var(--ink-2); margin-right: 6px; }
+.gap-over { color: var(--over-text, var(--over)); font-weight: 700; }
+.gap-under { color: var(--under-text, var(--under)); font-weight: 700; }
+.axis-head { display: flex; justify-content: space-between; width: 120px; font-weight: 500; color: var(--muted); }
+
+/* ---------- misc blocks ---------- */
+.grid2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; }
+.grid2 > .card { margin-top: 16px; }
+.pair { display: grid; gap: 6px; padding: 12px 0; border-bottom: 1px solid var(--grid); }
+.pair:last-child { border-bottom: 0; }
+.pair .head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 12px; font-size: var(--fs-base); }
+.pair .meta { color: var(--ink-2); font-size: var(--fs-sm); font-variant-numeric: tabular-nums; }
+.pair svg { display: block; width: 100%; }
+.hbars { display: grid; gap: 4px; }
+.hbar { display: grid; grid-template-columns: minmax(0, 190px) minmax(0, 1fr) minmax(0, 120px); gap: 10px; align-items: center; font-size: var(--fs-sm); padding: 2px 0; }
+.hbar .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hbar .val { color: var(--ink-2); font-variant-numeric: tabular-nums; white-space: nowrap; text-align: right; }
+.hbar svg { display: block; width: 100%; }
+.share-strip { display: flex; height: 28px; border-radius: 6px; overflow: hidden; gap: 2px; background: var(--surface); }
+.share-strip div { min-width: 2px; }
+.share-legend { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 4px 16px; margin-top: 10px; font-size: var(--fs-sm); }
+.share-legend span { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.share-legend i { width: 12px; height: 10px; border-radius: 3px; flex: none; }
+.share-legend em { font-style: normal; margin-left: auto; font-variant-numeric: tabular-nums; color: var(--ink-2); }
+.share-legend .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sources { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
+.sources li { border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; background: var(--surface-2); min-width: 0; }
+.sources .name { font-weight: 650; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.sources dl { display: grid; grid-template-columns: max-content 1fr; gap: 2px 12px; margin: 8px 0 0; font-size: var(--fs-sm); }
 .sources dt { color: var(--ink-2); }
 .sources dd { margin: 0; overflow-wrap: anywhere; }
-a { color: var(--under); }
-.tag { display: inline-block; font-size: 11px; font-weight: 650; padding: 1px 6px; border-radius: 6px; margin-left: 6px; vertical-align: 1px; }
-.tag.syn { background: var(--mock-bg); color: var(--mock-ink); }
-.tag.pub { background: var(--live-bg); color: var(--live-ink); }
-.empty { color: var(--ink-2); font-size: 14px; padding: 16px; border: 1px dashed var(--axis); border-radius: 10px; }
-.more { margin-top: 10px; font: inherit; font-size: 13px; color: var(--ink); background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; padding: 6px 12px; cursor: pointer; }
-[hidden] { display: none !important; }
-.viewswitch { display: inline-flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: var(--surface); }
-.viewswitch a { color: var(--ink-2); text-decoration: none; padding: 6px 10px; font-size: 13px; }
-.viewswitch a[aria-current="page"] { background: var(--surface-2); color: var(--ink); font-weight: 600; }
-.controls { display: flex; flex-wrap: wrap; gap: 8px; }
-.gate ul { margin: 6px 0 10px; padding-left: 20px; font-size: 14px; }
-.gate code { font-size: 12px; }
-.hbars { display: grid; gap: 6px; }
-.hbar { display: grid; grid-template-columns: minmax(0, 220px) 1fr minmax(0, 150px); gap: 10px; align-items: center; font-size: 13px; }
-.hbar .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.hbar .val { color: var(--ink-2); font-variant-numeric: tabular-nums; white-space: nowrap; }
-.hbar svg { display: block; width: 100%; }
-.pair { display: grid; gap: 4px; padding: 10px 0; border-bottom: 1px solid var(--grid); }
-.pair:last-child { border-bottom: 0; }
-.pair .head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 12px; font-size: 14px; }
-.pair .head b { font-weight: 650; }
-.pair .meta { color: var(--ink-2); font-size: 13px; font-variant-numeric: tabular-nums; }
-.pair svg { display: block; width: 100%; }
-.legend i.box { height: 10px; width: 14px; border-radius: 3px; }
-#cells th, #cells td { padding: 9px 8px; }
-#cells th:first-child, #cells td:first-child { padding-left: 12px; }
-@media (max-width: 560px) {
-  .card { padding: 16px 14px; }
-  .brand h1 { font-size: 20px; }
+.sources p { margin: 8px 0 0; font-size: var(--fs-sm); color: var(--ink-2); }
+.gate ul { margin: 6px 0 10px; padding-left: 20px; font-size: var(--fs-base); }
+.foot { color: var(--muted); font-size: var(--fs-xs); margin-top: 24px; line-height: 1.7; }
+.src-line { font-size: var(--fs-xs); color: var(--muted); margin: 8px 0 0; overflow-wrap: anywhere; }
+
+/* ---------- responsive ---------- */
+@media (max-width: 900px) {
+  .hero { grid-template-columns: 1fr; }
+  .grid2 { grid-template-columns: 1fr; gap: 0; }
+}
+@media (max-width: 640px) {
+  .card, .hero-main { padding: 16px 14px; }
+  .hero-main h1 { font-size: 22px; }
+  .hero-num .big { font-size: 36px; }
+  .kpi { padding: 10px 12px; }
+  .kpi .value { font-size: 20px; }
   select { min-width: 0; width: 100%; }
   .filters label { flex: 1 1 140px; }
-  .tiles { grid-template-columns: repeat(2, 1fr); gap: 8px; }
-  .tile { padding: 10px; }
-  .tile .label { font-size: 12px; }
-  .tile .value { font-size: 19px; }
-  .tile .note { font-size: 11px; }
-  /* cell table becomes stacked cards so the key metric is never scrolled away */
-  #cells-scroll { border: 0; overflow: visible; }
-  #cells thead { display: none; }
-  #cells, #cells tbody, #cells tr, #cells td { display: block; width: 100%; }
-  #cells tr { display: grid; grid-template-columns: 1fr 1fr; column-gap: 18px; border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; margin-bottom: 8px; background: var(--surface); }
-  #cells td { width: auto; border: 0; padding: 2px 0; white-space: nowrap; text-align: left; display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 13px; }
-  #cells td[data-label]::before { content: attr(data-label); color: var(--ink-2); font-size: 12px; font-weight: 600; }
-  #cells td.cell-title, #cells td.wide, #cells td[colspan] { grid-column: 1 / -1; }
-  #cells td[colspan] { white-space: normal; }
-  #cells td.cell-title { font-weight: 650; font-size: 15px; }
-  #cells td.cell-title::before { content: none; }
+  .hbar { grid-template-columns: minmax(0, 1fr) auto; }
+  .hbar svg { grid-column: 1 / -1; grid-row: 2; }
+  /* leaderboard becomes stacked cards: rank, model and the CI stay together */
+  #board-scroll { border: 0; overflow: visible; }
+  #board thead { display: none; }
+  #board, #board tbody, #board tr, #board td { display: block; width: 100%; }
+  #board tr { display: grid; grid-template-columns: auto 1fr 1fr; column-gap: 12px; row-gap: 2px; border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; background: var(--surface); }
+  #board td { border: 0; padding: 1px 0; white-space: nowrap; font-size: var(--fs-sm); }
+  #board td.rank { grid-row: 1 / span 2; align-self: start; font-size: var(--fs-md); }
+  #board td.model { grid-column: 2 / -1; white-space: normal; }
+  #board td.nk { grid-column: 2 / -1; justify-self: start; padding: 2px 0 4px; }
+  #board td.ci { grid-column: 2 / -1; }
+  #board td.ci .ci-cell svg { width: 110px; }
+  #board td.opt { display: flex; justify-content: space-between; gap: 6px; color: var(--ink-2); font-size: var(--fs-xs); }
+  #board td.opt:nth-child(odd) { grid-column: 2; }
+  #board td.opt:nth-child(even) { grid-column: 3; }
+  #board td.opt::before { content: attr(data-label); color: var(--muted); font-size: var(--fs-xs); }
+  #board td.lockrow { grid-column: 2 / -1; white-space: normal; }
+  #board tbody tr:hover td { background: transparent; }
+  .sources { grid-template-columns: 1fr; }
   .sources dl { grid-template-columns: 1fr; }
   .sources dt { margin-top: 4px; }
-  .hbar { grid-template-columns: 1fr; gap: 2px; }
 }
 @media (forced-colors: active) {
-  .legend i { forced-color-adjust: none; }
+  .legend i, .share-legend i, .share-strip div { forced-color-adjust: none; }
+  .chip[aria-pressed="true"] { outline: 2px solid CanvasText; }
+}
+@media print {
+  .controls, .skip, .more, details.tbl summary { display: none; }
+  .card, .hero-main, .kpi { box-shadow: none; break-inside: avoid; }
 }
 </style>
 </head>
 <body>
-<div class="mock-banner" id="banner" role="note">데이터를 불러오는 중…</div>
+<a class="skip" href="#main">본문으로 건너뛰기</a>
+<div class="strip" id="strip" role="note" aria-live="polite">
+  <div class="inner"><b id="strip-title">데이터를 불러오는 중…</b><span id="strip-text"></span>
+    <details id="strip-more" hidden><summary>데이터 라벨 원문</summary><p id="strip-label"></p></details>
+  </div>
+</div>
 <div class="wrap">
   <header class="top">
     <div class="brand">
-      <h1>ModelReceipts <span class="pill">v1.0.0-rc1</span> <span class="pill" id="view-pill"></span></h1>
-      <p>자기평가가 아니라 결과 증거로 매긴 태스크별 모델 순위</p>
-      <p class="src-line" id="src-line"></p>
+      <div class="logo" aria-hidden="true">R</div>
+      <div>
+        <div class="brand-name">ModelReceipts <span class="pill">v1.0.0-rc2</span> <span class="pill" id="view-pill"></span></div>
+        <div class="eyebrow">자기평가가 아니라 결과 증거로 매긴 태스크별 모델 순위</div>
+      </div>
     </div>
     <div class="controls">
-    <nav class="viewswitch" id="viewswitch" aria-label="보기">
-      <a href="?view=overview" data-view="overview">공개 개요</a>
-      <a href="?view=detail" data-view="detail">기여자 상세</a>
-    </nav>
-    <div class="theme-toggle" role="group" aria-label="테마">
-      <button type="button" data-theme-choice="auto">자동</button>
-      <button type="button" data-theme-choice="light">라이트</button>
-      <button type="button" data-theme-choice="dark">다크</button>
-    </div>
+      <nav class="seg" id="viewswitch" aria-label="보기 전환">
+        <a href="?view=overview" data-view="overview">공개 개요</a>
+        <a href="?view=detail" data-view="detail">기여자 상세</a>
+      </nav>
+      <div class="seg" role="group" aria-label="색 테마">
+        <button type="button" data-theme-choice="auto">자동</button>
+        <button type="button" data-theme-choice="light">라이트</button>
+        <button type="button" data-theme-choice="dark">다크</button>
+      </div>
     </div>
   </header>
 
+  <main id="main" tabindex="-1">
   <section class="card" id="load-error" hidden>
     <h2>집계 데이터를 불러오지 못했습니다</h2>
     <p class="sub" id="load-error-msg"></p>
@@ -216,39 +321,50 @@ a { color: var(--under); }
   </section>
 
   <div id="content" hidden>
-  <div class="tiles" id="tiles"></div>
+  <!-- hero -->
+  <section class="hero" aria-labelledby="hero-title">
+    <div class="hero-main">
+      <div class="eyebrow" id="hero-eyebrow"></div>
+      <h1 id="hero-title"></h1>
+      <div class="hero-num"><span class="big" id="hero-big"></span><span class="cap" id="hero-cap"></span></div>
+      <p class="hero-insight" id="hero-insight"></p>
+    </div>
+    <div class="kpis" id="kpis"></div>
+  </section>
 
   <section class="card gate" id="gate-card" aria-labelledby="gate-title" hidden>
     <h2 id="gate-title">공개 개요 보기입니다</h2>
-    <p class="sub">누구나 보는 층은 L1 × 모델 단위의 테스트 통과율과 공개 시드만 담습니다. 아래 항목은 최근 90일 안에 현장 보고를 제출한 설치 키로 서명한 요청에만 열립니다.</p>
+    <p class="sub">누구나 보는 층은 L1 × 모델 단위의 테스트 통과율 점추정과 공개 시드만 담습니다. 아래 항목은 최근 90일 안에 현장 보고를 제출한 설치 키로 서명한 요청에만 열립니다.</p>
     <ul id="gate-adds"></ul>
     <p class="src-line">조회: <code>modelreceipts query --endpoint https://서버주소</code> (설치 키로 서명한 <code>GET /v1/aggregates/detail</code>)</p>
   </section>
 
-  <section class="card" aria-labelledby="cmp-title">
-    <h2 id="cmp-title">자기평가 기반 순위 vs 증거 기반 순위 <span class="tag syn" id="cmp-tag" hidden>SYNTHETIC</span></h2>
-    <p class="sub">같은 태스크 셀(field_report)에서 에이전트가 스스로 매긴 성공 점수의 순위(왼쪽)와 마지막 테스트 통과율의 순위(오른쪽). 선이 교차하면 자기평가가 순위를 왜곡한다는 뜻입니다. 공개 임계를 넘은 셀만 쓰고, 방법(하네스)별 셀은 레코드 수로 가중해 모델 단위로 합칩니다.</p>
-    <div class="filters">
-      <label>태스크 셀 (L2)
-        <select id="cmp-l2"></select>
-      </label>
+  <!-- signature: self-assessment rank vs evidence rank -->
+  <section class="card signature" id="cmp-card" aria-labelledby="cmp-title">
+    <div class="kicker">핵심 지표</div>
+    <div class="card-head">
+      <h2 id="cmp-title">자기평가 순위 vs 증거 순위</h2>
+      <span class="tag syn" id="cmp-tag" hidden>SYNTHETIC · 합성 데이터</span>
     </div>
+    <p class="sub">같은 태스크(L2)에서 에이전트가 스스로 매긴 성공 점수의 순위(왼쪽)와 마지막 테스트 통과율의 순위(오른쪽)입니다. 선이 기울거나 교차하면 자기평가가 순위를 바꾼다는 뜻입니다. 공개 임계를 넘은 현장 보고 셀만 쓰고, 방법(하네스)별 셀은 레코드 수로 가중해 모델 단위로 합칩니다.</p>
     <div id="cmp-body">
+      <div class="chips" id="cmp-chips" role="group" aria-label="태스크(L2) 선택"></div>
       <div class="legend" aria-hidden="true">
         <span><i style="background:var(--over)"></i>▼ 자기평가가 과대평가 (증거 순위가 더 낮음)</span>
         <span><i style="background:var(--under)"></i>▲ 증거 순위가 더 높음</span>
-        <span><i style="background:var(--same)"></i>순위 동일</span>
+        <span><i style="background:var(--same)"></i>순위 같음</span>
       </div>
-      <div class="slope-wrap" id="slope-wrap">
-        <svg id="slope" role="img" aria-labelledby="cmp-title"></svg>
-        <div class="tip" id="tip" role="status"></div>
+      <div class="chart" id="slope-wrap">
+        <svg id="slope" role="group" aria-labelledby="cmp-title" aria-describedby="cmp-caption"></svg>
+        <div class="tip" id="slope-tip" aria-hidden="true"></div>
       </div>
-      <details>
+      <p class="caption" id="cmp-caption"></p>
+      <details class="tbl">
         <summary>표로 보기</summary>
         <div class="table-scroll" style="margin-top:8px">
-          <table id="cmp-table"><thead><tr>
-            <th>모델</th><th class="num">자기평가 순위</th><th class="num">자기평가 평균</th>
-            <th class="num">증거 순위</th><th class="num">테스트 통과율</th><th class="num">격차 (pp)</th><th class="num">테스트된 레코드</th>
+          <table id="cmp-table"><caption class="sr-only">자기평가 순위와 증거 순위</caption><thead><tr>
+            <th scope="col">모델</th><th scope="col" class="num">자기평가 순위</th><th scope="col" class="num">자기평가 평균</th>
+            <th scope="col" class="num">증거 순위</th><th scope="col" class="num">테스트 통과율</th><th scope="col" class="num">격차 (pp)</th><th scope="col" class="num">테스트된 레코드</th>
           </tr></thead><tbody></tbody></table>
         </div>
       </details>
@@ -256,87 +372,111 @@ a { color: var(--under); }
     <p class="empty" id="cmp-empty" hidden>자기평가가 있는 공개 셀의 모델이 두 개 이상인 L2가 아직 없습니다.</p>
   </section>
 
-  <section class="card" id="pair-card" aria-labelledby="pair-title">
-    <h2 id="pair-title">페어 모드: 같은 태스크 A/B 맞대결 <span class="tag syn" id="pair-tag" hidden>SYNTHETIC</span></h2>
-    <p class="sub" id="pair-sub">한 사용자가 같은 태스크를 두 모델로 각각 돌린 쌍(pair_id)만 셉니다. 각 쪽의 마지막 테스트 결과로 승패를 정하고, 둘 다 통과·둘 다 실패는 무승부, 한쪽이라도 테스트가 없으면 판정 불가로 뺍니다. A 점수 = (A 승 + 무승부/2) / 판정된 쌍, Wilson 95% CI.</p>
-    <div class="legend" aria-hidden="true">
-      <span><i class="box" style="background:var(--div-a)"></i>A 승</span>
-      <span><i class="box" style="background:var(--div-mid)"></i>무승부</span>
-      <span><i class="box" style="background:var(--div-b)"></i>B 승</span>
+  <!-- task cells: one filter row scopes the scatter and the leaderboard -->
+  <section class="card" id="cells-card" aria-labelledby="cells-title">
+    <div class="card-head">
+      <h2 id="cells-title">태스크 셀 리더보드</h2>
+      <span class="tag" id="cells-tag"></span>
     </div>
-    <div id="pair-list"></div>
-    <details>
-      <summary>표로 보기</summary>
-      <div class="table-scroll" style="margin-top:8px">
-        <table id="pair-table"><thead><tr>
-          <th>L2</th><th>A</th><th>B</th><th class="num">쌍</th><th class="num">기여자 k</th><th class="num">A 승</th><th class="num">무승부</th><th class="num">B 승</th><th class="num">판정 불가</th><th class="num">A 점수 (95% CI)</th>
-        </tr></thead><tbody></tbody></table>
-      </div>
-    </details>
-    <p class="empty" id="pair-empty" hidden></p>
-  </section>
-
-  <section class="card" id="seed-card" aria-labelledby="seed-title">
-    <h2 id="seed-title">시드 층: 선호 투표 · 사용량 <span class="tag syn" id="seed-tag" hidden>일부 SYNTHETIC</span></h2>
-    <p class="sub" id="seed-sub"></p>
-    <div class="filters" role="group" aria-label="시드 필터">
-      <label>층 <select id="seed-layer"></select></label>
-      <label>태스크 <select id="seed-task"></select></label>
-    </div>
-    <p class="l1-note" id="seed-note"></p>
-    <div class="hbars" id="seed-bars"></div>
-    <details>
-      <summary>표로 보기</summary>
-      <div class="table-scroll" style="margin-top:8px">
-        <table id="seed-table"><thead><tr></tr></thead><tbody></tbody></table>
-      </div>
-    </details>
-  </section>
-
-  <section class="card" aria-labelledby="cells-title">
-    <h2 id="cells-title">태스크 셀 브라우저</h2>
     <p class="sub" id="cells-sub"></p>
-    <div class="filters" role="group" aria-label="셀 필터">
-      <label>데이터 층
-        <select id="f-src"></select>
-      </label>
-      <label>L2
-        <select id="f-l2"></select>
-      </label>
-      <label>방법
-        <select id="f-method"></select>
-      </label>
-      <label>정렬
-        <select id="f-sort">
-          <option value="pass">테스트 통과율</option>
-          <option value="cps">성공 1건당 비용</option>
-          <option value="cost">태스크당 비용</option>
-          <option value="n">레코드 수</option>
-        </select>
-      </label>
+    <div class="filters" role="group" aria-label="셀 필터 (산점도와 리더보드에 함께 적용)">
+      <label>데이터 층 <select id="f-src"></select></label>
+      <label>태스크 (L2) <select id="f-l2"></select></label>
+      <label>방법 <select id="f-method"></select></label>
+      <label>정렬 <select id="f-sort">
+        <option value="pass">테스트 통과율</option>
+        <option value="cps">성공 1건당 비용</option>
+        <option value="cost">태스크당 비용</option>
+        <option value="n">레코드 수</option>
+      </select></label>
     </div>
-    <p class="l1-note" id="l1-note"></p>
-    <div class="table-scroll" id="cells-scroll">
-      <table id="cells"><thead><tr>
-        <th>모델</th><th>방법</th><th class="num">n / k</th><th>테스트 통과율 (95% CI)</th>
-        <th class="num">커밋</th><th class="num">다음 프롬프트 재시도</th><th class="num">$/태스크</th><th class="num">$/성공</th><th class="num">지연 중앙값</th><th class="num">자기평가 (참고)</th>
+
+    <h3 class="sr-only" id="scatter-title">비용 대 테스트 통과율</h3>
+    <div class="legend" id="scatter-legend" aria-hidden="true">
+      <span><i class="dot" style="background:var(--seq)"></i>셀 (모델 × 방법)</span>
+      <span><i style="background:var(--ink-2)"></i>비용 대비 최선 경계 (더 싸면서 더 잘 되는 셀이 없음)</span>
+      <span><i style="background:var(--seq-soft);width:3px;height:12px"></i>통과율 95% CI</span>
+    </div>
+    <div class="chart" id="scatter-wrap">
+      <svg id="scatter" role="application" tabindex="0" aria-labelledby="scatter-title" aria-describedby="scatter-help"></svg>
+      <div class="tip" id="scatter-tip" aria-hidden="true"></div>
+    </div>
+    <p class="caption" id="scatter-help">가로축: 태스크 1건당 비용(로그 눈금) · 세로축: 테스트 통과율. 왼쪽 위일수록 싸고 잘 됩니다. 차트에 초점을 두고 ← → 키로 점을 차례로 볼 수 있습니다.</p>
+    <p class="sr-only" id="scatter-live" aria-live="polite"></p>
+    <p class="empty" id="scatter-empty" hidden></p>
+
+    <div class="table-scroll" id="board-scroll" style="margin-top:16px">
+      <table id="board"><caption class="sr-only">태스크 셀 리더보드</caption><thead><tr>
+        <th scope="col" class="num" title="순위 · 통계적 순위(CI가 겹치지 않게 앞서는 셀 수 + 1)">#</th>
+        <th scope="col">모델 · 방법</th>
+        <th scope="col">n · k</th>
+        <th scope="col"><span class="axis-head" aria-hidden="true"><span>0</span><span>50</span><span>100%</span></span><span class="sr-only">테스트 통과율과 95% 신뢰구간</span></th>
+        <th scope="col" class="num">커밋</th><th scope="col" class="num">재시도</th><th scope="col" class="num">$/태스크</th><th scope="col" class="num">$/성공</th><th scope="col" class="num">지연 중앙값</th><th scope="col" class="num">자기평가 (참고)</th>
       </tr></thead><tbody></tbody></table>
     </div>
     <button type="button" class="more" id="more" hidden></button>
+    <p class="src-line" id="board-note"></p>
   </section>
+
+  <div class="grid2">
+    <section class="card" id="pair-card" aria-labelledby="pair-title">
+      <div class="card-head">
+        <h2 id="pair-title">페어 모드 맞대결</h2>
+        <span class="tag syn" id="pair-tag" hidden>SYNTHETIC</span>
+      </div>
+      <p class="sub">한 사용자가 같은 태스크를 두 모델로 돌린 쌍만 셉니다. 각 쪽의 마지막 테스트 결과로 승패를 정하고, 둘 다 통과·둘 다 실패는 무승부입니다. A 점수 = (A 승 + 무/2) / 판정된 쌍, Wilson 95% CI.</p>
+      <div class="legend" aria-hidden="true">
+        <span><i class="box" style="background:var(--div-a)"></i>A 승</span>
+        <span><i class="box" style="background:var(--div-mid)"></i>무승부</span>
+        <span><i class="box" style="background:var(--div-b)"></i>B 승</span>
+      </div>
+      <div id="pair-list"></div>
+      <details class="tbl">
+        <summary>표로 보기</summary>
+        <div class="table-scroll" style="margin-top:8px">
+          <table id="pair-table"><caption class="sr-only">페어 모드 결과</caption><thead><tr>
+            <th scope="col">L2</th><th scope="col">A</th><th scope="col">B</th><th scope="col" class="num">쌍</th><th scope="col" class="num">k</th><th scope="col" class="num">A 승</th><th scope="col" class="num">무</th><th scope="col" class="num">B 승</th><th scope="col" class="num">판정 불가</th><th scope="col" class="num">A 점수 (95% CI)</th>
+          </tr></thead><tbody></tbody></table>
+        </div>
+      </details>
+      <p class="empty" id="pair-empty" hidden></p>
+    </section>
+
+    <section class="card" id="seed-card" aria-labelledby="seed-title">
+      <div class="card-head">
+        <h2 id="seed-title">시드 층: 선호 · 사용량</h2>
+        <span class="tag" id="seed-tag"></span>
+      </div>
+      <p class="sub">선호 = 사람의 쌍대 투표(결과 증거 아님), 사용량 = 채택 점유율(품질 신호 아님). 현장 보고와 합치지도, 같은 순위에 넣지도 않습니다.</p>
+      <div class="filters" role="group" aria-label="시드 필터">
+        <label>층 <select id="seed-layer"></select></label>
+        <label>태스크 <select id="seed-task"></select></label>
+      </div>
+      <div id="seed-body"></div>
+      <p class="src-line" id="seed-note"></p>
+      <details class="tbl">
+        <summary>표로 보기</summary>
+        <div class="table-scroll" style="margin-top:8px">
+          <table id="seed-table"><caption class="sr-only">시드 셀</caption><thead><tr></tr></thead><tbody></tbody></table>
+        </div>
+      </details>
+    </section>
+  </div>
 
   <section class="card" aria-labelledby="src-title">
     <h2 id="src-title">데이터 출처</h2>
-    <p class="sub" id="src-sub"></p>
+    <p class="sub">시드 층은 <code>source_type</code>으로 분리되고 현장 보고와 합산되지 않습니다. Artificial Analysis 데이터와 LMSYS-Chat-1M은 약관상 쓰지 않습니다.</p>
     <ul class="sources" id="sources"></ul>
   </section>
   </div>
+  </main>
 
-  <p class="foot" id="foot">
+  <p class="foot">
     랭킹 신호는 결과 증거(<code>tests.pass_rate</code>, Wilson 95% CI)입니다. 자기평가 열은 참고용이며 기본 랭킹에 쓰지 않습니다.
-    현장 보고 셀은 기여자 k명·레코드 n건 이상일 때만 수치를 공개하고, 미달 셀은 존재만 표시합니다.
-    비용은 클라이언트 보고값이 있으면 그 값을, 없으면 서버가 가격표로 다시 계산한 값(<em>서버</em> 표시)을 보여 주며 두 값은 따로 저장됩니다.
-    레코드 스키마: <code>schema/record.v0.2.schema.json</code> · API: <code>GET /v1/overview</code>(공개) · <code>GET /v1/aggregates/detail</code>(기여자, 서명 필요).
+    현장 보고 셀은 기여자 k명·레코드 n건 이상이고 한 기여자 비중이 상한 이하일 때만 수치를 공개하고, 미달 셀은 존재만 표시합니다.
+    비용은 클라이언트 보고값이 있으면 그 값을, 없으면 서버가 가격표로 다시 계산한 값(<b>*</b> 표시)을 보여 주며 두 값은 따로 저장됩니다.
+    <br>레코드 스키마 <code>schema/record.v0.2.schema.json</code> · API <code>GET /v1/overview</code>(공개) · <code>GET /v1/aggregates/detail</code>(기여자, 서명 필요)
+    <br><span id="src-line"></span>
   </p>
 </div>
 
@@ -366,17 +506,33 @@ a { color: var(--under); }
   // ---------- helpers ----------
   const clamp = (x, lo, hi) => Math.min(hi, Math.max(lo, x));
   const pct = v => v == null ? "—" : (v * 100).toFixed(0) + "%";
-  const usd = v => v == null ? "—" : "$" + v.toFixed(v < 1 ? 3 : 2);
+  const usd = v => v == null ? "—" : "$" + (v < 0.01 ? v.toFixed(4) : v < 1 ? v.toFixed(3) : v.toFixed(2));
   const secs = ms => ms == null ? "—" : (ms >= 60000 ? (ms / 60000).toFixed(1) + "분" : (ms / 1000).toFixed(0) + "초");
+  const num = v => v == null ? "—" : Number(v).toLocaleString("ko-KR");
   const el = (tag, props = {}, text) => { const e = document.createElement(tag); Object.assign(e, props); if (text != null) e.textContent = text; return e; };
   const SVGNS = "http://www.w3.org/2000/svg";
-  const svgEl = (tag, attrs = {}) => { const e = document.createElementNS(SVGNS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); return e; };
+  const svgEl = (tag, attrs = {}, text) => { const e = document.createElementNS(SVGNS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (text != null) e.textContent = text; return e; };
   const css = name => getComputedStyle(root).getPropertyValue(name).trim();
   const L2_NAMES = { "coding.bugfix": "버그 수정", "coding.feature": "기능 추가", "coding.refactor": "리팩터링", "coding.test": "테스트 작성",
     "coding.config_devops": "설정·DevOps", "coding.docs": "문서", "coding.review": "리뷰", "coding.explain": "설명", "coding.migration": "마이그레이션",
     "coding.performance": "성능", "coding.ui": "UI", "coding.other": "기타 코딩" };
-  const SRC_NAMES = { field_report: "현장 보고 (field_report)", benchmark: "벤치마크 시드 (benchmark)", preference: "선호 시드 (preference)", usage: "사용량 시드 (usage)" };
   const l2name = c => c == null ? "L1 전체" : (L2_NAMES[c] || c);
+  const shortModel = m => m.replace(/^example-model-/, "모델 ").replace(/^example-harness-/, "하네스 ");
+
+  /** One tooltip per chart: value rows lead, label follows; positioned inside the wrapper. */
+  function tooltip(wrap, tip) {
+    return {
+      show(title, rows, x, y) {
+        tip.replaceChildren(el("div", { className: "t" }, title));
+        for (const [k, v] of rows) { const d = el("div", { className: "row" }); d.append(el("span", {}, k), el("b", {}, v)); tip.append(d); }
+        tip.style.display = "block";
+        const w = wrap.clientWidth, tw = tip.offsetWidth, th = tip.offsetHeight;
+        tip.style.left = clamp(x - tw / 2, 0, Math.max(0, w - tw)) + "px";
+        tip.style.top = (y - th - 14 < 0 ? y + 16 : y - th - 14) + "px";
+      },
+      hide() { tip.style.display = "none"; },
+    };
+  }
 
   // ---------- load ----------
   const wantView = params.get("view") === "overview" ? "overview" : "detail";
@@ -391,8 +547,9 @@ a { color: var(--under); }
     .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
     .then(render)
     .catch(err => {
-      const b = document.getElementById("banner");
-      b.className = "mock-banner error"; b.textContent = "데이터 없음 — 아래 안내를 보세요.";
+      document.getElementById("strip").className = "strip error";
+      document.getElementById("strip-title").textContent = "데이터 없음";
+      document.getElementById("strip-text").textContent = "아래 안내를 보세요.";
       document.getElementById("load-error-msg").textContent = `${dataUrl} → ${err.message}`;
       document.getElementById("load-error").hidden = false;
     });
@@ -403,41 +560,31 @@ a { color: var(--under); }
     const synthetic = ds.synthetic_field_reports === true;
     const isOverview = agg.view === "overview";
     const synthSources = new Set(ds.synthetic_sources || []);
+    const isSynthSource = id => synthSources.has(id) || /synthetic/i.test(id || "");
     const sve = new Map((agg.self_vs_evidence || []).map(t => [t.task, t.models]));
-    document.getElementById("view-pill").textContent = isOverview ? "공개 개요" : agg.view === "detail" ? "기여자 상세" : "집계";
-    const gate = agg.gate || {};
-    document.getElementById("gate-card").hidden = !isOverview;
-    for (const a of gate.adds || []) document.getElementById("gate-adds").append(el("li", {}, a));
-    const banner = document.getElementById("banner");
-    banner.textContent = ds.label || "출처 라벨이 없는 집계 데이터입니다. sources와 source_type을 확인하세요.";
-    banner.className = synthetic ? "mock-banner" : "mock-banner live";
-    document.getElementById("src-line").textContent = `데이터: ${dataUrl} · 생성 ${agg.generated_at || "?"} · ${agg.api || ""}`;
-    document.getElementById("cmp-tag").hidden = !synthetic;
-    document.getElementById("content").hidden = false;
-    const fth = th.field_report || { min_contributors: "?", min_records: "?" };
     const thText = st => { const t = th[st]; return t ? `k ≥ ${t.min_contributors}, n ≥ ${t.min_records}` : "?"; };
+    document.getElementById("view-pill").textContent = isOverview ? "공개 개요" : agg.view === "detail" ? "기여자 상세" : "집계";
+    document.getElementById("content").hidden = false;
 
-    // ---------- tiles ----------
-    const totals = (agg.totals || {}).records_by_source_type || {};
+    // ---------- provenance strip (always visible) ----------
+    const strip = document.getElementById("strip");
+    const realSeeds = (agg.sources || []).filter(s => !isSynthSource(s.source_id)).map(s => s.name.replace(/\s*\(.*\)$/, ""));
+    if (synthetic) {
+      strip.className = "strip";
+      document.getElementById("strip-title").textContent = "SAMPLE · 합성 데이터 포함";
+      document.getElementById("strip-text").textContent =
+        `현장 보고·자기평가·페어 모드·사용량 셀은 합성(example-model-*)입니다. 실제 공개 데이터: ${realSeeds.join(", ") || "없음"}.`;
+    } else {
+      strip.className = "strip live";
+      document.getElementById("strip-title").textContent = "LOCAL SERVER";
+      document.getElementById("strip-text").textContent = "이 인스턴스가 받은 레코드와 적재한 시드입니다. 출처와 source_type을 확인하고 읽으세요.";
+    }
+    if (ds.label) { document.getElementById("strip-label").textContent = ds.label; document.getElementById("strip-more").hidden = false; }
+    document.getElementById("src-line").textContent = `데이터 ${dataUrl} · 생성 ${agg.generated_at || "?"} · ${agg.api || ""}`;
+
+    // ---------- self vs evidence model ----------
     const fieldCells = cells.filter(c => c.source_type === "field_report");
     const fieldSupp = suppressed.filter(c => c.source_type === "field_report");
-    const cmpL2s = [...new Set([...fieldCells.map(c => c.l2), ...sve.keys()])].filter(l2 => l2 != null && ranked(l2).length >= 2);
-    const flipped = cmpL2s.filter(l2 => { const r = ranked(l2); return r.find(x => x.selfRank === 1).model !== r.find(x => x.evRank === 1).model; }).length;
-    const tiles = [
-      ["현장 보고 레코드" + (synthetic ? " (합성)" : ""), (totals.field_report || 0).toLocaleString("ko-KR"), "field_report만 사용자 증거로 셈"],
-      ["공개된 현장 셀", `${fieldCells.length} / ${fieldCells.length + fieldSupp.length}`, `${thText("field_report")}일 때만 공개`],
-      ["순위가 뒤집힌 L2", cmpL2s.length ? `${flipped} / ${cmpL2s.length}` : "—", "자기평가 1위 ≠ 증거 1위"],
-      ["벤치마크 시드 레코드", (totals.benchmark || 0).toLocaleString("ko-KR"), `${cells.filter(c => c.source_type === "benchmark").length}개 셀 · 공개 데이터`],
-      ["선호·사용량 시드 셀", Object.values((agg.totals || {}).seed_cells_by_source_type || {}).reduce((a, b) => a + b, 0).toLocaleString("ko-KR"), "집계 셀만 저장 · 현장 보고와 합산 안 함"],
-    ];
-    const tilesEl = document.getElementById("tiles");
-    for (const [label, value, note] of tiles) {
-      const t = el("div", { className: "tile" });
-      t.append(el("div", { className: "label" }, label), el("div", { className: "value" }, value), el("div", { className: "note" }, note));
-      tilesEl.append(t);
-    }
-
-    // ---------- comparison ----------
     function ranked(l2) {
       if (sve.has(l2)) return sve.get(l2).map(m => ({ model: m.model, n: m.tested, pass: m.pass_rate, self: m.self_mean, selfRank: m.rank_by_self, evRank: m.rank_by_evidence }));
       const by = new Map();
@@ -448,68 +595,146 @@ a { color: var(--under); }
         m.selfSum += c.self_assessment.mean * c.self_assessment.n; m.selfN += c.self_assessment.n;
         by.set(c.model, m);
       }
-      const rows = [...by.values()].map(m => ({ model: m.model, n: m.n, pass: m.passed / m.tested, self: m.selfSum / m.selfN }));
+      const rows = [...by.values()].map(m => ({ model: m.model, n: m.tested, pass: m.passed / m.tested, self: m.selfSum / m.selfN }));
       [...rows].sort((a, b) => b.self - a.self).forEach((r, i) => r.selfRank = i + 1);
       [...rows].sort((a, b) => b.pass - a.pass).forEach((r, i) => r.evRank = i + 1);
       return rows;
     }
-    const cmpSel = document.getElementById("cmp-l2");
-    for (const l2 of cmpL2s) cmpSel.append(el("option", { value: l2 }, `${l2name(l2)} (${l2})`));
-    document.getElementById("cmp-body").hidden = !cmpL2s.length;
-    document.getElementById("cmp-empty").hidden = !!cmpL2s.length;
-    if (isOverview) document.getElementById("cmp-empty").textContent = "자기평가와 증거의 순위 비교는 기여자 상세 보기에서만 제공합니다(공개 개요에는 자기평가 값이 없습니다).";
-    cmpSel.disabled = !cmpL2s.length;
-    cmpSel.closest(".filters").hidden = !cmpL2s.length;
+    const cmpL2s = [...new Set([...fieldCells.map(c => c.l2), ...sve.keys()])].filter(l2 => l2 != null && ranked(l2).length >= 2).sort();
+    const flippedL2 = new Set(cmpL2s.filter(l2 => { const r = ranked(l2); return r.find(x => x.selfRank === 1).model !== r.find(x => x.evRank === 1).model; }));
+    const allRows = cmpL2s.flatMap(l2 => ranked(l2).map(r => ({ ...r, l2 })));
+    const worst = allRows.reduce((w, r) => (!w || (r.evRank - r.selfRank) > (w.evRank - w.selfRank) || ((r.evRank - r.selfRank) === (w.evRank - w.selfRank) && (r.self - r.pass) > (w.self - w.pass))) ? r : w, null);
 
-    const svg = document.getElementById("slope"), tip = document.getElementById("tip"), wrap = document.getElementById("slope-wrap");
-    function showTip(r, x, y) {
-      tip.replaceChildren();
-      tip.append(el("strong", {}, r.model));
-      const gap = (r.self - r.pass) * 100;
-      const rows = [["증거: 테스트 통과율", pct(r.pass) + ` (${r.evRank}위)`], ["자기평가 평균", pct(r.self) + ` (${r.selfRank}위)`], ["격차", (gap >= 0 ? "+" : "") + gap.toFixed(0) + "pp"], ["테스트된 레코드", r.n.toLocaleString("ko-KR")]];
-      for (const [k, v] of rows) { const d = el("div", { className: "row" }); d.append(el("span", {}, k), el("b", {}, v)); tip.append(d); }
-      tip.style.display = "block";
-      const w = wrap.clientWidth, tw = tip.offsetWidth;
-      tip.style.left = clamp(x - tw / 2, 0, w - tw) + "px";
-      tip.style.top = (y + 14) + "px";
+    // ---------- hero ----------
+    const totals = (agg.totals || {}).records_by_source_type || {};
+    const seedCellTotal = Object.values((agg.totals || {}).seed_cells_by_source_type || {}).reduce((a, b) => a + b, 0);
+    const gen = (agg.generated_at || "").slice(0, 10);
+    document.getElementById("hero-eyebrow").textContent = `코딩 태스크 · ${isOverview ? "공개 개요" : "기여자 상세"}${gen ? " · " + gen + " 생성" : ""}`;
+    const heroBig = document.getElementById("hero-big"), heroCap = document.getElementById("hero-cap"), heroIns = document.getElementById("hero-insight");
+    if (cmpL2s.length) {
+      document.getElementById("hero-title").textContent = "AI가 스스로 매긴 순위와 테스트가 말하는 순위는 다릅니다.";
+      heroBig.textContent = `${flippedL2.size} / ${cmpL2s.length}`;
+      heroCap.replaceChildren(document.createTextNode("태스크(L2)에서 자기평가 1위와 증거 1위가 다른 모델입니다. "));
+      if (synthetic) heroCap.append(el("span", { className: "tag syn" }, "SYNTHETIC"));
+      if (worst) {
+        heroIns.replaceChildren(
+          document.createTextNode("가장 큰 과대평가: "), el("b", {}, worst.model),
+          document.createTextNode(` (${l2name(worst.l2)}) — 자기평가 ${worst.selfRank}위 · ${pct(worst.self)}, 증거 ${worst.evRank}위 · 통과율 ${pct(worst.pass)}.`));
+      }
+    } else {
+      const pubField = fieldCells.length;
+      document.getElementById("hero-title").textContent = isOverview
+        ? "공개 개요: 누구나 볼 수 있는 결과 증거 요약입니다."
+        : "아직 자기평가와 증거를 비교할 공개 셀이 부족합니다.";
+      heroBig.textContent = `${pubField}`;
+      heroCap.replaceChildren(document.createTextNode(isOverview ? "개의 현장 보고 셀(L1 × 모델, 통과율 점추정)이 공개 기준을 넘었습니다. " : "개의 현장 보고 셀이 공개 기준을 넘었습니다. "));
+      if (synthetic) heroCap.append(el("span", { className: "tag syn" }, "SYNTHETIC"));
+      heroIns.textContent = isOverview ? "자기평가 비교, 신뢰구간, 비용, 페어 모드는 기여자 상세 보기에서 열립니다." : `공개 기준: ${thText("field_report")}.`;
     }
-    const hideTip = () => { tip.style.display = "none"; };
+    const kpis = [
+      ["현장 보고 레코드", num(totals.field_report || 0), synthetic ? "field_report · 합성" : "field_report만 사용자 증거로 셈", synthetic],
+      ["공개된 현장 셀", `${fieldCells.length} / ${fieldCells.length + fieldSupp.length}`, `${thText("field_report")}일 때만 수치 공개`, synthetic],
+      ["벤치마크 시드 레코드", num(totals.benchmark || 0), `${cells.filter(c => c.source_type === "benchmark").length}개 셀 · Aider polyglot 공개 데이터`, false],
+      ["선호·사용량 시드 셀", num(seedCellTotal), "집계 개수만 저장 · 현장 보고와 합산 안 함", (agg.sources || []).some(s => isSynthSource(s.source_id) && s.source_type === "usage")],
+    ];
+    const kpiEl = document.getElementById("kpis");
+    for (const [label, value, note, syn] of kpis) {
+      const t = el("div", { className: "kpi" }), l = el("div", { className: "label" }, label);
+      if (syn) l.append(el("span", { className: "tag syn" }, label === "선호·사용량 시드 셀" ? "일부 합성" : "합성"));
+      t.append(l, el("div", { className: "value" }, value), el("div", { className: "note" }, note));
+      kpiEl.append(t);
+    }
+    const gate = agg.gate || {};
+    document.getElementById("gate-card").hidden = !isOverview;
+    const GATE_KO = { "L2 x harness cells": "L2 × 하네스(방법) 셀", "Wilson 95% CIs": "Wilson 95% 신뢰구간",
+      "cost per task / per success (client and server)": "태스크당·성공당 비용 (클라이언트 보고값과 서버 재계산값)",
+      "commit, retry and tool-error rates": "커밋·재시도·도구 오류 비율", "self-assessment vs evidence": "자기평가 vs 증거 순위",
+      "pair-mode head-to-head": "페어 모드 맞대결" };
+    for (const a of gate.adds || []) document.getElementById("gate-adds").append(el("li", {}, GATE_KO[a] || a));
+
+    // ---------- signature: slope chart ----------
+    document.getElementById("cmp-tag").hidden = !synthetic;
+    document.getElementById("cmp-body").hidden = !cmpL2s.length;
+    const cmpEmpty = document.getElementById("cmp-empty");
+    cmpEmpty.hidden = !!cmpL2s.length;
+    if (isOverview) cmpEmpty.textContent = "자기평가와 증거의 순위 비교는 기여자 상세 보기에서만 제공합니다(공개 개요에는 자기평가 값이 없습니다).";
+    let cmpL2 = [...flippedL2][0] || cmpL2s[0];
+    const chipsEl = document.getElementById("cmp-chips");
+    for (const l2 of cmpL2s) {
+      const b = el("button", { type: "button", className: "chip" }, l2name(l2));
+      if (flippedL2.has(l2)) { b.append(el("span", { className: "flip", title: "1위가 뒤집힘" }, "⇅")); }
+      b.setAttribute("aria-label", `${l2name(l2)} (${l2})${flippedL2.has(l2) ? ", 1위가 뒤집힘" : ""}`);
+      b.dataset.l2 = l2;
+      b.addEventListener("click", () => { cmpL2 = l2; renderSlope(); });
+      chipsEl.append(b);
+    }
+    const slope = document.getElementById("slope"), slopeWrap = document.getElementById("slope-wrap");
+    const slopeTip = tooltip(slopeWrap, document.getElementById("slope-tip"));
 
     function renderSlope() {
       if (!cmpL2s.length) return;
-      const rows = ranked(cmpSel.value);
-      const W = Math.max(300, wrap.clientWidth), rowH = 46, top = 36, H = top + rows.length * rowH + 8;
-      const narrow = W < 520, labelW = narrow ? 128 : 190, xL = labelW, xR = W - labelW;
-      const short = m => narrow ? m.replace(/^example-model-/, "모델 ").replace(/^example-/, "") : m;
-      svg.setAttribute("width", W); svg.setAttribute("height", H); svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
-      svg.replaceChildren();
-      const ink2 = css("--ink-2"), axis = css("--axis"), surface = css("--surface"), ink = css("--ink");
-      const title = (x, t, anchor) => { const e = svgEl("text", { x, y: 16, "text-anchor": anchor, "font-size": 12, "font-weight": 600, fill: ink2 }); e.textContent = t; svg.append(e); };
-      title(xL, narrow ? "자기평가 순위" : "자기평가 순위 (AI 자기보고)", "end");
-      title(xR, narrow ? "증거 순위" : "증거 순위 (테스트 통과)", "start");
-      svg.append(svgEl("line", { x1: xL + 8, x2: xL + 8, y1: top - 6, y2: H - 10, stroke: axis, "stroke-width": 1 }));
-      svg.append(svgEl("line", { x1: xR - 8, x2: xR - 8, y1: top - 6, y2: H - 10, stroke: axis, "stroke-width": 1 }));
+      chipsEl.querySelectorAll(".chip").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.l2 === cmpL2)));
+      const rows = ranked(cmpL2);
+      const W = Math.max(300, slopeWrap.clientWidth), narrow = W < 560;
+      const rowH = narrow ? 40 : 48, top = 40, H = top + rows.length * rowH + 4;
+      const labelW = narrow ? 92 : 230, xL = labelW + 26, xR = W - labelW - 26;
+      const nm = m => narrow ? shortModel(m) : m;
+      slope.setAttribute("viewBox", `0 0 ${W} ${H}`); slope.setAttribute("height", H);
+      slope.replaceChildren();
+      const ink = css("--ink"), ink2 = css("--ink-2"), muted = css("--muted"), grid = css("--grid"), surface = css("--surface");
+      const ta = narrow ? ["end", "start"] : ["middle", "middle"], tx = narrow ? [xL + 6, xR - 6] : [xL, xR];
+      slope.append(svgEl("text", { x: tx[0], y: 14, "text-anchor": ta[0], "font-size": 12, "font-weight": 650, fill: ink2 }, "자기평가"));
+      slope.append(svgEl("text", { x: tx[0], y: 28, "text-anchor": ta[0], "font-size": 11, fill: muted }, narrow ? "AI 보고" : "AI 자기보고"));
+      slope.append(svgEl("text", { x: tx[1], y: 14, "text-anchor": ta[1], "font-size": 12, "font-weight": 650, fill: ink2 }, "증거"));
+      slope.append(svgEl("text", { x: tx[1], y: 28, "text-anchor": ta[1], "font-size": 11, fill: muted }, narrow ? "테스트" : "테스트 통과율"));
       const yOf = rank => top + (rank - 0.5) * rowH;
-      const order = [...rows].sort((a, b) => (a.selfRank === a.evRank) - (b.selfRank === b.evRank)).reverse();
+      for (let i = 1; i <= rows.length; i++) {
+        slope.append(svgEl("line", { x1: xL, x2: xR, y1: yOf(i), y2: yOf(i), stroke: grid, "stroke-width": 1 }));
+        slope.append(svgEl("text", { x: xL - 14, y: yOf(i) + 4, "text-anchor": "end", "font-size": 11, fill: muted, "aria-hidden": "true" }, `${i}`));
+        slope.append(svgEl("text", { x: xR + 14, y: yOf(i) + 4, "text-anchor": "start", "font-size": 11, fill: muted, "aria-hidden": "true" }, `${i}`));
+      }
+      if (synthetic) slope.append(svgEl("text", { x: W / 2, y: H - 6, "text-anchor": "middle", "font-size": 11, "font-weight": 700, fill: muted, "letter-spacing": "0.08em", "aria-hidden": "true" }, "SYNTHETIC SAMPLE"));
+      const order = [...rows].sort((a, b) => Math.abs(a.evRank - a.selfRank) - Math.abs(b.evRank - b.selfRank));
+      const groups = [];
       for (const r of order) {
         const moved = r.evRank - r.selfRank;
         const color = moved > 0 ? css("--over") : moved < 0 ? css("--under") : css("--same");
-        const g = svgEl("g", { tabindex: 0, role: "img", "aria-label": `${r.model}: 자기평가 ${r.selfRank}위, 증거 ${r.evRank}위, 테스트 통과율 ${pct(r.pass)}` });
-        const y1 = yOf(r.selfRank), y2 = yOf(r.evRank), x1 = xL + 8, x2 = xR - 8;
-        g.append(svgEl("line", { x1, y1, x2, y2, stroke: "transparent", "stroke-width": 24, "stroke-linecap": "round" }));
-        g.append(svgEl("line", { x1, y1, x2, y2, stroke: color, "stroke-width": 2, "stroke-linecap": "round", class: "mark" }));
-        for (const [cx, cy] of [[x1, y1], [x2, y2]]) g.append(svgEl("circle", { cx, cy, r: 5, fill: color, stroke: surface, "stroke-width": 2 }));
-        const lt = svgEl("text", { x: xL - 4, y: y1 + 4, "text-anchor": "end", "font-size": 13, fill: ink });
-        lt.textContent = `${short(r.model)}  ${pct(r.self)}`;
-        const arrow = moved > 0 ? " ▼" : moved < 0 ? " ▲" : "";
-        const rt = svgEl("text", { x: xR + 4, y: y2 + 4, "text-anchor": "start", "font-size": 13, fill: ink });
-        rt.textContent = `${pct(r.pass)}  ${short(r.model)}${arrow}`;
+        const gap = (r.self - r.pass) * 100;
+        const g = svgEl("g", { tabindex: 0, role: "img", class: "slope-g",
+          "aria-label": `${r.model}: 자기평가 ${r.selfRank}위 (${pct(r.self)}), 증거 ${r.evRank}위 (통과율 ${pct(r.pass)}), ${moved > 0 ? `증거 순위가 ${moved}칸 낮음 (과대평가)` : moved < 0 ? `증거 순위가 ${-moved}칸 높음` : "순위 같음"}` });
+        const y1 = yOf(r.selfRank), y2 = yOf(r.evRank);
+        g.append(svgEl("line", { x1: xL, y1, x2: xR, y2, stroke: "transparent", "stroke-width": 22, "stroke-linecap": "round" }));
+        g.append(svgEl("line", { x1: xL, y1, x2: xR, y2, stroke: color, "stroke-width": moved ? 2.5 : 2, "stroke-linecap": "round", class: "mark-line" }));
+        for (const [cx, cy] of [[xL, y1], [xR, y2]]) g.append(svgEl("circle", { cx, cy, r: 5, fill: color, stroke: surface, "stroke-width": 2, class: "mark-dot" }));
+        const lt = svgEl("text", { x: xL - 30, y: y1 + 4, "text-anchor": "end", "font-size": 13, fill: ink, class: "slope-label" });
+        lt.append(svgEl("tspan", { "font-weight": 600 }, nm(r.model)), svgEl("tspan", { fill: ink2, dx: 6 }, pct(r.self)));
+        const rt = svgEl("text", { x: xR + 30, y: y2 + 4, "text-anchor": "start", "font-size": 13, fill: ink, class: "slope-label" });
+        rt.append(svgEl("tspan", { fill: ink2 }, pct(r.pass)), svgEl("tspan", { "font-weight": 600, dx: 6 }, nm(r.model)), svgEl("tspan", { fill: color, dx: 4 }, moved > 0 ? "▼" : moved < 0 ? "▲" : ""));
         g.append(lt, rt);
-        const enter = ev => { g.querySelector(".mark").setAttribute("stroke-width", 3.5); const b = wrap.getBoundingClientRect(); const px = ev.clientX ? ev.clientX - b.left : (x1 + x2) / 2; const py = ev.clientY ? ev.clientY - b.top : (y1 + y2) / 2; showTip(r, px, py); };
-        const leave = () => { g.querySelector(".mark").setAttribute("stroke-width", 2); hideTip(); };
-        g.addEventListener("pointermove", enter); g.addEventListener("pointerleave", leave);
-        g.addEventListener("focus", enter); g.addEventListener("blur", leave);
-        svg.append(g);
+        const on = ev => {
+          slope.classList.add("dim"); groups.forEach(x => x.classList.toggle("active", x === g));
+          const b = slopeWrap.getBoundingClientRect(), svgScale = slopeWrap.clientWidth / W;
+          const px = ev && ev.clientX ? ev.clientX - b.left : ((xL + xR) / 2) * svgScale;
+          const py = ev && ev.clientY ? ev.clientY - b.top : ((y1 + y2) / 2) * svgScale;
+          slopeTip.show(r.model, [["증거: 테스트 통과율", `${pct(r.pass)} · ${r.evRank}위`], ["자기평가 평균", `${pct(r.self)} · ${r.selfRank}위`],
+            ["격차", (gap >= 0 ? "+" : "") + gap.toFixed(0) + "pp"], ["테스트된 레코드", num(r.n)]], px, py);
+        };
+        const off = () => { slope.classList.remove("dim"); g.classList.remove("active"); slopeTip.hide(); };
+        g.addEventListener("pointermove", on); g.addEventListener("pointerleave", off);
+        g.addEventListener("focus", () => on()); g.addEventListener("blur", off);
+        groups.push(g); slope.append(g);
+      }
+      const w = rows.reduce((a, r) => (!a || (r.evRank - r.selfRank) > (a.evRank - a.selfRank)) ? r : a, null);
+      const best = rows.find(r => r.evRank === 1), selfTop = rows.find(r => r.selfRank === 1);
+      const cap = document.getElementById("cmp-caption");
+      cap.replaceChildren();
+      if (best && selfTop && best.model !== selfTop.model) {
+        cap.append(document.createTextNode(`${l2name(cmpL2)}: 자기평가 1위는 `), el("b", {}, selfTop.model),
+          document.createTextNode(`(자기평가 ${pct(selfTop.self)}, 실제 통과율 ${pct(selfTop.pass)} → 증거 ${selfTop.evRank}위)이고, 증거 1위는 `),
+          el("b", {}, best.model), document.createTextNode(`(통과율 ${pct(best.pass)}, 자기평가 ${best.selfRank}위)입니다.`));
+      } else if (best) {
+        cap.append(document.createTextNode(`${l2name(cmpL2)}: 1위는 두 순위 모두 `), el("b", {}, best.model),
+          document.createTextNode(`입니다.${w && w.evRank > w.selfRank ? ` 가장 크게 내려간 모델은 ${w.model}(${w.selfRank}위 → ${w.evRank}위)입니다.` : ""}`));
       }
       const tb = document.querySelector("#cmp-table tbody");
       tb.replaceChildren();
@@ -517,20 +742,22 @@ a { color: var(--under); }
         const tr = el("tr"), gap = (r.self - r.pass) * 100;
         tr.append(el("td", {}, r.model), el("td", { className: "num" }, r.selfRank + "위"), el("td", { className: "num" }, pct(r.self)),
           el("td", { className: "num" }, r.evRank + "위"), el("td", { className: "num" }, pct(r.pass)),
-          el("td", { className: "num " + (gap >= 15 ? "gap-over" : "") }, (gap >= 0 ? "+" : "") + gap.toFixed(0)), el("td", { className: "num" }, r.n.toLocaleString("ko-KR")));
+          el("td", { className: "num " + (gap >= 15 ? "gap-over" : "") }, (gap >= 0 ? "+" : "") + gap.toFixed(0)), el("td", { className: "num" }, num(r.n)));
         tb.append(tr);
       }
     }
-    cmpSel.addEventListener("change", renderSlope);
-    let rz; window.addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(renderSlope, 80); });
 
-    // ---------- cell browser ----------
+    // ---------- cells: shared filters ----------
     const fSrc = document.getElementById("f-src"), fL2 = document.getElementById("f-l2"), fM = document.getElementById("f-method"), fS = document.getElementById("f-sort");
     const moreBtn = document.getElementById("more");
     const PAGE = 12;
     let showAll = false;
     const srcTypes = [...new Set([...cells, ...suppressed].map(c => c.source_type))];
-    for (const st of ["field_report", "benchmark", "preference", "usage"].filter(s => srcTypes.includes(s))) fSrc.append(el("option", { value: st }, SRC_NAMES[st]));
+    for (const st of ["field_report", "benchmark"].filter(s => srcTypes.includes(s))) fSrc.append(el("option", { value: st }, st === "field_report" ? "현장 보고" : "벤치마크 시드"));
+    // client-reported cost first; otherwise the server's price-table recomputation (stored separately)
+    const costTask = c => { const x = c.cost_usd_per_task || {}; return x.client_mean != null ? [x.client_mean, false] : [x.server_mean ?? null, x.server_mean != null]; };
+    const costSuccess = c => c.cost_usd_per_success != null ? [c.cost_usd_per_success, false] : [c.server_cost_usd_per_success ?? null, c.server_cost_usd_per_success != null];
+
     function fillOptions() {
       const st = fSrc.value, pool = [...cells, ...suppressed].filter(c => c.source_type === st);
       const keep = [fL2.value, fM.value];
@@ -543,142 +770,225 @@ a { color: var(--under); }
       const t = th[st];
       const share = t && t.max_contributor_share < 1 ? `, 한 기여자 비중 ≤ ${Math.round(t.max_contributor_share * 100)}%` : "";
       document.getElementById("cells-sub").textContent = (isOverview && st === "field_report")
-        ? `공개 개요: 현장 보고는 L1 × 모델로만 합쳐 통과율 점추정만 보여 줍니다. 공개 기준: 기여자 k ≥ ${t ? t.min_contributors : "?"}, 레코드 n ≥ ${t ? t.min_records : "?"}${share}.`
-        : `L1 / L2 × 모델 × 방법(하네스) × 비용. 이 층의 공개 기준: 기여자 k ≥ ${t ? t.min_contributors : "?"}, 레코드 n ≥ ${t ? t.min_records : "?"}${share}. 신뢰구간은 Wilson 95%.`;
-      document.getElementById("l1-note").textContent = st === "benchmark"
-        ? "벤치마크 시드: Aider polyglot 연습문제 1개 = 레코드 1개. L2(coding.feature)는 근사 매핑이고, 시드가 보고하지 않는 커밋·자기평가는 비워 둡니다."
-        : synthetic ? "이 샘플의 현장 보고는 전부 합성 데이터입니다(example-model-*, example-harness-*). 실제 측정이 아닙니다."
-        : "v0.1은 Claude Code Stop 훅의 코딩 태스크만 수집합니다.";
+        ? `공개 개요: 현장 보고는 L1 × 모델로만 합쳐 통과율 점추정만 보여 줍니다. 공개 기준: ${thText(st)}${share}.`
+        : `모델 × 방법(하네스) 셀의 테스트 통과율과 Wilson 95% 신뢰구간, 비용. 이 층의 공개 기준: ${thText(st)}${share}. 아래 필터는 산점도와 표에 함께 적용됩니다.`;
+      const tag = document.getElementById("cells-tag");
+      const syn = st === "field_report" && synthetic;
+      tag.className = syn ? "tag syn" : "tag pub";
+      tag.textContent = syn ? "SYNTHETIC · 합성 현장 보고" : st === "benchmark" ? "공개 데이터 · Aider polyglot" : "이 서버의 레코드";
+      document.getElementById("board-note").textContent = st === "benchmark"
+        ? "벤치마크 시드: Aider polyglot 연습문제 1개 = 레코드 1개. L2(coding.feature)는 근사 매핑이고, 시드가 보고하지 않는 커밋·자기평가는 비워 둡니다. k는 출처 수(1)입니다."
+        : (synthetic ? "이 샘플의 현장 보고는 전부 합성 데이터입니다(example-model-*, example-harness-*). 실제 측정이 아닙니다. " : "")
+          + "# 아래 '통계 N'은 통계적 순위(95% CI가 겹치지 않게 앞서는 셀 수 + 1)입니다. 비용의 * 표시는 클라이언트 보고값이 없어 서버 가격표로 다시 계산한 값입니다.";
     }
+    const current = () => {
+      const st = fSrc.value, l2 = fL2.value, method = fM.value;
+      const match = c => c.source_type === st && (l2 === "all" || (c.l2 ?? "") === l2) && (method === "all" || (c.method ?? "") === method);
+      return { st, l2, vis: cells.filter(match), hid: suppressed.filter(match) };
+    };
 
+    // ---------- leaderboard (rank, CI whisker on a shared 0-100% axis, n/k badges) ----------
     function ciSvg(c) {
-      const [lo, hi] = c.tests.ci95 || [0, 0], W = 72, H = 12, s = svgEl("svg", { width: W, height: H, "aria-hidden": "true" });
-      s.append(svgEl("rect", { x: 0, y: 5, width: W, height: 2, rx: 1, fill: css("--grid") }));
-      s.append(svgEl("rect", { x: lo * W, y: 3, width: Math.max(2, (hi - lo) * W), height: 6, rx: 3, fill: css("--seq-soft") }));
-      s.append(svgEl("rect", { x: clamp(c.tests.pass_rate * W - 1, 0, W - 2), y: 0, width: 2, height: H, rx: 1, fill: css("--seq") }));
+      const W = 120, H = 16, s = svgEl("svg", { width: W, height: H, viewBox: `0 0 ${W} ${H}`, "aria-hidden": "true" });
+      s.append(svgEl("rect", { x: 0, y: 7.5, width: W, height: 1, fill: css("--grid") }));
+      s.append(svgEl("rect", { x: W / 2 - 0.5, y: 3, width: 1, height: 10, fill: css("--axis") }));
+      const p = c.tests.pass_rate;
+      if (c.tests.ci95) {
+        const [lo, hi] = c.tests.ci95;
+        s.append(svgEl("rect", { x: lo * W, y: 5, width: Math.max(2, (hi - lo) * W), height: 6, rx: 3, fill: css("--seq-soft") }));
+      }
+      s.append(svgEl("circle", { cx: clamp(p * W, 5, W - 5), cy: 8, r: 4.5, fill: css("--seq"), stroke: css("--surface"), "stroke-width": 2 }));
       return s;
     }
-    const lab = (td, label) => { td.dataset.label = label; return td; };
-    // client-reported cost first; otherwise the server's price-table recomputation (stored separately)
-    const costTask = c => { const x = c.cost_usd_per_task || {}; return x.client_mean != null ? [x.client_mean, false] : [x.server_mean ?? null, x.server_mean != null]; };
-    const costSuccess = c => c.cost_usd_per_success != null ? [c.cost_usd_per_success, false] : [c.server_cost_usd_per_success ?? null, c.server_cost_usd_per_success != null];
-    const usdCell = ([v, server]) => usd(v) + (server ? " 서버" : "");
-
-    function renderCells() {
-      const st = fSrc.value, l2 = fL2.value, method = fM.value, sort = fS.value;
-      const match = c => c.source_type === st && (l2 === "all" || (c.l2 ?? "") === l2) && (method === "all" || (c.method ?? "") === method);
-      const key = {
-        pass: c => -(c.tests.pass_rate ?? -1),
-        cps: c => costSuccess(c)[0] ?? Infinity,
-        cost: c => costTask(c)[0] ?? Infinity,
-        n: c => -c.n,
-      }[sort];
-      const vis = cells.filter(match).sort((a, b) => key(a) - key(b));
-      const hid = suppressed.filter(match);
-      const rows = [...vis.map(c => [c, true]), ...hid.map(c => [c, false])];
+    function renderBoard() {
+      const { st, l2, vis, hid } = current(), sort = fS.value;
+      const key = { pass: c => -(c.tests.pass_rate ?? -1), cps: c => costSuccess(c)[0] ?? Infinity, cost: c => costTask(c)[0] ?? Infinity, n: c => -c.n }[sort];
+      const byPass = [...vis].sort((a, b) => (b.tests.pass_rate ?? -1) - (a.tests.pass_rate ?? -1));
+      const rankOf = new Map(byPass.map((c, i) => [c, i + 1]));
+      // statistical rank (LMArena-style upper bound): 1 + cells whose CI lower bound beats this cell's CI upper bound
+      const statRank = c => c.tests.ci95 ? 1 + vis.filter(o => o !== c && o.tests.ci95 && o.tests.ci95[0] > c.tests.ci95[1]).length : null;
+      const sorted = [...vis].sort((a, b) => key(a) - key(b));
+      const rows = [...sorted.map(c => [c, true]), ...hid.map(c => [c, false])];
       const shown = showAll ? rows : rows.slice(0, PAGE);
-      const tb = document.querySelector("#cells tbody");
+      const tb = document.querySelector("#board tbody");
       tb.replaceChildren();
+      const fieldish = st === "field_report";
       for (const [c, visible] of shown) {
-        const tr = el("tr", { className: visible ? "" : "hidden-cell" });
-        const title = l2 === "all" ? `${c.model} · ${l2name(c.l2)}` : c.model;
-        const modelCell = el("td", { className: "cell-title" }, title);
+        const tr = el("tr", { className: visible ? "" : "locked" });
+        const rk = el("td", { className: "rank num" });
+        const modelTd = el("td", { className: "model" }, c.model);
+        const sub = [l2 === "all" ? l2name(c.l2) : null, c.method ?? "방법 합산"].filter(Boolean).join(" · ");
+        modelTd.append(el("small", {}, sub));
         if (!visible) {
-          const td = el("td", { colSpan: 8 });
+          rk.textContent = "—";
           const why = c.reason === "dominated_by_one_contributor" ? "한 기여자 비중 초과" : `공개 기준(${thText(c.source_type)}) 미달`;
-          td.append(el("span", { className: "badge-lock" }, `비공개 셀 — ${why}. 수치를 내보내지 않습니다.`));
-          tr.append(modelCell, lab(el("td", { className: "wide" }, c.method ?? "(방법 합산)"), "방법"), td);
+          const td = el("td", { colSpan: 8, className: "lockrow" });
+          td.append(el("span", { className: "lock-badge" }, "비공개"), el("span", { className: "lock" }, `${why} — 수치를 내보내지 않습니다.`));
+          tr.append(rk, modelTd, td);
         } else {
-          const [lo, hi] = c.tests.ci95 || [null, null];
-          const ciTd = el("td", { className: "wide" });
-          if (c.tests.pass_rate != null && !c.tests.ci95) {
-            ciTd.textContent = pct(c.tests.pass_rate);
-          } else if (c.tests.pass_rate != null) {
-            const w = el("span", { className: "ci" });
-            w.append(ciSvg(c), el("span", {}, `${pct(c.tests.pass_rate)} (${pct(lo)}–${pct(hi)})`));
-            ciTd.append(w);
-          } else ciTd.textContent = "테스트 없음";
+          rk.textContent = rankOf.get(c);
+          const sr = statRank(c);
+          if (sr != null) rk.append(el("small", { title: "통계적 순위" }, `통계 ${sr}`));
+          const nk = el("td", { className: "nk" }), badges = el("span", { className: "badges" });
+          badges.append(el("span", { className: "badge", title: "레코드 수" }, `n ${num(c.n)}`), el("span", { className: "badge", title: fieldish ? "기여자 수" : "출처 수" }, `k ${c.k}`));
+          nk.append(badges);
+          const ciTd = el("td", { className: "ci" }), wrapCi = el("div", { className: "ci-cell" });
+          const v = el("span", { className: "v" });
+          if (c.tests.pass_rate == null) v.textContent = "테스트 없음";
+          else {
+            v.append(el("b", {}, pct(c.tests.pass_rate)));
+            if (c.tests.ci95) v.append(document.createTextNode(" "), el("span", {}, `${pct(c.tests.ci95[0])}–${pct(c.tests.ci95[1])}`));
+            wrapCi.append(ciSvg(c));
+          }
+          wrapCi.append(v); ciTd.append(wrapCi);
+          ciTd.setAttribute("aria-label", c.tests.ci95 ? `통과율 ${pct(c.tests.pass_rate)}, 95% CI ${pct(c.tests.ci95[0])}–${pct(c.tests.ci95[1])}` : `통과율 ${pct(c.tests.pass_rate)}`);
+          const opt = (label, value, server) => { const td = el("td", { className: "num opt" }), v = el("span", {}, value); td.append(v); td.dataset.label = label; if (server) { v.append(el("span", { className: "server", title: "서버 가격표로 다시 계산한 값" }, "*")); td.setAttribute("aria-label", `${value} (서버 가격표 재계산)`); } return td; };
+          const [ct, cts] = costTask(c), [cs, css_] = costSuccess(c);
           const self = c.self_assessment && c.self_assessment.n ? pct(c.self_assessment.mean) : "—";
           const retry = c.retry_next_prompt && c.retry_next_prompt.observed ? pct(c.retry_next_prompt.rate) : "—";
-          tr.append(modelCell, lab(el("td", { className: "wide" }, c.method ?? "(방법 합산)"), "방법"), lab(el("td", { className: "num" }, `${c.n} / ${c.k}`), "n / k"),
-            lab(ciTd, "테스트 통과율"),
-            lab(el("td", { className: "num" }, pct(c.commit_rate)), "커밋"),
-            lab(el("td", { className: "num" }, retry), "재시도"),
-            lab(el("td", { className: "num" }, usdCell(costTask(c))), "$/태스크"),
-            lab(el("td", { className: "num" }, usdCell(costSuccess(c))), "$/성공"),
-            lab(el("td", { className: "num" }, secs(c.latency_ms_median)), "지연 중앙값"),
-            lab(el("td", { className: "num", style: "color:var(--muted)" }, self), "자기평가 (참고)"));
+          tr.append(rk, modelTd, nk, ciTd, opt("커밋", pct(c.commit_rate)), opt("재시도", retry), opt("$/태스크", usd(ct), cts), opt("$/성공", usd(cs), css_),
+            opt("지연 중앙값", secs(c.latency_ms_median)), opt("자기평가 (참고)", self));
+          tr.lastChild.style.color = "var(--muted)";
         }
         tb.append(tr);
       }
       if (!rows.length) { const tr = el("tr"); tr.append(el("td", { colSpan: 10 }, "조건에 맞는 셀이 없습니다.")); tb.append(tr); }
       moreBtn.hidden = rows.length <= PAGE;
       moreBtn.textContent = showAll ? "접기" : `나머지 ${rows.length - PAGE}개 셀 더 보기`;
+      moreBtn.setAttribute("aria-expanded", String(showAll));
     }
+
+    // ---------- cost vs pass-rate scatter (log x), Pareto frontier ----------
+    const scatter = document.getElementById("scatter"), scWrap = document.getElementById("scatter-wrap");
+    const scTip = tooltip(scWrap, document.getElementById("scatter-tip"));
+    let scPoints = [], scIndex = -1;
+    function renderScatter() {
+      const { st, vis } = current();
+      const pts = vis.map(c => ({ c, x: costTask(c)[0], server: costTask(c)[1], y: c.tests.pass_rate })).filter(p => p.x > 0 && p.y != null);
+      const empty = document.getElementById("scatter-empty");
+      const show = pts.length >= 2;
+      scWrap.hidden = !show; document.getElementById("scatter-legend").hidden = !show; document.getElementById("scatter-help").hidden = !show;
+      empty.hidden = show;
+      if (!show) {
+        empty.textContent = isOverview && st === "field_report"
+          ? "공개 개요의 현장 보고 셀에는 비용이 없습니다. 비용 대 통과율은 기여자 상세 보기나 벤치마크 층에서 볼 수 있습니다."
+          : "비용과 통과율이 모두 있는 셀이 두 개 이상 필요합니다.";
+        scPoints = []; return;
+      }
+      const W = Math.max(300, scWrap.clientWidth), narrow = W < 560, H = narrow ? 300 : 360;
+      const m = { l: narrow ? 40 : 48, r: narrow ? 12 : 24, t: 16, b: 40 };
+      const xs = pts.map(p => p.x);
+      const lx0 = Math.floor(Math.log10(Math.min(...xs)) * 2) / 2, lx1 = Math.ceil(Math.log10(Math.max(...xs)) * 2) / 2 + (Math.max(...xs) === Math.min(...xs) ? 0.5 : 0);
+      const X = v => m.l + (Math.log10(v) - lx0) / (lx1 - lx0 || 1) * (W - m.l - m.r);
+      const lows = pts.map(p => p.c.tests.ci95 ? p.c.tests.ci95[0] : p.y), highs = pts.map(p => p.c.tests.ci95 ? p.c.tests.ci95[1] : p.y);
+      const y0 = Math.max(0, Math.floor(Math.min(...lows) * 10) / 10), y1 = Math.min(1, Math.ceil(Math.max(...highs) * 10) / 10);
+      const Y = v => m.t + (1 - (v - y0) / ((y1 - y0) || 1)) * (H - m.t - m.b);
+      scatter.setAttribute("viewBox", `0 0 ${W} ${H}`); scatter.setAttribute("height", H);
+      scatter.replaceChildren();
+      const grid = css("--grid"), axis = css("--axis"), muted = css("--muted"), ink2 = css("--ink-2"), ink = css("--ink"), seq = css("--seq"), soft = css("--seq-soft"), surface = css("--surface");
+      const yStep = (y1 - y0) > 0.5 ? 0.2 : 0.1;
+      for (let v = y0; v <= y1 + 1e-9; v += yStep) {
+        scatter.append(svgEl("line", { x1: m.l, x2: W - m.r, y1: Y(v), y2: Y(v), stroke: Math.abs(v - y0) < 1e-9 ? axis : grid, "stroke-width": 1 }));
+        scatter.append(svgEl("text", { x: m.l - 8, y: Y(v) + 4, "text-anchor": "end", "font-size": 11, fill: muted }, `${Math.round(v * 100)}%`));
+      }
+      for (let e = Math.floor(lx0); e <= Math.floor(lx1); e++) {
+        for (const mul of narrow ? [1] : [1, 3]) {
+          const v = mul * 10 ** e, lv = Math.log10(v);
+          if (lv < lx0 - 1e-9 || lv > lx1 + 1e-9) continue;
+          scatter.append(svgEl("line", { x1: X(v), x2: X(v), y1: m.t, y2: H - m.b, stroke: grid, "stroke-width": 1 }));
+          scatter.append(svgEl("text", { x: X(v), y: H - m.b + 16, "text-anchor": "middle", "font-size": 11, fill: muted }, usd(v).replace(/\.?0+$/, "")));
+        }
+      }
+      scatter.append(svgEl("text", { x: W - m.r, y: H - 6, "text-anchor": "end", "font-size": 11, fill: ink2 }, "태스크당 비용 →"));
+      scatter.append(svgEl("text", { x: m.l + 4, y: m.t + 12, "font-size": 11, fill: ink2 }, "↑ 테스트 통과율 · ← 더 쌈"));
+      if (st === "field_report" && synthetic) scatter.append(svgEl("text", { x: W - m.r - 4, y: m.t + 12, "text-anchor": "end", "font-size": 11, "font-weight": 700, fill: muted, "letter-spacing": "0.08em" }, "SYNTHETIC SAMPLE"));
+      // Pareto frontier: sorted by cost, keep points that beat every cheaper point
+      const byCost = [...pts].sort((a, b) => a.x - b.x || b.y - a.y);
+      const frontier = []; let bestY = -1;
+      for (const p of byCost) if (p.y > bestY) { frontier.push(p); bestY = p.y; }
+      const fset = new Set(frontier);
+      if (frontier.length > 1) {
+        let d = `M${X(frontier[0].x)},${Y(frontier[0].y)}`;
+        for (const p of frontier.slice(1)) d += ` H${X(p.x)} V${Y(p.y)}`;
+        scatter.append(svgEl("path", { d, fill: "none", stroke: ink2, "stroke-width": 1.5, "stroke-linejoin": "round", opacity: 0.7 }));
+      }
+      // CI whiskers, then points (frontier points drawn last so they sit on top)
+      for (const p of pts) if (p.c.tests.ci95) scatter.append(svgEl("line", { x1: X(p.x), x2: X(p.x), y1: Y(p.c.tests.ci95[0]), y2: Y(p.c.tests.ci95[1]), stroke: soft, "stroke-width": 3, "stroke-linecap": "round" }));
+      scPoints = [...pts].sort((a, b) => (fset.has(a) - fset.has(b)) || a.x - b.x);
+      const dots = new Map();
+      for (const p of scPoints) {
+        const dot = svgEl("circle", { cx: X(p.x), cy: Y(p.y), r: fset.has(p) ? 5.5 : 4.5, fill: seq, stroke: surface, "stroke-width": 2, class: "mark-dot", opacity: fset.has(p) ? 1 : 0.75 });
+        dots.set(p, dot); scatter.append(dot);
+      }
+      // direct labels only on the frontier, skipping collisions
+      const placed = [];
+      for (const p of frontier) {
+        const text = `${narrow ? shortModel(p.c.model) : p.c.model}${p.c.method ? " · " + (narrow ? shortModel(p.c.method) : p.c.method) : ""}`;
+        const w = text.length * 6.4, x = X(p.x) + 9, y = Y(p.y) - 8;
+        const anchorEnd = x + w > W - m.r;
+        const bx = anchorEnd ? X(p.x) - 9 - w : x;
+        if (placed.some(b => bx < b.x + b.w && bx + w > b.x && Math.abs(y - b.y) < 14)) continue;
+        placed.push({ x: bx, y, w });
+        const t = svgEl("text", { x: anchorEnd ? X(p.x) - 9 : x, y, "text-anchor": anchorEnd ? "end" : "start", "font-size": 12, fill: ink, "paint-order": "stroke", stroke: surface, "stroke-width": 3, "stroke-linejoin": "round" }, text);
+        scatter.append(t);
+      }
+      // nearest-point hit layer (the pointer only has to be closest, not dead-center)
+      const ring = svgEl("circle", { r: 9, fill: "none", stroke: ink, "stroke-width": 1.5, visibility: "hidden", "pointer-events": "none" });
+      scatter.append(ring);
+      const hit = svgEl("rect", { x: m.l, y: m.t, width: W - m.l - m.r, height: H - m.t - m.b, fill: "transparent" });
+      scatter.append(hit);
+      const scale = () => scWrap.clientWidth / W;
+      const focusPoint = (p, px, py) => {
+        const cx = X(p.x), cy = Y(p.y);
+        ring.setAttribute("cx", cx); ring.setAttribute("cy", cy); ring.setAttribute("visibility", "visible");
+        const c = p.c, [lo, hi] = c.tests.ci95 || [null, null], [cs] = costSuccess(c);
+        const rows = [["테스트 통과율", `${pct(c.tests.pass_rate)}${lo != null ? ` (${pct(lo)}–${pct(hi)})` : ""}`], ["태스크당 비용", usd(p.x) + (p.server ? " (서버)" : "")],
+          ["성공 1건당 비용", usd(cs)], ["n · k", `${num(c.n)} · ${c.k}`]];
+        if (fset.has(p)) rows.push(["", "비용 대비 최선 경계"]);
+        scTip.show(`${c.model}${c.method ? " · " + c.method : ""}`, rows, px ?? cx * scale(), py ?? cy * scale());
+        document.getElementById("scatter-live").textContent = `${c.model} ${c.method || ""}: 통과율 ${pct(c.tests.pass_rate)}, 태스크당 ${usd(p.x)}`;
+      };
+      const clear = () => { ring.setAttribute("visibility", "hidden"); scTip.hide(); };
+      hit.addEventListener("pointermove", ev => {
+        const b = scatter.getBoundingClientRect(), s = scale(), sx = (ev.clientX - b.left) / s, sy = (ev.clientY - b.top) / s;
+        let best = null, bd = Infinity;
+        for (const p of scPoints) { const d = (X(p.x) - sx) ** 2 + (Y(p.y) - sy) ** 2; if (d < bd) { bd = d; best = p; } }
+        if (best && bd < 40 * 40) { scIndex = scPoints.indexOf(best); focusPoint(best, X(best.x) * s, Y(best.y) * s); } else clear();
+      });
+      hit.addEventListener("pointerleave", clear);
+      scatter.onkeydown = ev => {
+        if (!["ArrowRight", "ArrowLeft", "ArrowUp", "ArrowDown", "Home", "End", "Escape"].includes(ev.key)) return;
+        ev.preventDefault();
+        if (ev.key === "Escape") { clear(); return; }
+        const order = [...scPoints].sort((a, b) => a.x - b.x);
+        let i = order.indexOf(scPoints[scIndex]);
+        i = ev.key === "Home" ? 0 : ev.key === "End" ? order.length - 1 : ev.key === "ArrowRight" || ev.key === "ArrowDown" ? (i + 1) % order.length : (i - 1 + order.length) % order.length;
+        scIndex = scPoints.indexOf(order[i]);
+        focusPoint(order[i]);
+      };
+      scatter.onblur = clear;
+      scatter.setAttribute("aria-label", `비용 대 테스트 통과율 산점도, 셀 ${pts.length}개, 비용 대비 최선 경계 ${frontier.length}개. 경계: ${frontier.map(p => `${p.c.model} ${p.c.method || ""} ${pct(p.y)} ${usd(p.x)}`).join("; ")}`);
+    }
+
+    const renderCells = () => { renderScatter(); renderBoard(); };
     fSrc.addEventListener("change", () => { showAll = false; fillOptions(); renderCells(); });
-    [fL2, fM, fS].forEach(s => s.addEventListener("change", () => { showAll = false; renderCells(); }));
-    moreBtn.addEventListener("click", () => { showAll = !showAll; renderCells(); });
+    [fL2, fM].forEach(s => s.addEventListener("change", () => { showAll = false; renderCells(); }));
+    fS.addEventListener("change", () => { showAll = false; renderBoard(); });
+    moreBtn.addEventListener("click", () => { showAll = !showAll; renderBoard(); });
     const initialSrc = params.get("layer");
     if (initialSrc && srcTypes.includes(initialSrc)) fSrc.value = initialSrc;
     fillOptions();
-    // Start on one L2 so both published and suppressed cells are visible at a glance.
+    // start on one L2 so published and suppressed cells show together
     const firstL2 = [...fL2.options].map(o => o.value).find(v => v !== "all");
-    if (fSrc.value === "field_report" && firstL2 !== undefined) fL2.value = firstL2;
-
-    // ---------- sources ----------
-    const list = document.getElementById("sources");
-    document.getElementById("src-sub").textContent = "시드 층은 source_type으로 분리되고 현장 보고와 합산되지 않습니다. Artificial Analysis 데이터와 LMSYS-Chat-1M은 약관상 쓰지 않습니다.";
-    for (const s of agg.sources || []) {
-      const li = el("li");
-      const name = el("div", { className: "name" }, s.name);
-      const syn = synthSources.has(s.source_id) || /synthetic/i.test(s.source_id);
-      name.append(el("span", { className: syn ? "tag syn" : "tag pub" }, (syn ? "SYNTHETIC · " : "공개 데이터 · ") + s.source_type));
-      const dl = el("dl");
-      const add = (k, v, href) => {
-        dl.append(el("dt", {}, k));
-        const dd = el("dd");
-        if (href && /^https:\/\//.test(href)) dd.append(el("a", { href, rel: "noopener", target: "_blank" }, v));
-        else dd.textContent = v ?? "—";
-        dl.append(dd);
-      };
-      add("출처", s.url, s.url);
-      add("커밋", `${(s.commit_sha || "").slice(0, 12)} · ${s.commit_date || "?"}`);
-      add("라이선스", s.license);
-      add("비고", s.license_note);
-      li.append(name, dl);
-      list.append(li);
-    }
-    if (agg.price_table) {
-      const pt = agg.price_table, src = pt.source || {};
-      const li = el("li"), name = el("div", { className: "name" }, "서버 가격표 " + pt.price_table_id);
-      const syn = /synthetic/i.test(pt.price_table_id);
-      name.append(el("span", { className: syn ? "tag syn" : "tag pub" }, syn ? "SYNTHETIC" : (src.verified_live ? "확인됨" : "라이브 미확인")));
-      const dl = el("dl");
-      for (const [k, v] of [["출처", src.url], ["기준일", src.as_of], ["가져온 경로", src.retrieved_via], ["적용 경로(route)", (pt.applies_to_routes || []).join(", ")], ["sha256", (pt.sha256 || "").slice(0, 16)]]) {
-        dl.append(el("dt", {}, k), el("dd", {}, v ?? "—"));
-      }
-      li.append(name, dl);
-      list.append(li);
-    }
-    const synthLi = el("li");
-    const sn = el("div", { className: "name" }, "현장 보고 (field_report)");
-    sn.append(el("span", { className: synthetic ? "tag syn" : "tag pub" }, synthetic ? "SYNTHETIC" : "이 서버에 제출된 레코드"));
-    synthLi.append(sn, el("p", { className: "src-line" }, synthetic
-      ? "샘플 생성기가 결정적 의사난수로 만든 가짜 레코드입니다. 모델·하네스 이름도 가상입니다. 자기평가 값도 합성이며, 실제 수집기는 모델에게 자기평가를 요청하지 않습니다."
-      : "이 인스턴스가 POST /v1/records로 받은 레코드입니다. 공개 기준 미달 셀은 수치 없이 존재만 표시됩니다."));
-    list.append(synthLi);
+    if (fSrc.value === "field_report" && firstL2 !== undefined && !isOverview) fL2.value = cmpL2 && [...fL2.options].some(o => o.value === cmpL2) ? cmpL2 : firstL2;
 
     // ---------- pair mode ----------
     const pairs = (agg.pairwise || {}).results || [];
     const pairCard = document.getElementById("pair-card");
     document.getElementById("pair-tag").hidden = !synthetic;
     const pairEmpty = document.getElementById("pair-empty");
-    if (!agg.pairwise) {
-      pairEmpty.textContent = isOverview ? "페어 모드 맞대결은 기여자 상세 보기에서만 제공합니다." : "이 집계에는 페어 모드 결과가 없습니다.";
-    } else if (!pairs.length) {
-      const pt = th.pairs || {};
-      pairEmpty.textContent = `공개 기준(쌍 ≥ ${pt.min_pairs ?? "?"}, 기여자 ≥ ${pt.min_contributors ?? "?"})을 넘은 모델 쌍이 아직 없습니다.`;
-    }
+    if (!agg.pairwise) pairEmpty.textContent = isOverview ? "페어 모드 맞대결은 기여자 상세 보기에서만 제공합니다." : "이 집계에는 페어 모드 결과가 없습니다.";
+    else if (!pairs.length) { const pt = th.pairs || {}; pairEmpty.textContent = `공개 기준(쌍 ≥ ${pt.min_pairs ?? "?"}, 기여자 ≥ ${pt.min_contributors ?? "?"})을 넘은 모델 쌍이 아직 없습니다.`; }
     pairEmpty.hidden = !!pairs.length;
     pairCard.querySelector(".legend").hidden = !pairs.length;
     pairCard.querySelector("details").hidden = !pairs.length;
@@ -689,10 +999,10 @@ a { color: var(--under); }
       for (const r of pairs) {
         const box = el("div", { className: "pair" }), head = el("div", { className: "head" });
         const t = el("span");
-        t.append(el("b", {}, r.model_a), document.createTextNode(" vs "), el("b", {}, r.model_b), document.createTextNode(` · ${l2name(r.l2)}`));
+        t.append(el("b", {}, shortModel(r.model_a)), document.createTextNode(" vs "), el("b", {}, shortModel(r.model_b)), el("span", { className: "meta" }, ` · ${l2name(r.l2)}`));
         const [lo, hi] = r.a_score_ci95 || [null, null];
-        head.append(t, el("span", { className: "meta" }, `A 점수 ${pct(r.a_score)} (${pct(lo)}–${pct(hi)}) · ${r.pairs}쌍 · k=${r.k}${r.undecided ? ` · 판정 불가 ${r.undecided}` : ""}`));
-        const decided = r.a_wins + r.ties + r.b_wins, H = 22;
+        head.append(t, el("span", { className: "meta" }, `A ${pct(r.a_score)} (${pct(lo)}–${pct(hi)})`));
+        const decided = r.a_wins + r.ties + r.b_wins, H = 18;
         const s = svgEl("svg", { height: H, viewBox: `0 0 1000 ${H}`, preserveAspectRatio: "none", role: "img",
           "aria-label": `${r.model_a} ${r.a_wins}승, 무승부 ${r.ties}, ${r.model_b} ${r.b_wins}승` });
         let x = 0;
@@ -700,29 +1010,24 @@ a { color: var(--under); }
           if (!n) continue;
           const w = 1000 * n / decided;
           const rect = svgEl("rect", { x, y: 0, width: w, height: H, fill: css(color), stroke: surface, "stroke-width": 2, "vector-effect": "non-scaling-stroke" });
-          const tt = svgEl("title"); tt.textContent = label; rect.append(tt);
-          s.append(rect);
-          x += w;
+          rect.append(svgEl("title", {}, label));
+          s.append(rect); x += w;
         }
-        const nums = el("div", { className: "meta" }, `${r.model_a} ${r.a_wins}승 · 무승부 ${r.ties} · ${r.model_b} ${r.b_wins}승`);
-        box.append(head, s, nums);
+        box.append(head, s, el("div", { className: "meta" }, `A 승 ${r.a_wins} · 무 ${r.ties} · B 승 ${r.b_wins} · ${r.pairs}쌍 · k ${r.k}${r.undecided ? ` · 판정 불가 ${r.undecided}` : ""}`));
         list.append(box);
         const tr = el("tr");
-        for (const [v, num] of [[l2name(r.l2)], [r.model_a], [r.model_b], [r.pairs, 1], [r.k, 1], [r.a_wins, 1], [r.ties, 1], [r.b_wins, 1], [r.undecided, 1], [`${pct(r.a_score)} (${pct(lo)}–${pct(hi)})`, 1]])
-          tr.append(el("td", { className: num ? "num" : "" }, String(v)));
+        for (const [v, isNum] of [[l2name(r.l2)], [r.model_a], [r.model_b], [r.pairs, 1], [r.k, 1], [r.a_wins, 1], [r.ties, 1], [r.b_wins, 1], [r.undecided, 1], [`${pct(r.a_score)} (${pct(lo)}–${pct(hi)})`, 1]])
+          tr.append(el("td", { className: isNum ? "num" : "" }, String(v)));
         tb.append(tr);
       }
     }
 
     // ---------- seed layers ----------
-    const seed = agg.seed_cells || { cells: [] };
-    const seedCells = seed.cells || [];
+    const seedCells = (agg.seed_cells || { cells: [] }).cells || [];
     const sLayer = document.getElementById("seed-layer"), sTask = document.getElementById("seed-task");
     const layers = ["preference", "usage"].filter(k => seedCells.some(c => c.kind === k));
     for (const k of layers) sLayer.append(el("option", { value: k }, k === "preference" ? "선호 투표 (preference)" : "사용량 점유율 (usage)"));
     document.getElementById("seed-card").hidden = !layers.length;
-    document.getElementById("seed-tag").hidden = !seedCells.some(c => synthSources.has(c.source_id) || /synthetic/i.test(c.source_id));
-    document.getElementById("seed-sub").textContent = "선호 = 사람의 쌍대 투표(결과 증거 아님), 사용량 = 채택 점유율(품질 신호 아님). 두 층은 현장 보고와 합치지도, 같은 순위에 넣지도 않습니다. 원문 프롬프트·응답은 저장하지 않고 셀 단위 개수만 보관합니다.";
     const taskKey = c => c.l2 ?? (c.l1 ? c.l1 + ".*" : "*");
     function fillSeedTasks() {
       const pool = seedCells.filter(c => c.kind === sLayer.value);
@@ -734,52 +1039,64 @@ a { color: var(--under); }
       if (!layers.length) return;
       const kind = sLayer.value, task = sTask.value;
       const pool = seedCells.filter(c => c.kind === kind && taskKey(c) === task);
-      const bars = document.getElementById("seed-bars"), thead = document.querySelector("#seed-table thead tr"), tb = document.querySelector("#seed-table tbody");
-      bars.replaceChildren(); tb.replaceChildren(); thead.replaceChildren();
+      const body = document.getElementById("seed-body"), thead = document.querySelector("#seed-table thead tr"), tb = document.querySelector("#seed-table tbody");
+      body.replaceChildren(); tb.replaceChildren(); thead.replaceChildren();
       const src = [...new Set(pool.map(c => c.source_id))].join(", ");
-      const syn = pool.some(c => synthSources.has(c.source_id) || /synthetic/i.test(c.source_id));
-      const TOP = 12;
+      const syn = pool.some(c => isSynthSource(c.source_id));
+      const tag = document.getElementById("seed-tag");
+      tag.className = syn ? "tag syn" : "tag pub"; tag.textContent = syn ? "SYNTHETIC 픽스처" : "공개 데이터 · LMArena 55k";
+      const TOP = 10;
       if (kind === "preference") {
         const rows = [...pool].sort((a, b) => b.win_rate - a.win_rate);
-        document.getElementById("seed-note").textContent = `출처 ${src}${syn ? " (SYNTHETIC)" : ""} · 승률 = (승 + 무/2) / 대결, Wilson 95% CI · 대결 ${th.preference ? th.preference.min_records : 30}회 미만 셀은 비공개 · 상위 ${Math.min(TOP, rows.length)}/${rows.length} 모델. 2023–2024년 모델이며 코딩 분류는 규칙 기반 근사입니다.`;
-        for (const c of rows.slice(0, TOP)) {
+        document.getElementById("seed-note").textContent = `출처 ${src} · 승률 = (승 + 무/2) / 대결, Wilson 95% CI, 세로선 = 50% (가로축은 확대) · 대결 ${th.preference ? th.preference.min_records : 30}회 미만 셀은 비공개 · 상위 ${Math.min(TOP, rows.length)}/${rows.length}. 2023–2024년 모델이며 코딩 분류는 규칙 기반 근사입니다.`;
+        const bars = el("div", { className: "hbars" });
+        const topRows = rows.slice(0, TOP);
+        // zoomed domain that always contains the 50% line, so CI widths stay readable
+        const d0 = Math.min(0.5, ...topRows.map(c => (c.win_rate_ci95 || [c.win_rate])[0])) - 0.03;
+        const d1 = Math.max(0.5, ...topRows.map(c => (c.win_rate_ci95 || [0, c.win_rate])[1])) + 0.03;
+        const PX = v => (clamp(v, d0, d1) - d0) / (d1 - d0) * 1000;
+        for (const c of topRows) {
           const row = el("div", { className: "hbar" }), W = 1000, H = 14;
-          const s = svgEl("svg", { height: H, viewBox: `0 0 ${W} ${H}`, preserveAspectRatio: "none", role: "img", "aria-label": `${c.model} 승률 ${pct(c.win_rate)}` });
           const [lo, hi] = c.win_rate_ci95 || [c.win_rate, c.win_rate];
-          s.append(svgEl("rect", { x: 0, y: 6, width: W, height: 2, fill: css("--grid") }));
-          s.append(svgEl("rect", { x: W / 2 - 1, y: 0, width: 2, height: H, fill: css("--axis"), "vector-effect": "non-scaling-stroke" }));
-          s.append(svgEl("rect", { x: lo * W, y: 3, width: Math.max(4, (hi - lo) * W), height: 8, rx: 4, fill: css("--seq-soft") }));
-          const m = svgEl("rect", { x: clamp(c.win_rate * W - 3, 0, W - 6), y: 0, width: 6, height: H, fill: css("--seq") });
-          const tt = svgEl("title"); tt.textContent = `${c.model}: ${pct(c.win_rate)} (${pct(lo)}–${pct(hi)}), ${c.battles}회`; m.append(tt);
-          s.append(m);
-          row.append(el("span", { className: "nm", title: c.model }, c.model), s, el("span", { className: "val" }, `${pct(c.win_rate)} · ${c.battles.toLocaleString("ko-KR")}회`));
+          const s = svgEl("svg", { height: H, viewBox: `0 0 ${W} ${H}`, preserveAspectRatio: "none", role: "img", "aria-label": `${c.model} 승률 ${pct(c.win_rate)}, 95% CI ${pct(lo)}–${pct(hi)}, 대결 ${c.battles}회` });
+          s.append(svgEl("rect", { x: 0, y: 6.5, width: W, height: 1, fill: css("--grid") }));
+          s.append(svgEl("rect", { x: PX(0.5) - 1, y: 0, width: 2, height: H, fill: css("--axis") }));
+          s.append(svgEl("rect", { x: PX(lo), y: 3, width: Math.max(4, PX(hi) - PX(lo)), height: 8, rx: 4, fill: css("--seq-soft") }));
+          s.append(svgEl("rect", { x: clamp(PX(c.win_rate) - 5, 0, W - 10), y: 0, width: 10, height: H, rx: 2, fill: css("--seq") }));
+          row.append(el("span", { className: "nm", title: c.model }, c.model), s, el("span", { className: "val" }, `${pct(c.win_rate)} · ${num(c.battles)}표`));
           bars.append(row);
         }
-        for (const h of ["모델", "제공사", "대결", "승", "패", "무", "승률 (95% CI)"]) thead.append(el("th", { className: h === "모델" || h === "제공사" ? "" : "num" }, h));
+        body.append(bars);
+        for (const h of ["모델", "제공사", "대결", "승", "패", "무", "승률 (95% CI)"]) thead.append(el("th", { scope: "col", className: h === "모델" || h === "제공사" ? "" : "num" }, h));
         for (const c of rows) {
           const tr = el("tr"), [lo, hi] = c.win_rate_ci95 || [null, null];
-          for (const [v, num] of [[c.model], [c.provider], [c.battles, 1], [c.wins, 1], [c.losses, 1], [c.ties, 1], [`${pct(c.win_rate)} (${pct(lo)}–${pct(hi)})`, 1]])
-            tr.append(el("td", { className: num ? "num" : "" }, String(v)));
+          for (const [v, isNum] of [[c.model], [c.provider], [num(c.battles), 1], [c.wins, 1], [c.losses, 1], [c.ties, 1], [`${pct(c.win_rate)} (${pct(lo)}–${pct(hi)})`, 1]])
+            tr.append(el("td", { className: isNum ? "num" : "" }, String(v)));
           tb.append(tr);
         }
       } else {
-        const rows = [...pool].sort((a, b) => a.rank - b.rank), max = Math.max(...rows.map(c => c.share), 0.0001);
+        // OpenRouter-style share: one 100% strip, fixed categorical order by rank, long tail folded into "기타"
+        const rows = [...pool].sort((a, b) => a.rank - b.rank);
         const per = rows[0] && rows[0].period ? ` · 기간 ${rows[0].period.start} ~ ${rows[0].period.end}` : "";
-        document.getElementById("seed-note").textContent = `출처 ${src}${syn ? " — SYNTHETIC 픽스처(실제 OpenRouter 데이터 아님, 모델 이름도 가상)" : ""}${per} · 점유율 = 해당 모델 토큰 / 전체 토큰(롱테일 'other' 포함).`;
-        for (const c of rows.slice(0, TOP)) {
-          const row = el("div", { className: "hbar" }), W = 1000, H = 14;
-          const s = svgEl("svg", { height: H, viewBox: `0 0 ${W} ${H}`, preserveAspectRatio: "none", role: "img", "aria-label": `${c.model} 점유율 ${pct(c.share)}` });
-          const b = svgEl("rect", { x: 0, y: 1, width: Math.max(4, W * c.share / max), height: H - 2, rx: 4, fill: css("--seq") });
-          const tt = svgEl("title"); tt.textContent = `${c.model}: ${(c.share * 100).toFixed(1)}%, ${c.rank}위`; b.append(tt);
-          s.append(b);
-          row.append(el("span", { className: "nm", title: c.model }, `${c.rank}. ${c.model}`), s, el("span", { className: "val" }, `${(c.share * 100).toFixed(1)}%`));
-          bars.append(row);
+        document.getElementById("seed-note").textContent = `출처 ${src}${syn ? " — SYNTHETIC 픽스처(실제 OpenRouter 데이터 아님, 모델 이름도 가상)" : ""}${per} · 점유율 = 모델 토큰 / 전체 토큰. 기간이 하나뿐이라 시간 추이 대신 한 기간의 점유율만 보여 줍니다.`;
+        const top = rows.slice(0, 5), rest = Math.max(0, 1 - top.reduce((a, c) => a + c.share, 0));
+        const segs = [...top.map((c, i) => [c.model, c.share, `--cat-${i + 1}`]), ...(rest > 0.0005 ? [["기타 (롱테일)", rest, "--cat-other"]] : [])];
+        const stripEl = el("div", { className: "share-strip", role: "img" });
+        stripEl.setAttribute("aria-label", segs.map(([n, s]) => `${n} ${(s * 100).toFixed(1)}%`).join(", "));
+        const legend = el("div", { className: "share-legend" });
+        for (const [name, share, color] of segs) {
+          const seg = el("div", { title: `${name}: ${(share * 100).toFixed(1)}%` }); seg.style.flex = `${share} 0 0`; seg.style.background = `var(${color})`;
+          stripEl.append(seg);
+          const li = el("span"), sw = el("i"); sw.style.background = `var(${color})`;
+          li.append(sw, el("span", { className: "nm", title: name }, name), el("em", {}, `${(share * 100).toFixed(1)}%`));
+          legend.append(li);
         }
-        for (const h of ["순위", "모델", "제공사", "토큰", "점유율"]) thead.append(el("th", { className: h === "모델" || h === "제공사" ? "" : "num" }, h));
+        body.append(stripEl, legend);
+        for (const h of ["순위", "모델", "제공사", "토큰", "점유율"]) thead.append(el("th", { scope: "col", className: h === "모델" || h === "제공사" ? "" : "num" }, h));
         for (const c of rows) {
           const tr = el("tr");
-          for (const [v, num] of [[c.rank, 1], [c.model], [c.provider], [c.tokens.toLocaleString("ko-KR"), 1], [(c.share * 100).toFixed(2) + "%", 1]])
-            tr.append(el("td", { className: num ? "num" : "" }, String(v)));
+          for (const [v, isNum] of [[c.rank, 1], [c.model], [c.provider], [num(c.tokens), 1], [(c.share * 100).toFixed(2) + "%", 1]])
+            tr.append(el("td", { className: isNum ? "num" : "" }, String(v)));
           tb.append(tr);
         }
       }
@@ -788,11 +1105,51 @@ a { color: var(--under); }
     sTask.addEventListener("change", renderSeeds);
     if (layers.length) { fillSeedTasks(); if ([...sTask.options].some(o => o.value === "coding.*")) sTask.value = "coding.*"; }
 
+    // ---------- sources ----------
+    const list = document.getElementById("sources");
+    for (const s of agg.sources || []) {
+      const li = el("li"), name = el("div", { className: "name" }, s.name);
+      const syn = isSynthSource(s.source_id);
+      name.append(el("span", { className: syn ? "tag syn" : "tag pub" }, (syn ? "SYNTHETIC · " : "공개 데이터 · ") + s.source_type));
+      const dl = el("dl");
+      const add = (k, v, href) => {
+        dl.append(el("dt", {}, k));
+        const dd = el("dd");
+        if (href && /^https:\/\//.test(href)) dd.append(el("a", { href, rel: "noopener noreferrer", target: "_blank" }, v));
+        else dd.textContent = v ?? "—";
+        dl.append(dd);
+      };
+      add("출처", s.url, s.url);
+      add("커밋", `${(s.commit_sha || "").slice(0, 12) || "—"} · ${s.commit_date || "?"}`);
+      add("라이선스", s.license);
+      add("비고", s.license_note);
+      li.append(name, dl);
+      list.append(li);
+    }
+    if (agg.price_table) {
+      const pt = agg.price_table, src = pt.source || {};
+      const li = el("li"), name = el("div", { className: "name" }, "서버 가격표 " + pt.price_table_id);
+      const syn = /synthetic/i.test(pt.price_table_id);
+      name.append(el("span", { className: syn ? "tag syn" : "tag pub" }, syn ? "SYNTHETIC" : (src.verified_live ? "확인됨" : "라이브 미확인")));
+      const dl = el("dl");
+      for (const [k, v] of [["출처", src.url], ["기준일", src.as_of], ["가져온 경로", src.retrieved_via], ["적용 경로", (pt.applies_to_routes || []).join(", ")], ["sha256", (pt.sha256 || "").slice(0, 16)]])
+        dl.append(el("dt", {}, k), el("dd", {}, v ?? "—"));
+      li.append(name, dl);
+      list.append(li);
+    }
+    const fr = el("li"), frName = el("div", { className: "name" }, "현장 보고 (field_report)");
+    frName.append(el("span", { className: synthetic ? "tag syn" : "tag pub" }, synthetic ? "SYNTHETIC" : "이 서버에 제출된 레코드"));
+    fr.append(frName, el("p", {}, synthetic
+      ? "샘플 생성기가 결정적 의사난수로 만든 가짜 레코드입니다. 모델·하네스 이름도 가상입니다. 자기평가 값도 합성이며, 실제 수집기는 모델에게 자기평가를 요청하지 않습니다."
+      : "이 인스턴스가 POST /v1/records로 받은 레코드입니다. 공개 기준 미달 셀은 수치 없이 존재만 표시됩니다."));
+    list.append(fr);
+
     renderSlope();
     renderCells();
     renderPairs();
     renderSeeds();
     rerender.push(renderSlope, renderCells, renderPairs, renderSeeds);
+    let rz; window.addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(() => { renderSlope(); renderScatter(); }, 80); });
   }
 })();
 </script>
