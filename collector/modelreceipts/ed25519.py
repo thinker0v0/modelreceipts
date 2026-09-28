@@ -41,7 +41,7 @@ def _add(P, Q):
 
 
 def _mul(s: int, P):
-    Q = (0, 1, 1, 0)  # neutral element
+    Q = (0, 1, 1, 0)  # neutral element (_IDENTITY)
     while s > 0:
         if s & 1:
             Q = _add(Q, P)
@@ -73,6 +73,16 @@ def _recover_x(y: int, sign: int):
 _gy = 4 * _inv(5) % _p
 _gx = _recover_x(_gy, 0)
 _G = (_gx, _gy, 1, _gx * _gy % _p)
+
+
+_IDENTITY = (0, 1, 1, 0)
+
+
+def _is_small_order(P) -> bool:
+    """True for the 8 torsion points. With such a public key A, a signature with a
+    small-order R and s = 0 verifies for many (for the identity: all) messages, so
+    the key proves possession of nothing."""
+    return _equal(_mul(8, P), _IDENTITY)
 
 
 def _compress(P) -> bytes:
@@ -128,7 +138,7 @@ def verify(public: bytes, message: bytes, signature: bytes) -> bool:
     if len(public) != 32 or len(signature) != 64:
         return False
     A = _decompress(public)
-    if A is None:
+    if A is None or _is_small_order(A):
         return False
     Rs = signature[:32]
     R = _decompress(Rs)

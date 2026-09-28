@@ -61,8 +61,15 @@ def _open(req, timeout: float, endpoint: str) -> tuple[int, dict]:
     import urllib.error
     import urllib.request
 
+    class NoRedirect(urllib.request.HTTPRedirectHandler):
+        # Following a 30x would re-send the signed headers to a host that was never
+        # checked against the loopback rule. A redirect is reported as its status.
+        def redirect_request(self, *args, **kwargs):
+            return None
+
+    opener = urllib.request.build_opener(NoRedirect)
     try:
-        with urllib.request.urlopen(req, timeout=timeout) as resp:
+        with opener.open(req, timeout=timeout) as resp:
             return resp.status, json.loads(resp.read() or b"{}")
     except urllib.error.HTTPError as err:
         try:

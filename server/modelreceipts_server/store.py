@@ -72,6 +72,7 @@ CREATE TABLE IF NOT EXISTS records (
   body             TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS records_cell ON records (source_type, l1, l2, model_id, harness);
+CREATE INDEX IF NOT EXISTS records_contributor ON records (contributor, received_at);
 CREATE TABLE IF NOT EXISTS server_costs (
   record_id      TEXT PRIMARY KEY REFERENCES records(record_id),
   price_table_id TEXT NOT NULL,
@@ -362,6 +363,12 @@ class Store:
             row = self._db.execute("SELECT price_table_id, cost_usd, reason FROM server_costs WHERE record_id = ?",
                                    (record_id,)).fetchone()
         return None if row is None else {"price_table_id": row[0], "cost_usd": row[1], "reason": row[2]}
+
+    def has_contributed(self, contributor: str) -> bool:
+        """True if this contributor has ANY stored record (used to spot first-time keys)."""
+        with self._lock:
+            row = self._db.execute("SELECT 1 FROM records WHERE contributor = ? LIMIT 1", (contributor,)).fetchone()
+        return row is not None
 
     def has_recent_contribution(self, contributor: str, days: int = 90, now: datetime | None = None) -> bool:
         """True if this contributor added a field report within ``days`` (gate for the detailed view)."""

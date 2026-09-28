@@ -23,8 +23,10 @@ stored only as salted hashes.
 
 from __future__ import annotations
 
+import functools
 import json
 import mimetypes
+import re
 import socket
 from dataclasses import dataclass, field
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -41,6 +43,54 @@ from .store import DuplicateRecord, InvalidRecord, Store, cell_key
 MAX_BODY = 64 * 1024
 INSTALL_HEADER = "X-ModelReceipts-Install"
 GATE_DAYS = 90
+_CONTENT_LENGTH = re.compile(r"[0-9]{1,9}")  # ASCII digits only: no sign, no "1_000", no "²"
+
+
+def _reject_constant(name: str):
+    raise ValueError(f"{name} is not valid JSON")
+
+
+def parse_json_body(raw: bytes):
+    """Strict JSON: UTF-8, no NaN/Infinity. Raises ValueError with a client-safe message.
+
+    ``json.loads`` can also raise RecursionError (deep nesting) and a plain
+    ValueError for integer literals over the int-digit limit; both are mapped to
+    ValueError here so the handler answers 400 instead of dropping the connection.
+    """
+    try:
+        return json.loads(raw.decode("utf-8"), parse_constant=_reject_constant)
+    except json.JSONDecodeError as exc:
+        raise ValueError(str(exc)) from None
+    except UnicodeDecodeError:
+        raise ValueError("body is not UTF-8") from None
+    except RecursionError:
+        raise ValueError("nesting too deep") from None
+    except ValueError as exc:
+        text = str(exc)
+        raise ValueError(text if "not valid JSON" in text else "number literal too large") from None
+
+
+def _printable(text: str, limit: int = 200) -> str:
+    """Escape control characters so request paths cannot forge or recolor log lines."""
+    out = "".join(c if c.isprintable() else f"\\x{ord(c):02x}" for c in text[:limit])
+    return out + ("..." if len(text) > limit else "")
+
+
+def _guarded(method):
+    """Answer 500 with a fixed body on any unexpected exception (no internals leak)."""
+    @functools.wraps(method)
+    def wrapper(self):
+        try:
+            return method(self)
+        except Exception as exc:  # noqa: BLE001 - last-resort guard
+            self.close_connection = True
+            if not getattr(self, "quiet", False):
+                print(f"[modelreceipts-server] internal error: {type(exc).__name__}", flush=True)
+            try:
+                self._json(500, {"error": "internal_error"})
+            except Exception:  # noqa: BLE001 - headers may already be sent
+                pass
+    return wrapper
 
 
 class NotLoopback(ValueError):
@@ -60,20 +110,30 @@ class Policy:
 
 def make_handler(store: Store, thresholds: Thresholds, policy: Policy | None = None,
                  dashboard_dir: Path = DASHBOARD_DIR, quiet: bool = False):
+    quiet_logs = quiet
     dashboard_root = dashboard_dir.resolve()
     policy = policy or Policy()
     bucket = TokenBucket(policy.limits.per_hour, policy.limits.burst)
+    # One shared bucket for contributors the database has never seen: rotating keys
+    # (or legacy install ids) per request must not mint a fresh per-key bucket each time.
+    newcomers = TokenBucket(policy.limits.new_contributors_per_hour, policy.limits.new_contributor_burst,
+                            max_keys=1)
 
     class Handler(BaseHTTPRequestHandler):
         server_version = f"ModelReceipts/{__version__}"
         sys_version = ""
         protocol_version = "HTTP/1.1"
         timeout = 15
+        quiet = quiet_logs
 
         # -- helpers -------------------------------------------------------
         def log_message(self, fmt, *args):  # no client address in logs
             if not quiet:
-                print(f"[modelreceipts-server] {self.command} {urlsplit(self.path).path} -> {args[1] if len(args) > 1 else ''}", flush=True)
+                raw_path = getattr(self, "path", "")
+                path = _printable(urlsplit(raw_path).path) if isinstance(raw_path, str) else "?"
+                status = _printable(str(args[1])) if len(args) > 1 else ""
+                command = _printable(str(getattr(self, "command", None) or "-"))
+                print(f"[modelreceipts-server] {command} {path} -> {status}", flush=True)
 
         def _send(self, status: int, body: bytes, ctype: str, extra: dict | None = None):
             self.send_response(status)
@@ -88,7 +148,8 @@ def make_handler(store: Store, thresholds: Thresholds, policy: Policy | None = N
                 self.wfile.write(body)
 
         def _json(self, status: int, obj, extra: dict | None = None):
-            body = (json.dumps(obj, ensure_ascii=False, indent=2) + "\n").encode("utf-8")
+            # allow_nan=False: never emit NaN/Infinity (invalid JSON); the guard turns it into a 500.
+            body = (json.dumps(obj, ensure_ascii=False, indent=2, allow_nan=False) + "\n").encode("utf-8")
             self._send(status, body, "application/json; charset=utf-8", extra)
 
         def _error(self, status: int, code: str, details=None, extra: dict | None = None):
@@ -98,6 +159,7 @@ def make_handler(store: Store, thresholds: Thresholds, policy: Policy | None = N
             self._json(status, obj, extra)
 
         # -- routes --------------------------------------------------------
+        @_guarded
         def do_GET(self):
             url = urlsplit(self.path)
             if url.path == "/healthz":
@@ -121,18 +183,19 @@ def make_handler(store: Store, thresholds: Thresholds, policy: Policy | None = N
 
         do_HEAD = do_GET
 
+        @_guarded
         def do_POST(self):
             path = urlsplit(self.path).path
             if path in {"/v1/aggregates", "/v1/aggregates/detail", "/v1/overview", "/healthz"}:
                 return self._method_not_allowed()
             if path != "/v1/records":
                 return self._error(404, "not_found")
-            if self.headers.get("Transfer-Encoding"):
-                return self._error(411, "content_length_required")
-            try:
-                length = int(self.headers.get("Content-Length", ""))
-            except ValueError:
-                return self._error(411, "content_length_required")
+            declared = (self.headers.get("Content-Length") or "").strip()
+            if self.headers.get("Transfer-Encoding") or not _CONTENT_LENGTH.fullmatch(declared):
+                # The body (if any) is left unread, so this connection cannot be reused.
+                self.close_connection = True
+                return self._error(411, "content_length_required", [f"send a Content-Length of 0..{MAX_BODY}"])
+            length = int(declared)
             if length > MAX_BODY:
                 self.close_connection = True
                 return self._error(413, "payload_too_large", [f"max {MAX_BODY} bytes"])
@@ -156,14 +219,21 @@ def make_handler(store: Store, thresholds: Thresholds, policy: Policy | None = N
                 install_id = (self.headers.get(INSTALL_HEADER) or "").strip()[:128] or None
                 contributor = store.contributor_key(install_id)
 
-            # 2) per-contributor rate limit (before any parsing work)
+            # 2) per-contributor rate limit (before any parsing work), then the shared
+            #    budget for first-time contributors (defeats key rotation)
             allowed, retry_after = bucket.take(contributor)
             if not allowed:
                 return self._error(429, "rate_limited", [f"retry after {retry_after}s"], {"Retry-After": str(retry_after)})
+            if not store.has_contributed(contributor):
+                allowed, retry_after = newcomers.take("new")
+                if not allowed:
+                    return self._error(429, "new_contributor_rate_limited",
+                                       ["too many first-time contributors right now", f"retry after {retry_after}s"],
+                                       {"Retry-After": str(retry_after)})
 
             try:
-                record = json.loads(raw.decode("utf-8"))
-            except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+                record = parse_json_body(raw)
+            except ValueError as exc:
                 return self._error(400, "invalid_json", [str(exc)])
             errors = store.validate(record)
             if errors:
@@ -221,8 +291,14 @@ def make_handler(store: Store, thresholds: Thresholds, policy: Policy | None = N
 
         def _static(self, rel: str):
             rel = rel or "index.html"
-            target = (dashboard_root / rel).resolve()
-            if not target.is_relative_to(dashboard_root) or not target.is_file():
+            if "\x00" in rel:
+                return self._error(404, "not_found")
+            try:
+                target = (dashboard_root / rel).resolve()
+                found = target.is_relative_to(dashboard_root) and target.is_file()
+            except (OSError, ValueError):
+                found = False
+            if not found:
                 return self._error(404, "not_found")
             ctype = mimetypes.guess_type(target.name)[0] or "application/octet-stream"
             if ctype.startswith("text/") or ctype in {"application/json", "application/javascript", "image/svg+xml"}:

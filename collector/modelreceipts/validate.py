@@ -16,7 +16,9 @@ CLI::
 
 from __future__ import annotations
 
+import functools
 import json
+import math
 import re
 import sys
 from datetime import datetime
@@ -32,7 +34,44 @@ _SUPPORTED = {
     "items", "maxItems", "minItems", "uniqueItems", "pattern", "minLength", "maxLength",
     "minimum", "maximum", "format", "$ref", "anyOf", "allOf", "if", "then", "else",
 }
-_UUID_RE = re.compile(r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
+_UUID_RE = re.compile(r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\Z")
+# I-JSON (RFC 7493): integers beyond +-(2**53 - 1) are not interoperable (and would
+# overflow SQLite INTEGER far earlier than Python notices).
+MAX_SAFE_INTEGER = 2 ** 53 - 1
+_ECHO_LIMIT = 60
+
+
+def _short(value: Any) -> str:
+    """repr() for error messages, truncated so a 60 KB string is not echoed back."""
+    text = repr(value)
+    return text if len(text) <= _ECHO_LIMIT else f"{text[:_ECHO_LIMIT]}...({len(text)} chars)"
+
+
+@functools.lru_cache(maxsize=256)
+def _compile_pattern(pattern: str) -> re.Pattern:
+    """Compile a JSON Schema (ECMA-262) pattern for Python's ``re``.
+
+    The one difference that matters for our schemas: in ECMA-262 ``$`` (without
+    the multiline flag) matches only at the end of input, while Python's ``$``
+    also matches before a trailing newline. Unescaped ``$`` outside character
+    classes becomes ``\\Z``.
+    """
+    out, i, in_class = [], 0, False
+    while i < len(pattern):
+        c = pattern[i]
+        if c == "\\":
+            out.append(pattern[i:i + 2])
+            i += 2
+            continue
+        if c == "[":
+            in_class = True
+        elif c == "]":
+            in_class = False
+        elif c == "$" and not in_class:
+            c = r"\Z"
+        out.append(c)
+        i += 1
+    return re.compile("".join(out))
 
 
 class SchemaError(Exception):
@@ -47,9 +86,9 @@ def _is_type(value: Any, name: str) -> bool:
     if name == "integer":
         if isinstance(value, bool):
             return False
-        return isinstance(value, int) or (isinstance(value, float) and value.is_integer())
+        return isinstance(value, int) or (isinstance(value, float) and value.is_integer())  # inf/nan: False
     if name == "number":
-        return isinstance(value, (int, float)) and not isinstance(value, bool)
+        return isinstance(value, (int, float)) and not isinstance(value, bool) and _finite(value)
     if name == "string":
         return isinstance(value, str)
     if name == "array":
@@ -57,6 +96,10 @@ def _is_type(value: Any, name: str) -> bool:
     if name == "object":
         return isinstance(value, dict)
     raise SchemaError(f"unknown type {name!r}")
+
+
+def _finite(value: int | float) -> bool:
+    return not isinstance(value, float) or math.isfinite(value)
 
 
 def _json_equal(a: Any, b: Any) -> bool:
@@ -109,25 +152,30 @@ class Validator:
         if "type" in schema:
             types = schema["type"] if isinstance(schema["type"], list) else [schema["type"]]
             if not any(_is_type(instance, t) for t in types):
-                yield f"{path}: expected type {'|'.join(types)}, got {type(instance).__name__}"
+                if isinstance(instance, float) and not math.isfinite(instance):
+                    yield f"{path}: NaN/Infinity is not a JSON number"
+                else:
+                    yield f"{path}: expected type {'|'.join(types)}, got {type(instance).__name__}"
                 return  # further checks would only add noise
 
         if "const" in schema and not _json_equal(instance, schema["const"]):
             yield f"{path}: must equal {schema['const']!r}"
         if "enum" in schema and not any(_json_equal(instance, e) for e in schema["enum"]):
-            yield f"{path}: {instance!r} not in {schema['enum']}"
+            yield f"{path}: {_short(instance)} not in {schema['enum']}"
 
         if isinstance(instance, str):
-            if "pattern" in schema and not re.search(schema["pattern"], instance):
-                yield f"{path}: {instance!r} does not match {schema['pattern']}"
+            if "pattern" in schema and not _compile_pattern(schema["pattern"]).search(instance):
+                yield f"{path}: {_short(instance)} does not match {schema['pattern']}"
             if "minLength" in schema and len(instance) < schema["minLength"]:
                 yield f"{path}: shorter than {schema['minLength']}"
             if "maxLength" in schema and len(instance) > schema["maxLength"]:
                 yield f"{path}: longer than {schema['maxLength']}"
             if "format" in schema and not _check_format(instance, schema["format"]):
-                yield f"{path}: {instance!r} is not a valid {schema['format']}"
+                yield f"{path}: {_short(instance)} is not a valid {schema['format']}"
 
         if _is_type(instance, "number"):
+            if _is_type(instance, "integer") and abs(instance) > MAX_SAFE_INTEGER:
+                yield f"{path}: integer outside +-(2**53 - 1)"
             if "minimum" in schema and instance < schema["minimum"]:
                 yield f"{path}: {instance} < minimum {schema['minimum']}"
             if "maximum" in schema and instance > schema["maximum"]:
@@ -155,7 +203,7 @@ class Validator:
                 if key in props:
                     yield from self.iter_errors(value, props[key], f"{path}.{key}")
                 elif schema.get("additionalProperties") is False:
-                    yield f"{path}: unexpected property {key!r}"
+                    yield f"{path}: unexpected property {_short(key)}"
 
         for sub in schema.get("allOf", []):
             yield from self.iter_errors(instance, sub, path)
