@@ -57,17 +57,32 @@
 
 ## 스크린샷
 
-`docs/screenshots/`의 4장(데스크톱/폰 × 라이트/다크)은 로컬 서버가 샘플 JSON을 서빙하는 상태에서 Playwright가 캐시한 Chromium headless shell로 찍었다(2026-09-28, 기여자 상세 보기). 데스크톱은 페이지 전체(1280×4224), 폰은 위쪽 3000px(390×3000)이다.
+`docs/screenshots/`의 README용 4장(데스크톱/폰 × 라이트/다크)과 상태 캡처 4장(개요·빈 집계·오류·로딩, 폰)은 `tools/check-ui.mjs`가 찍는다(2026-09-29, 기여자 상세 보기). 스크롤바를 숨긴 headless Chromium을 쓰며, 데스크톱은 1440px 전체 페이지, 폰은 390px의 위쪽 3000px이다. 저장소 루트에서 다음처럼 실행한다(Node 22 이상, 외부 의존성 없음).
 
 ```bash
-PYTHONPATH=server python3 -m modelreceipts_server serve --db /tmp/mr-shots.sqlite3 --port 8791 &
 H=$(ls -d ~/.cache/ms-playwright/chromium_headless_shell-*/chrome-*/ | head -1)
-${H}chrome-headless-shell --no-sandbox --headless --hide-scrollbars --virtual-time-budget=5000 --window-size=1280,4224 \
-  --screenshot=dashboard-desktop-light.png "http://127.0.0.1:8791/dashboard/?theme=light"
-# 폰: --window-size=390,3000
-kill %1   # 서버 종료
+node dashboard/tools/check-ui.mjs "${H}chrome-headless-shell" check           # 검사 + 캡처 + docs/screenshots/ui-checks.json
+node dashboard/tools/check-ui.mjs "${H}chrome-headless-shell" keyviews:opus   # 전후 비교용 핵심 화면 3장
 ```
 
-## rc3 Codex 단계 검증
+드라이버는 127.0.0.1 임시 포트에 정적 서버를 띄우고, Chromium 하나를 CDP로 조작한 뒤 둘 다 닫는다. 검사 항목은 다음과 같다.
 
-[디자인 격차 10개](../docs/DESIGN_COMPARISON.md)와 [전후 캡처·재현 명령](../docs/screenshots/before_after/README.md)을 참고한다. 상단 섹션 이동과 스냅샷 시각, 필터 요약·초기화, 로딩·오류·빈 상태를 추가했다. `tools/check-ui.mjs`는 설치된 headless Chromium과 Node 내장 기능만 쓰며, 외부 API 없이 화면과 키보드 동작을 검사한다.
+- 320–1440px에서 가로 넘침이 없는지
+- 두 테마 글자 대비
+- 차트 라벨과 워터마크가 겹치지 않는지
+- 키보드 탐색과 Esc
+- reduced motion
+- 필터
+- 빈 집계·오류·시간 초과·로딩 상태
+
+## rc3 검증 (Codex 단계 → Opus 단계)
+
+[디자인 격차와 단계별 결과](../docs/DESIGN_COMPARISON.md)와 [전후 캡처·재현 명령](../docs/screenshots/before_after/README.md)을 참고한다.
+
+- Codex 단계에서 추가한 것: 섹션 이동, 스냅샷 시각, 필터 요약·초기화, 로딩·오류·빈 상태.
+- Opus 단계에서 다듬은 것:
+  - 섹션 링크와 스냅샷을 도구 막대 한 줄로 합침
+  - 빈 집계 문구
+  - 로그 가격 축 눈금
+  - 폰 카드 두 열
+  - 스크롤 영역 초점

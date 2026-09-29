@@ -13,7 +13,7 @@ AI 에이전트가 실제 작업을 끝내면 (태스크 분류 코드, 모델, 
 
 ## 현재 단계: v1.0.0-rc3 코드 완성 후보 (2026-09-29)
 
-rc3 Codex 단계는 대시보드 최종 다듬기와 전후 캡처를 마쳤다(`docs/DESIGN_COMPARISON.md`). 다음은 Claude Opus 단계다.
+rc3 대시보드 최종 다듬기를 마쳤다. Codex 단계(`0c31c5c`) 뒤에 Claude Opus 단계가 검토하고 보완했다. 결과는 `docs/DESIGN_COMPARISON.md`와 `docs/QUALITY.md`에 있다. UI 검사는 `node dashboard/tools/check-ui.mjs <chrome-headless-shell> check`로 실행한다.
 
 rc2는 새 기능 없이 품질·보안 자체 점검(`docs/QUALITY.md`)과 대시보드 재디자인(`docs/DESIGN_REFERENCES.md`)만 했다.
 

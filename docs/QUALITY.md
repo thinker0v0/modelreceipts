@@ -1,8 +1,47 @@
 # 품질·보안 및 화면 점검 (v1.0.0-rc3, 2026-09-29)
 
+rc3는 대시보드 최종 다듬기이며 두 단계로 진행했다. 먼저 Codex 단계(`0c31c5c`)가 작업하고, 이어서 Claude Opus 단계가 그 결과를 검토하고 보완했다. 격차별 결과는 [디자인 비교](DESIGN_COMPARISON.md)에 있다. 두 단계 모두 로컬 문서와 코드만 비교했고, 외부 서비스 화면은 열어 보지 않았다.
+
+## rc3 — Opus 단계 (최종)
+
+Codex 단계의 수정 10개를 하나씩 검토했다.
+
+- 그대로 둔 것: 1개(필터 요약).
+- 보완한 것: 9개. 결함 예시는 다음과 같다.
+  - 로딩 중 노란 띠가 합성 색 규칙을 어김
+  - 헤더에 빈 pill이 보임
+  - 빈 집계에서 `?` 자리표시가 새어 나옴
+  - 숨은 섹션으로 가는 링크
+  - 가격 축 왼쪽 끝에 눈금이 없음
+  - 폰 카드가 6줄로 길어짐
+  - 넘치지 않는 표가 Tab 정지점이 됨
+- 새로 고친 격차: 2개(slope 워터마크 겹침, 캡처 폭 불일치).
+
+통계 산식, 팔레트, 합성 표시 위치와 개수는 바꾸지 않았다. 브라우저 검사를 새로 추가했고, 수정할 때마다 해당 동작을 검사로 확인했다.
+
+| 영역 | 검사 | 결과 |
+|---|---|---|
+| 전체 Python 테스트 | 디렉터리마다 따로 `python3 -m unittest discover -s …/tests` 실행 (2026-09-29, Python 3.12) | collector 79 / server 60 / seeds 21, 총 160개 통과. Opus 단계는 Python 코드를 바꾸지 않았다. |
+| 반응형 | Chromium CDP, 스크롤바 숨김, 320·375·390·640·768·1024·1440px | 페이지 가로 넘침 없음. 폰 카드 보조 지표는 390px에서 두 열, 320px에서 한 열 |
+| 글자 대비 | 두 테마에서 ink·ink-2·muted·accent·over-text·under-text 대 surface·surface-2·page, 합성·공개 태그 색 | 가장 낮은 값: 라이트 4.81:1, 다크 5.79:1. 검사한 조합은 모두 AA 4.5:1 이상. 전체 접근성 인증은 아님 |
+| 차트 | slope 워터마크가 모든 순위 라벨보다 아래(데스크톱·폰 × 라이트·다크), 산점도 가격 눈금 3개 이상 | 통과 |
+| 키보드·상태 | 산점도 화살표와 Esc, slope Esc, reduced motion, 필터 초기화·층 변경, 표 스크롤 영역(1440px은 정지점 없음, 768px은 region으로 초점 이동) | 통과 |
+| 빈 집계·오류·지연 | 빈 응답(`?` 없음, "데이터 없음" 선택지, 숨은 섹션 링크 없음), 로컬 404(빈 pill 없음, 재시도, 샘플로 복구), 15초 초과(사람이 읽을 수 있는 메시지), 1.5초 지연(중립 띠, 빈 pill 없음) | 통과 |
+| 브라우저 오류 | 위 화면·동작에서 Runtime.exceptionThrown 수집 | JavaScript 미처리 예외 0 |
+| 캡처 | 기본 4장, 개요·빈 상태·오류·로딩 4장 갱신, Codex → Opus 핵심 화면 3쌍 | [before_after/README.md](screenshots/before_after/README.md) |
+
+재현: `node dashboard/tools/check-ui.mjs <chrome-headless-shell> check`. 결과는 [ui-checks.json](screenshots/ui-checks.json)에 기록된다. 전후 캡처 방법은 [스크린샷 안내](screenshots/before_after/README.md)에 있다. 두 코어를 공유하므로 Chromium은 한 번에 하나만 띄웠고, 테스트 스위트는 차례로 실행했다. 외부·유료 API, 자격증명, 실제 transcript, 실제 `~/.claude` 파일은 쓰지 않았다.
+
+한계는 다음과 같다.
+
+- 실제 스크린 리더, Chromium 외 브라우저, axe 같은 자동 접근성 검사기로는 확인하지 않았다.
+- 참고 서비스의 현재 화면은 다시 보지 않았다.
+- 이번 작업은 보안 감사가 아니다. 아래 rc2의 남은 운영 위험은 그대로 남아 있다.
+- 다른 모델 계열(GPT, Claude)이 앞 단계 결과를 검토했지만, 둘 다 AI 에이전트다. 사람의 디자인 검토를 대신하지 못한다.
+
 ## rc3 — Codex 단계
 
-이번 라운드는 대시보드 최종 다듬기다. [디자인 비교](DESIGN_COMPARISON.md)의 10개 격차를 수정했다. 로컬 문서와 코드만 비교했으며 최신 외부 서비스 화면을 열어 보지 않았다. 다음 Claude Opus 단계의 검토는 아직 수행하지 않았다.
+[디자인 비교](DESIGN_COMPARISON.md)의 10개 격차를 수정했다. 이 절의 기록은 Codex 단계 당시의 것이다. 이후 Opus 단계에서 보완한 내용은 위 절에 있다.
 
 | 영역 | 검사 | 결과 |
 |---|---|---|
@@ -16,7 +55,7 @@
 | 생성물·스키마 | 예시 8개 검증, 패키지 스키마 비교, 분류기 보고서 및 샘플·SVG 재생성 비교 | 모두 일치 |
 | 버전·문서 | 수집기·서버·패키지·README·화면·CHANGELOG | `1.0.0rc3` / `1.0.0-rc3` 일치, 로컬 커밋만 |
 
-재현: [스크린샷 안내](screenshots/before_after/README.md), [기계 검사 결과](screenshots/before_after/after-checks.json), [드라이버](../dashboard/tools/check-ui.mjs). 두 코어를 공유하므로 Chromium 하나와 테스트 스위트 순차 실행으로 제한했다. 테스트 임시 파일과 브라우저 프로필은 프로젝트의 `server/var/ui/`에 두었다. 외부·유료 API, 자격증명, 실제 transcript, 실제 `~/.claude` 파일을 사용하지 않았다.
+재현: [스크린샷 안내](screenshots/before_after/README.md), [기계 검사 결과](screenshots/before_after/after-checks.json)(Codex 단계 당시의 기록). 드라이버는 이후 Opus 단계에서 `check`/`keyviews:NAME` 모드로 바뀌었다. 두 코어를 공유하므로 Chromium 하나와 테스트 스위트 순차 실행으로 제한했다. 테스트 임시 파일과 브라우저 프로필은 프로젝트의 `server/var/ui/`에 두었다. 외부·유료 API, 자격증명, 실제 transcript, 실제 `~/.claude` 파일을 사용하지 않았다.
 
 한계: 실제 스크린 리더·다른 브라우저·axe 검사는 수행하지 않았다. 이번 라운드는 아래 rc2 보안 점검을 새로 시행한 보안 감사가 아니며, 남은 운영 위험도 그대로다.
 
