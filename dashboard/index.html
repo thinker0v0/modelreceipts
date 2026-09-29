@@ -89,7 +89,7 @@ h1, h2, h3, p, .cap, .note, .caption { word-break: keep-all; overflow-wrap: anyw
 /* ---------- synthetic strip ---------- */
 .strip { border-bottom: 1px solid var(--syn-line); background: var(--syn-bg); color: var(--syn-ink); }
 .strip.live { background: var(--pub-bg); color: var(--pub-ink); border-color: var(--border); }
-.strip.error { background: var(--surface-2); color: var(--ink); border-color: var(--border); }
+.strip.error, .strip.pending { background: var(--surface-2); color: var(--ink); border-color: var(--border); }
 .strip .inner { max-width: 1120px; margin: 0 auto; padding: 8px 16px; display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: baseline; font-size: var(--fs-sm); }
 .strip b { font-weight: 700; letter-spacing: .02em; }
 .strip details { font-size: var(--fs-xs); }
@@ -281,11 +281,18 @@ tr.locked td { color: var(--muted); }
   .card, .hero-main, .kpi { box-shadow: none; break-inside: avoid; }
 }
 /* rc3: readable narrow layouts and explicit navigation/state */
-.section-nav { display:flex; flex-wrap:wrap; gap:8px 20px; padding:14px 0 0; }
-.section-nav a { font-size:13px; padding:6px 0; }
+/* Opus: section links and snapshot time share one quiet toolbar row under the header */
+.toolbar { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:6px 16px; margin-top:12px; padding:6px 0; border-top:1px solid var(--border); border-bottom:1px solid var(--border); }
+.section-nav { display:flex; flex-wrap:wrap; gap:2px; margin:0 -8px; }
+.section-nav a { font-size:var(--fs-sm); color:var(--ink-2); text-decoration:none; padding:6px 8px; border-radius:6px; }
+.section-nav a:hover { color:var(--ink); background:var(--surface-2); }
 section[id] { scroll-margin-top:16px; }
-.meta-line, .results-line { color:var(--ink-2); font-size:13px; }
+.meta-line, .results-line { color:var(--ink-2); font-size:var(--fs-sm); margin:0; }
+.meta-line time { font-variant-numeric:tabular-nums; }
 .results-line { display:flex; flex-wrap:wrap; gap:8px 16px; justify-content:space-between; margin:12px 0; }
+.error-actions { display:flex; flex-wrap:wrap; align-items:center; gap:8px 16px; margin:4px 0 12px; }
+.error-actions .more { margin:0; }
+.board-intro { margin-top:24px; padding-top:16px; border-top:1px solid var(--grid); }
 .filters { padding:12px; background:var(--surface-2); border-radius:10px; }
 .filters .more { margin:0; min-height:36px; }
 .loading-bars { display:grid; grid-template-columns:2fr 1fr 1fr; gap:12px; margin-top:20px; }
@@ -311,11 +318,18 @@ section[id] { scroll-margin-top:16px; }
   .tip { min-width:0; max-width:min(280px,100%); }
   .loading-bars { grid-template-columns:1fr; }
 }
+@media (min-width:360px) and (max-width:640px) {
+  #board tr { grid-template-columns:24px minmax(0,1fr) minmax(0,1fr); column-gap:16px; }
+  #board td.model, #board td.nk, #board td.ci, #board td.lockrow { grid-column:2 / -1; }
+  #board td.opt:nth-child(odd) { grid-column:2; }
+  #board td.opt:nth-child(even) { grid-column:3; }
+}
+@media print { .toolbar { display:none; } }
 </style>
 </head>
 <body>
 <a class="skip" href="#main">본문으로 건너뛰기</a>
-<div class="strip" id="strip" role="note" aria-live="polite">
+<div class="strip pending" id="strip" role="note" aria-live="polite">
   <div class="inner"><b id="strip-title">데이터를 불러오는 중…</b><span id="strip-text"></span>
     <details id="strip-more" hidden><summary>데이터 라벨 원문</summary><p id="strip-label"></p></details>
   </div>
@@ -325,7 +339,7 @@ section[id] { scroll-margin-top:16px; }
     <div class="brand">
       <div class="logo" aria-hidden="true">R</div>
       <div>
-        <div class="brand-name">ModelReceipts <span class="pill">v1.0.0-rc3</span> <span class="pill" id="view-pill"></span></div>
+        <div class="brand-name">ModelReceipts <span class="pill">v1.0.0-rc3</span> <span class="pill" id="view-pill" hidden></span></div>
         <div class="eyebrow">자기평가가 아니라 결과 증거로 매긴 태스크별 모델 순위</div>
       </div>
     </div>
@@ -352,17 +366,19 @@ section[id] { scroll-margin-top:16px; }
   <section class="card" id="load-error" role="alert" hidden>
     <h2>집계 데이터를 불러오지 못했습니다</h2>
     <p class="sub" id="load-error-msg"></p>
-    <button type="button" class="more" id="retry-load">다시 불러오기</button> <a href="?view=detail">샘플 보기</a>
+    <div class="error-actions"><button type="button" class="more" id="retry-load">다시 불러오기</button><a id="error-sample" href="?view=detail">합성 샘플로 보기</a></div>
     <details><summary>로컬 실행 안내</summary><p class="sub">브라우저는 <code>file://</code>에서 JSON을 읽지 못합니다. 저장소 루트에서
       <code>PYTHONPATH=server python3 -m modelreceipts_server serve</code> 후
       <code>http://127.0.0.1:8787/dashboard/</code>(샘플) 또는 <code>http://127.0.0.1:8787/</code>(서버 집계)를 여세요.</p></details>
   </section>
 
   <div id="content" hidden>
-  <nav class="section-nav" aria-label="대시보드 섹션">
-    <a href="#cmp-card">순위 비교</a><a href="#cells-card">태스크 셀</a><a href="#seed-card">시드 층</a><a href="#sources-card">출처</a>
-  </nav>
-  <p class="meta-line" id="snapshot-meta"></p>
+  <div class="toolbar">
+    <nav class="section-nav" aria-label="대시보드 섹션">
+      <a href="#cmp-card">순위 비교</a><a href="#cells-card">태스크 셀</a><a href="#pair-card">페어 모드</a><a href="#seed-card">시드 층</a><a href="#sources-card">출처</a>
+    </nav>
+    <p class="meta-line" id="snapshot-meta"></p>
+  </div>
   <!-- hero -->
   <section class="hero" aria-labelledby="hero-title">
     <div class="hero-main">
@@ -449,9 +465,9 @@ section[id] { scroll-margin-top:16px; }
     <p class="sr-only" id="scatter-live" aria-live="polite"></p>
     <p class="empty" id="scatter-empty" hidden></p>
 
-    <p class="caption">표의 #는 통과율 순위입니다. 정렬을 바꿔도 유지됩니다. —는 미측정·미제공이며 0이 아닙니다. 넓은 표는 가로로 스크롤할 수 있습니다.</p>
+    <p class="caption board-intro">표의 #는 통과율 순위이며 정렬을 바꿔도 그대로입니다. —는 미측정·미제공이며 0이 아닙니다.</p>
     <div class="empty" id="board-empty" hidden><b id="board-empty-title">조건에 맞는 셀이 없습니다.</b><p id="board-empty-help">태스크나 방법을 전체로 바꾸세요. 공개 기준 미달 셀은 수치 없이 표시됩니다.</p><a id="empty-sample" href="?view=detail" hidden>합성 샘플 둘러보기</a><button type="button" class="more" id="empty-reset">필터 초기화</button></div>
-    <div class="table-scroll" id="board-scroll" style="margin-top:16px">
+    <div class="table-scroll" id="board-scroll" style="margin-top:10px">
       <table id="board"><caption class="sr-only">태스크 셀 리더보드</caption><thead><tr>
         <th scope="col" class="num" title="순위 · 통계적 순위(CI가 겹치지 않게 앞서는 셀 수 + 1)">#</th>
         <th scope="col">모델 · 방법</th>
@@ -555,6 +571,7 @@ section[id] { scroll-margin-top:16px; }
   const usd = v => v == null ? "—" : "$" + (v < 0.01 ? v.toFixed(4) : v < 1 ? v.toFixed(3) : v.toFixed(2));
   const secs = ms => ms == null ? "—" : (ms >= 60000 ? (ms / 60000).toFixed(1) + "분" : (ms / 1000).toFixed(0) + "초");
   const num = v => v == null ? "—" : Number(v).toLocaleString("ko-KR");
+  const utc = iso => { const d = new Date(iso); return isNaN(d) ? null : d.toISOString().slice(0, 16).replace("T", " ") + " UTC"; };
   const el = (tag, props = {}, text) => { const e = document.createElement(tag); Object.assign(e, props); if (text != null) e.textContent = text; return e; };
   const SVGNS = "http://www.w3.org/2000/svg";
   const svgEl = (tag, attrs = {}, text) => { const e = document.createElementNS(SVGNS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (text != null) e.textContent = text; return e; };
@@ -590,6 +607,8 @@ section[id] { scroll-margin-top:16px; }
     if (a.dataset.view === wantView) a.setAttribute("aria-current", "page");
   });
   document.getElementById("retry-load").addEventListener("click", () => location.reload());
+  // the sample link is only a way out when the failing request was not the sample itself
+  document.getElementById("error-sample").hidden = !params.get("data") && wantView === "detail";
   const controller = new AbortController();
   const loadTimeout = setTimeout(() => controller.abort(), 15000);
   fetch(dataUrl, { cache: "no-store", signal: controller.signal })
@@ -600,7 +619,8 @@ section[id] { scroll-margin-top:16px; }
       document.getElementById("strip").className = "strip error";
       document.getElementById("strip-title").textContent = "불러오기 실패";
       document.getElementById("strip-text").textContent = "아래 안내를 보세요.";
-      document.getElementById("load-error-msg").textContent = `${dataUrl} → ${err.message}`;
+      const why = err.name === "AbortError" ? "15초 안에 응답이 없어 요청을 멈췄습니다" : err instanceof SyntaxError ? "응답이 JSON이 아닙니다" : err.message;
+      document.getElementById("load-error-msg").textContent = `${dataUrl} → ${why}`;
       document.getElementById("load-error").hidden = false;
     }).finally(() => {
       clearTimeout(loadTimeout);
@@ -616,15 +636,16 @@ section[id] { scroll-margin-top:16px; }
     const synthSources = new Set(ds.synthetic_sources || []);
     const isSynthSource = id => synthSources.has(id) || /synthetic/i.test(id || "");
     const sve = new Map((agg.self_vs_evidence || []).map(t => [t.task, t.models]));
-    const thText = st => { const t = th[st]; return t ? `k ≥ ${t.min_contributors}, n ≥ ${t.min_records}` : "?"; };
-    document.getElementById("view-pill").textContent = isOverview ? "공개 개요" : agg.view === "detail" ? "기여자 상세" : "집계";
+    const thText = st => { const t = th[st]; return t ? `k ≥ ${t.min_contributors}, n ≥ ${t.min_records}` : "정보 없음"; };
+    const viewPill = document.getElementById("view-pill");
+    viewPill.textContent = isOverview ? "공개 개요" : agg.view === "detail" ? "기여자 상세" : "집계";
+    viewPill.hidden = false;
     document.getElementById("content").hidden = false;
 
-    document.getElementById("snapshot-meta").textContent = `스냅샷 생성: ${agg.generated_at || "제공되지 않음"} · ${isOverview ? "공개 개요" : "상세 집계"} · 실시간 갱신 아님`;
-    document.querySelectorAll(".table-scroll").forEach(box => {
-      box.tabIndex = 0; box.setAttribute("role", "region");
-      box.setAttribute("aria-label", `${box.querySelector("caption")?.textContent || "데이터 표"} · 가로 스크롤`);
-    });
+    const meta = document.getElementById("snapshot-meta"), when = utc(agg.generated_at);
+    meta.replaceChildren(document.createTextNode("스냅샷 "));
+    if (when) meta.append(el("time", { dateTime: agg.generated_at }, when)); else meta.append(document.createTextNode("생성 시각 없음"));
+    meta.append(document.createTextNode(" · 실시간 갱신 아님"));
     // ---------- provenance strip (always visible) ----------
     const strip = document.getElementById("strip");
     const realSeeds = (agg.sources || []).filter(s => !isSynthSource(s.source_id)).map(s => s.name.replace(/\s*\(.*\)$/, ""));
@@ -667,8 +688,7 @@ section[id] { scroll-margin-top:16px; }
     // ---------- hero ----------
     const totals = (agg.totals || {}).records_by_source_type || {};
     const seedCellTotal = Object.values((agg.totals || {}).seed_cells_by_source_type || {}).reduce((a, b) => a + b, 0);
-    const gen = (agg.generated_at || "").slice(0, 10);
-    document.getElementById("hero-eyebrow").textContent = `코딩 태스크 · ${isOverview ? "공개 개요" : "기여자 상세"}${gen ? " · " + gen + " 생성" : ""}`;
+    document.getElementById("hero-eyebrow").textContent = `코딩 태스크 · ${isOverview ? "공개 개요" : "기여자 상세"}`;
     const heroBig = document.getElementById("hero-big"), heroCap = document.getElementById("hero-cap"), heroIns = document.getElementById("hero-insight");
     if (cmpL2s.length) {
       document.getElementById("hero-title").textContent = "AI가 스스로 매긴 순위와 테스트가 말하는 순위는 다릅니다.";
@@ -688,12 +708,12 @@ section[id] { scroll-margin-top:16px; }
       heroBig.textContent = `${pubField}`;
       heroCap.replaceChildren(document.createTextNode(isOverview ? "개의 현장 보고 셀(L1 × 모델, 통과율 점추정)이 공개 기준을 넘었습니다. " : "개의 현장 보고 셀이 공개 기준을 넘었습니다. "));
       if (synthetic) heroCap.append(el("span", { className: "tag syn" }, "SYNTHETIC"));
-      heroIns.textContent = isOverview ? "자기평가 비교, 신뢰구간, 비용, 페어 모드는 기여자 상세 보기에서 열립니다." : `공개 기준: ${thText("field_report")}.`;
+      heroIns.textContent = isOverview ? "자기평가 비교, 신뢰구간, 비용, 페어 모드는 기여자 상세 보기에서 열립니다." : th.field_report ? `공개 기준: ${thText("field_report")}.` : "이 집계에는 공개 기준 정보가 없습니다.";
     }
     const kpis = [
       ["현장 보고 레코드", num(totals.field_report || 0), synthetic ? "field_report · 합성" : "field_report만 사용자 증거로 셈", synthetic],
-      ["공개된 현장 셀", `${fieldCells.length} / ${fieldCells.length + fieldSupp.length}`, `${thText("field_report")}일 때만 수치 공개`, synthetic],
-      ["벤치마크 시드 레코드", num(totals.benchmark || 0), `${cells.filter(c => c.source_type === "benchmark").length}개 셀 · Aider polyglot 공개 데이터`, false],
+      ["공개된 현장 셀", `${fieldCells.length} / ${fieldCells.length + fieldSupp.length}`, th.field_report ? `${thText("field_report")}일 때만 수치 공개` : "공개 기준 정보 없음", synthetic],
+      ["벤치마크 시드 레코드", num(totals.benchmark || 0), totals.benchmark ? `${cells.filter(c => c.source_type === "benchmark").length}개 셀 · Aider polyglot 공개 데이터` : "적재된 벤치마크 시드 없음", false],
       ["선호·사용량 시드 셀", num(seedCellTotal), "집계 개수만 저장 · 현장 보고와 합산 안 함", (agg.sources || []).some(s => isSynthSource(s.source_id) && s.source_type === "usage")],
     ];
     const kpiEl = document.getElementById("kpis");
@@ -735,7 +755,7 @@ section[id] { scroll-margin-top:16px; }
       chipsEl.querySelectorAll(".chip").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.l2 === cmpL2)));
       const rows = ranked(cmpL2);
       const W = Math.max(240, slopeWrap.clientWidth), narrow = W < 560;
-      const rowH = narrow ? 40 : 48, top = 40, H = top + rows.length * rowH + 4;
+      const rowH = narrow ? 40 : 48, top = 40, H = top + rows.length * rowH + (synthetic ? 26 : 4);
       const labelW = narrow ? Math.min(92, W * .25) : 230, xL = labelW + 26, xR = W - labelW - 26;
       const nm = m => narrow ? shortModel(m) : m;
       slope.setAttribute("viewBox", `0 0 ${W} ${H}`); slope.setAttribute("height", H);
@@ -752,7 +772,7 @@ section[id] { scroll-margin-top:16px; }
         slope.append(svgEl("text", { x: xL - 14, y: yOf(i) + 4, "text-anchor": "end", "font-size": 11, fill: muted, "aria-hidden": "true" }, `${i}`));
         slope.append(svgEl("text", { x: xR + 14, y: yOf(i) + 4, "text-anchor": "start", "font-size": 11, fill: muted, "aria-hidden": "true" }, `${i}`));
       }
-      if (synthetic) slope.append(svgEl("text", { x: W / 2, y: H - 6, "text-anchor": "middle", "font-size": 11, "font-weight": 700, fill: muted, "letter-spacing": "0.08em", "aria-hidden": "true" }, "SYNTHETIC SAMPLE"));
+      if (synthetic) slope.append(svgEl("text", { x: W / 2, y: H - 4, "text-anchor": "middle", "font-size": 11, "font-weight": 700, fill: muted, "letter-spacing": "0.08em", "aria-hidden": "true" }, "SYNTHETIC SAMPLE"));
       const order = [...rows].sort((a, b) => Math.abs(a.evRank - a.selfRank) - Math.abs(b.evRank - b.selfRank));
       const groups = [];
       for (const r of order) {
@@ -814,6 +834,7 @@ section[id] { scroll-margin-top:16px; }
     let showAll = false;
     const srcTypes = [...new Set([...cells, ...suppressed].map(c => c.source_type))];
     for (const st of ["field_report", "benchmark"].filter(s => srcTypes.includes(s))) fSrc.append(el("option", { value: st }, st === "field_report" ? "현장 보고" : "벤치마크 시드"));
+    if (!srcTypes.length) fSrc.append(el("option", { value: "" }, "데이터 없음"));
     // client-reported cost first; otherwise the server's price-table recomputation (stored separately)
     const costTask = c => { const x = c.cost_usd_per_task || {}; return x.client_mean != null ? [x.client_mean, false] : [x.server_mean ?? null, x.server_mean != null]; };
     const costSuccess = c => c.cost_usd_per_success != null ? [c.cost_usd_per_success, false] : [c.server_cost_usd_per_success ?? null, c.server_cost_usd_per_success != null];
@@ -949,7 +970,10 @@ section[id] { scroll-margin-top:16px; }
       const W = Math.max(240, scWrap.clientWidth), narrow = W < 560, H = narrow ? 300 : 360;
       const m = { l: narrow ? 40 : 48, r: narrow ? 12 : 24, t: 44, b: 40 };
       const xs = pts.map(p => p.x);
-      const lx0 = Math.floor(Math.log10(Math.min(...xs)) * 2) / 2, lx1 = Math.ceil(Math.log10(Math.max(...xs)) * 2) / 2 + (Math.max(...xs) === Math.min(...xs) ? 0.5 : 0);
+      const TICK = [1, 3], L3 = Math.log10(3);
+      const snapDown = v => { const e = Math.floor(Math.log10(v) + 1e-9); return Math.log10(v) - e >= L3 - 1e-9 ? e + L3 : e; };
+      const snapUp = v => { const e = Math.floor(Math.log10(v) - 1e-9); return Math.log10(v) - e <= L3 + 1e-9 ? e + L3 : e + 1; };
+      const lx0 = snapDown(Math.min(...xs)), lx1 = Math.max(snapUp(Math.max(...xs)), lx0 + L3);
       const X = v => m.l + (Math.log10(v) - lx0) / (lx1 - lx0 || 1) * (W - m.l - m.r);
       const lows = pts.map(p => p.c.tests.ci95 ? p.c.tests.ci95[0] : p.y), highs = pts.map(p => p.c.tests.ci95 ? p.c.tests.ci95[1] : p.y);
       const y0 = Math.max(0, Math.floor(Math.min(...lows) * 10) / 10), y1 = Math.min(1, Math.ceil(Math.max(...highs) * 10) / 10);
@@ -963,11 +987,12 @@ section[id] { scroll-margin-top:16px; }
         scatter.append(svgEl("text", { x: m.l - 8, y: Y(v) + 4, "text-anchor": "end", "font-size": 11, fill: muted }, `${Math.round(v * 100)}%`));
       }
       for (let e = Math.floor(lx0); e <= Math.floor(lx1); e++) {
-        for (const mul of narrow ? [1] : [1, 3]) {
+        for (const mul of TICK) {
           const v = mul * 10 ** e, lv = Math.log10(v);
           if (lv < lx0 - 1e-9 || lv > lx1 + 1e-9) continue;
           scatter.append(svgEl("line", { x1: X(v), x2: X(v), y1: m.t, y2: H - m.b, stroke: grid, "stroke-width": 1 }));
-          scatter.append(svgEl("text", { x: X(v), y: H - m.b + 16, "text-anchor": "middle", "font-size": 11, fill: muted }, usd(v).replace(/\.?0+$/, "")));
+          const edge = lv <= lx0 + 1e-9 ? "start" : lv >= lx1 - 1e-9 ? "end" : "middle";   // edge labels point inward, clear of the % labels
+          scatter.append(svgEl("text", { x: X(v), y: H - m.b + 16, "text-anchor": edge, "font-size": 11, fill: muted }, usd(v).replace(/\.?0+$/, "")));
         }
       }
       scatter.append(svgEl("text", { x: W - m.r, y: H - 6, "text-anchor": "end", "font-size": 11, fill: ink2 }, "태스크당 비용 →"));
@@ -1041,14 +1066,21 @@ section[id] { scroll-margin-top:16px; }
       scatter.setAttribute("aria-label", `비용 대 테스트 통과율 산점도, 셀 ${pts.length}개, 비용 대비 최선 경계 ${frontier.length}개. 경계: ${frontier.map(p => `${p.c.model} ${p.c.method || ""} ${pct(p.y)} ${usd(p.x)}`).join("; ")}`);
     }
 
-    const renderCells = () => { renderScatter(); renderBoard(); };
+    // A table wrapper is a named, focusable region only while it actually overflows sideways.
+    const syncScrollRegions = () => document.querySelectorAll(".table-scroll").forEach(box => {
+      const scrolls = box.offsetParent !== null && box.scrollWidth > box.clientWidth + 1;
+      if (scrolls) { box.tabIndex = 0; box.setAttribute("role", "region"); box.setAttribute("aria-label", `${box.querySelector("caption")?.textContent || "데이터 표"} · 가로 스크롤`); }
+      else { box.removeAttribute("tabindex"); box.removeAttribute("role"); box.removeAttribute("aria-label"); }
+    });
+    document.querySelectorAll("details.tbl").forEach(d => d.addEventListener("toggle", syncScrollRegions));
+    const renderCells = () => { renderScatter(); renderBoard(); syncScrollRegions(); };
     const resetFilters = () => { fL2.value = "all"; fM.value = "all"; fS.value = "pass"; showAll = false; renderCells(); };
     document.getElementById("reset-filters").addEventListener("click", resetFilters);
     document.getElementById("empty-reset").addEventListener("click", () => { resetFilters(); document.getElementById("reset-filters").focus(); });
     fSrc.addEventListener("change", () => { showAll = false; fillOptions(); renderCells(); });
     [fL2, fM].forEach(s => s.addEventListener("change", () => { showAll = false; renderCells(); }));
-    fS.addEventListener("change", () => { showAll = false; renderBoard(); });
-    moreBtn.addEventListener("click", () => { showAll = !showAll; renderBoard(); });
+    fS.addEventListener("change", () => { showAll = false; renderBoard(); syncScrollRegions(); });
+    moreBtn.addEventListener("click", () => { showAll = !showAll; renderBoard(); syncScrollRegions(); });
     const initialSrc = params.get("layer");
     if (initialSrc && srcTypes.includes(initialSrc)) fSrc.value = initialSrc;
     fillOptions();
@@ -1175,8 +1207,8 @@ section[id] { scroll-margin-top:16px; }
         }
       }
     }
-    sLayer.addEventListener("change", () => { fillSeedTasks(); renderSeeds(); });
-    sTask.addEventListener("change", renderSeeds);
+    sLayer.addEventListener("change", () => { fillSeedTasks(); renderSeeds(); syncScrollRegions(); });
+    sTask.addEventListener("change", () => { renderSeeds(); syncScrollRegions(); });
     if (layers.length) { fillSeedTasks(); if ([...sTask.options].some(o => o.value === "coding.*")) sTask.value = "coding.*"; }
 
     // ---------- sources ----------
@@ -1223,7 +1255,10 @@ section[id] { scroll-margin-top:16px; }
     renderPairs();
     renderSeeds();
     rerender.push(renderSlope, renderCells, renderPairs, renderSeeds);
-    let rz; window.addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(() => { renderSlope(); renderScatter(); }, 80); });
+    // section links follow what this view actually shows
+    document.querySelectorAll(".section-nav a").forEach(a => { const t = document.querySelector(a.getAttribute("href")); a.hidden = !t || t.hidden; });
+    syncScrollRegions();
+    let rz; window.addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(() => { renderSlope(); renderScatter(); syncScrollRegions(); }, 80); });
   }
 })();
 </script>

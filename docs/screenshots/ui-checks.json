@@ -1,0 +1,52 @@
+{
+  "mode": "check",
+  "viewports": [
+    {
+      "device": "desktop",
+      "theme": "light",
+      "width": 1440,
+      "minTextContrast": 4.81,
+      "overflow": false
+    },
+    {
+      "device": "desktop",
+      "theme": "dark",
+      "width": 1440,
+      "minTextContrast": 5.79,
+      "overflow": false
+    },
+    {
+      "device": "phone",
+      "theme": "light",
+      "width": 390,
+      "minTextContrast": 4.81,
+      "overflow": false
+    },
+    {
+      "device": "phone",
+      "theme": "dark",
+      "width": 390,
+      "minTextContrast": 5.79,
+      "overflow": false
+    }
+  ],
+  "javascriptErrors": 0,
+  "checks": [
+    "320/375/390/640/768/1024/1440px no page overflow",
+    "light/dark text tokens AA >= 4.5",
+    "slope watermark below rank labels",
+    "scatter cost axis labelled at both ends",
+    "phone cards: two metric columns >= 360px, one at 320px",
+    "table scroll region focusable only when it overflows (1440 no, 768 yes)",
+    "scatter arrows and Escape",
+    "slope Escape",
+    "reduced motion",
+    "filter reset and source change",
+    "snapshot time as UTC",
+    "overview gate",
+    "empty dataset: no raw \"?\", layer select says no data, no link to hidden section",
+    "HTTP error: no empty pill, retry and sample recovery",
+    "15s timeout message",
+    "loading: neutral strip, no empty pill"
+  ]
+}
