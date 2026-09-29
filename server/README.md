@@ -1,4 +1,4 @@
-# server — ingest API (v1.0.0-rc2, localhost only)
+# server — ingest API (v1.0.0-rc3, localhost only)
 
 서버가 하는 일:
 

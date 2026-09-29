@@ -11,7 +11,9 @@ AI 에이전트가 실제 작업을 끝내면 (태스크 분류 코드, 모델, 
 - 공개: 코드·스키마·k-임계 집계. 원시 레코드는 비공개. 게이트 = 공개 개요 + 기여자 전용 세분 조회.
 - 근거: `research/2026-09-27-feasibility-report.md`, `research/notes/`.
 
-## 현재 단계: v1.0.0-rc2 코드 완성 후보 (2026-09-28)
+## 현재 단계: v1.0.0-rc3 코드 완성 후보 (2026-09-29)
+
+rc3 Codex 단계는 대시보드 최종 다듬기와 전후 캡처를 마쳤다(`docs/DESIGN_COMPARISON.md`). 다음은 Claude Opus 단계다.
 
 rc2는 새 기능 없이 품질·보안 자체 점검(`docs/QUALITY.md`)과 대시보드 재디자인(`docs/DESIGN_REFERENCES.md`)만 했다.
 

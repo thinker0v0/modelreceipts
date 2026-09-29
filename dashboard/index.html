@@ -280,6 +280,37 @@ tr.locked td { color: var(--muted); }
   .controls, .skip, .more, details.tbl summary { display: none; }
   .card, .hero-main, .kpi { box-shadow: none; break-inside: avoid; }
 }
+/* rc3: readable narrow layouts and explicit navigation/state */
+.section-nav { display:flex; flex-wrap:wrap; gap:8px 20px; padding:14px 0 0; }
+.section-nav a { font-size:13px; padding:6px 0; }
+section[id] { scroll-margin-top:16px; }
+.meta-line, .results-line { color:var(--ink-2); font-size:13px; }
+.results-line { display:flex; flex-wrap:wrap; gap:8px 16px; justify-content:space-between; margin:12px 0; }
+.filters { padding:12px; background:var(--surface-2); border-radius:10px; }
+.filters .more { margin:0; min-height:36px; }
+.loading-bars { display:grid; grid-template-columns:2fr 1fr 1fr; gap:12px; margin-top:20px; }
+.loading-bars span { height:96px; background:var(--surface-2); border:1px solid var(--border); border-radius:8px; }
+.table-scroll:focus-visible { outline-offset:3px; }
+#board .model { white-space:normal; min-width:190px; max-width:260px; overflow-wrap:anywhere; }
+#board th { z-index:1; }
+#board .model { position:sticky; left:0; background:var(--surface); }
+#board th:nth-child(2) { position:sticky; left:0; z-index:2; }
+.seg:focus-within { overflow:visible; }
+.seg a:focus-visible, .seg button:focus-visible { outline-offset:-3px; }
+#board-empty .more { display:block; }
+@media(max-width:640px) {
+  .seg a, .seg button, .chip, summary, .more, .filters .more { min-height:44px; }
+  .seg a, .seg button { display:inline-flex; align-items:center; }
+  .filters label { flex:1 1 100%; min-width:0; }
+  select { min-height:44px; }
+  #board tr { grid-template-columns:24px minmax(0,1fr); }
+  #board .model { min-width:0; max-width:none; position:static; }
+  #board td.opt:nth-child(n) { grid-column:2 / -1; }
+  #board td.ci .ci-cell { flex-wrap:wrap; gap:4px 8px; }
+  .chart { min-width:0; }
+  .tip { min-width:0; max-width:min(280px,100%); }
+  .loading-bars { grid-template-columns:1fr; }
+}
 </style>
 </head>
 <body>
@@ -294,7 +325,7 @@ tr.locked td { color: var(--muted); }
     <div class="brand">
       <div class="logo" aria-hidden="true">R</div>
       <div>
-        <div class="brand-name">ModelReceipts <span class="pill">v1.0.0-rc2</span> <span class="pill" id="view-pill"></span></div>
+        <div class="brand-name">ModelReceipts <span class="pill">v1.0.0-rc3</span> <span class="pill" id="view-pill"></span></div>
         <div class="eyebrow">자기평가가 아니라 결과 증거로 매긴 태스크별 모델 순위</div>
       </div>
     </div>
@@ -311,16 +342,27 @@ tr.locked td { color: var(--muted); }
     </div>
   </header>
 
-  <main id="main" tabindex="-1">
-  <section class="card" id="load-error" hidden>
+  <main id="main" tabindex="-1" aria-busy="true">
+  <section class="card" id="loading" role="status" aria-label="집계 불러오는 중">
+    <h2>집계를 불러오고 있습니다</h2>
+    <p class="sub">출처와 공개 기준을 확인한 뒤 차트와 표를 표시합니다.</p>
+    <div class="loading-bars" aria-hidden="true"><span></span><span></span><span></span></div>
+  </section>
+  <noscript><p class="empty">집계 차트와 표를 보려면 JavaScript를 켜 주세요.</p></noscript>
+  <section class="card" id="load-error" role="alert" hidden>
     <h2>집계 데이터를 불러오지 못했습니다</h2>
     <p class="sub" id="load-error-msg"></p>
-    <p class="sub">브라우저는 <code>file://</code>에서 JSON을 읽지 못합니다. 저장소 루트에서
+    <button type="button" class="more" id="retry-load">다시 불러오기</button> <a href="?view=detail">샘플 보기</a>
+    <details><summary>로컬 실행 안내</summary><p class="sub">브라우저는 <code>file://</code>에서 JSON을 읽지 못합니다. 저장소 루트에서
       <code>PYTHONPATH=server python3 -m modelreceipts_server serve</code> 후
-      <code>http://127.0.0.1:8787/dashboard/</code>(샘플) 또는 <code>http://127.0.0.1:8787/</code>(서버 집계)를 여세요.</p>
+      <code>http://127.0.0.1:8787/dashboard/</code>(샘플) 또는 <code>http://127.0.0.1:8787/</code>(서버 집계)를 여세요.</p></details>
   </section>
 
   <div id="content" hidden>
+  <nav class="section-nav" aria-label="대시보드 섹션">
+    <a href="#cmp-card">순위 비교</a><a href="#cells-card">태스크 셀</a><a href="#seed-card">시드 층</a><a href="#sources-card">출처</a>
+  </nav>
+  <p class="meta-line" id="snapshot-meta"></p>
   <!-- hero -->
   <section class="hero" aria-labelledby="hero-title">
     <div class="hero-main">
@@ -389,8 +431,10 @@ tr.locked td { color: var(--muted); }
         <option value="cost">태스크당 비용</option>
         <option value="n">레코드 수</option>
       </select></label>
+      <button type="button" class="more" id="reset-filters">필터 초기화</button>
     </div>
 
+    <div class="results-line"><span id="filter-summary" role="status" aria-live="polite" aria-atomic="true"></span><span>n = 레코드 · k = 기여자 (시드는 출처)</span></div>
     <h3 class="sr-only" id="scatter-title">비용 대 테스트 통과율</h3>
     <div class="legend" id="scatter-legend" aria-hidden="true">
       <span><i class="dot" style="background:var(--seq)"></i>셀 (모델 × 방법)</span>
@@ -401,10 +445,12 @@ tr.locked td { color: var(--muted); }
       <svg id="scatter" role="application" tabindex="0" aria-labelledby="scatter-title" aria-describedby="scatter-help"></svg>
       <div class="tip" id="scatter-tip" aria-hidden="true"></div>
     </div>
-    <p class="caption" id="scatter-help">가로축: 태스크 1건당 비용(로그 눈금) · 세로축: 테스트 통과율. 왼쪽 위일수록 싸고 잘 됩니다. 차트에 초점을 두고 ← → 키로 점을 차례로 볼 수 있습니다.</p>
+    <p class="caption" id="scatter-help">가로축: 태스크 1건당 비용(로그 눈금) · 세로축: 테스트 통과율(데이터 범위로 확대). 왼쪽 위일수록 비용이 낮고 통과율이 높습니다. 경계는 점추정 기준이며, 서로 다른 과제 구성과 겹치는 CI는 우열을 보장하지 않습니다. 차트에 초점을 두고 ← → 키로 점을 차례로 볼 수 있습니다.</p>
     <p class="sr-only" id="scatter-live" aria-live="polite"></p>
     <p class="empty" id="scatter-empty" hidden></p>
 
+    <p class="caption">표의 #는 통과율 순위입니다. 정렬을 바꿔도 유지됩니다. —는 미측정·미제공이며 0이 아닙니다. 넓은 표는 가로로 스크롤할 수 있습니다.</p>
+    <div class="empty" id="board-empty" hidden><b id="board-empty-title">조건에 맞는 셀이 없습니다.</b><p id="board-empty-help">태스크나 방법을 전체로 바꾸세요. 공개 기준 미달 셀은 수치 없이 표시됩니다.</p><a id="empty-sample" href="?view=detail" hidden>합성 샘플 둘러보기</a><button type="button" class="more" id="empty-reset">필터 초기화</button></div>
     <div class="table-scroll" id="board-scroll" style="margin-top:16px">
       <table id="board"><caption class="sr-only">태스크 셀 리더보드</caption><thead><tr>
         <th scope="col" class="num" title="순위 · 통계적 순위(CI가 겹치지 않게 앞서는 셀 수 + 1)">#</th>
@@ -463,7 +509,7 @@ tr.locked td { color: var(--muted); }
     </section>
   </div>
 
-  <section class="card" aria-labelledby="src-title">
+  <section class="card" id="sources-card" aria-labelledby="src-title">
     <h2 id="src-title">데이터 출처</h2>
     <p class="sub">시드 층은 <code>source_type</code>으로 분리되고 현장 보고와 합산되지 않습니다. Artificial Analysis 데이터와 LMSYS-Chat-1M은 약관상 쓰지 않습니다.</p>
     <ul class="sources" id="sources"></ul>
@@ -543,15 +589,23 @@ tr.locked td { color: var(--muted); }
     a.href = "?" + q.toString();
     if (a.dataset.view === wantView) a.setAttribute("aria-current", "page");
   });
-  fetch(dataUrl, { cache: "no-store" })
+  document.getElementById("retry-load").addEventListener("click", () => location.reload());
+  const controller = new AbortController();
+  const loadTimeout = setTimeout(() => controller.abort(), 15000);
+  fetch(dataUrl, { cache: "no-store", signal: controller.signal })
     .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
     .then(render)
     .catch(err => {
+      document.getElementById("content").hidden = true;
       document.getElementById("strip").className = "strip error";
-      document.getElementById("strip-title").textContent = "데이터 없음";
+      document.getElementById("strip-title").textContent = "불러오기 실패";
       document.getElementById("strip-text").textContent = "아래 안내를 보세요.";
       document.getElementById("load-error-msg").textContent = `${dataUrl} → ${err.message}`;
       document.getElementById("load-error").hidden = false;
+    }).finally(() => {
+      clearTimeout(loadTimeout);
+      document.getElementById("loading").hidden = true;
+      document.getElementById("main").setAttribute("aria-busy", "false");
     });
 
   function render(agg) {
@@ -566,6 +620,11 @@ tr.locked td { color: var(--muted); }
     document.getElementById("view-pill").textContent = isOverview ? "공개 개요" : agg.view === "detail" ? "기여자 상세" : "집계";
     document.getElementById("content").hidden = false;
 
+    document.getElementById("snapshot-meta").textContent = `스냅샷 생성: ${agg.generated_at || "제공되지 않음"} · ${isOverview ? "공개 개요" : "상세 집계"} · 실시간 갱신 아님`;
+    document.querySelectorAll(".table-scroll").forEach(box => {
+      box.tabIndex = 0; box.setAttribute("role", "region");
+      box.setAttribute("aria-label", `${box.querySelector("caption")?.textContent || "데이터 표"} · 가로 스크롤`);
+    });
     // ---------- provenance strip (always visible) ----------
     const strip = document.getElementById("strip");
     const realSeeds = (agg.sources || []).filter(s => !isSynthSource(s.source_id)).map(s => s.name.replace(/\s*\(.*\)$/, ""));
@@ -675,9 +734,9 @@ tr.locked td { color: var(--muted); }
       if (!cmpL2s.length) return;
       chipsEl.querySelectorAll(".chip").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.l2 === cmpL2)));
       const rows = ranked(cmpL2);
-      const W = Math.max(300, slopeWrap.clientWidth), narrow = W < 560;
+      const W = Math.max(240, slopeWrap.clientWidth), narrow = W < 560;
       const rowH = narrow ? 40 : 48, top = 40, H = top + rows.length * rowH + 4;
-      const labelW = narrow ? 92 : 230, xL = labelW + 26, xR = W - labelW - 26;
+      const labelW = narrow ? Math.min(92, W * .25) : 230, xL = labelW + 26, xR = W - labelW - 26;
       const nm = m => narrow ? shortModel(m) : m;
       slope.setAttribute("viewBox", `0 0 ${W} ${H}`); slope.setAttribute("height", H);
       slope.replaceChildren();
@@ -721,6 +780,7 @@ tr.locked td { color: var(--muted); }
         };
         const off = () => { slope.classList.remove("dim"); g.classList.remove("active"); slopeTip.hide(); };
         g.addEventListener("pointermove", on); g.addEventListener("pointerleave", off);
+        g.addEventListener("keydown", ev => { if (ev.key === "Escape") off(); });
         g.addEventListener("focus", () => on()); g.addEventListener("blur", off);
         groups.push(g); slope.append(g);
       }
@@ -852,7 +912,17 @@ tr.locked td { color: var(--muted); }
         }
         tb.append(tr);
       }
-      if (!rows.length) { const tr = el("tr"); tr.append(el("td", { colSpan: 10 }, "조건에 맞는 셀이 없습니다.")); tb.append(tr); }
+      document.getElementById("board-empty").hidden = !!rows.length;
+      document.getElementById("board-scroll").hidden = !rows.length;
+      document.getElementById("filter-summary").textContent = `${fSrc.selectedOptions[0]?.textContent || "데이터 없음"} · ${fL2.selectedOptions[0]?.textContent || "전체"} · ${fM.selectedOptions[0]?.textContent || "전체 방법"} — 공개 ${vis.length}개 · 비공개 ${hid.length}개 · 표시 ${shown.length}개`;
+      const noData = !srcTypes.length;
+      document.getElementById("board-empty-title").textContent = noData ? "아직 적재된 셀이 없습니다." : "조건에 맞는 셀이 없습니다.";
+      document.getElementById("board-empty-help").textContent = noData ? "이 집계에는 현장 보고나 벤치마크 셀이 없습니다. 샘플에서 화면 구성을 살펴볼 수 있습니다." : "태스크나 방법을 전체로 바꾸세요. 공개 기준 미달 셀은 수치 없이 표시됩니다.";
+      document.getElementById("empty-reset").hidden = noData;
+      document.getElementById("empty-sample").hidden = !noData;
+      document.getElementById("reset-filters").disabled = noData;
+      fSrc.disabled = noData;
+      [fL2, fM, fS].forEach(control => control.disabled = !srcTypes.length);
       moreBtn.hidden = rows.length <= PAGE;
       moreBtn.textContent = showAll ? "접기" : `나머지 ${rows.length - PAGE}개 셀 더 보기`;
       moreBtn.setAttribute("aria-expanded", String(showAll));
@@ -864,6 +934,7 @@ tr.locked td { color: var(--muted); }
     let scPoints = [], scIndex = -1;
     function renderScatter() {
       const { st, vis } = current();
+      scTip.hide(); scIndex = -1;
       const pts = vis.map(c => ({ c, x: costTask(c)[0], server: costTask(c)[1], y: c.tests.pass_rate })).filter(p => p.x > 0 && p.y != null);
       const empty = document.getElementById("scatter-empty");
       const show = pts.length >= 2;
@@ -875,8 +946,8 @@ tr.locked td { color: var(--muted); }
           : "비용과 통과율이 모두 있는 셀이 두 개 이상 필요합니다.";
         scPoints = []; return;
       }
-      const W = Math.max(300, scWrap.clientWidth), narrow = W < 560, H = narrow ? 300 : 360;
-      const m = { l: narrow ? 40 : 48, r: narrow ? 12 : 24, t: 16, b: 40 };
+      const W = Math.max(240, scWrap.clientWidth), narrow = W < 560, H = narrow ? 300 : 360;
+      const m = { l: narrow ? 40 : 48, r: narrow ? 12 : 24, t: 44, b: 40 };
       const xs = pts.map(p => p.x);
       const lx0 = Math.floor(Math.log10(Math.min(...xs)) * 2) / 2, lx1 = Math.ceil(Math.log10(Math.max(...xs)) * 2) / 2 + (Math.max(...xs) === Math.min(...xs) ? 0.5 : 0);
       const X = v => m.l + (Math.log10(v) - lx0) / (lx1 - lx0 || 1) * (W - m.l - m.r);
@@ -900,8 +971,8 @@ tr.locked td { color: var(--muted); }
         }
       }
       scatter.append(svgEl("text", { x: W - m.r, y: H - 6, "text-anchor": "end", "font-size": 11, fill: ink2 }, "태스크당 비용 →"));
-      scatter.append(svgEl("text", { x: m.l + 4, y: m.t + 12, "font-size": 11, fill: ink2 }, "↑ 테스트 통과율 · ← 더 쌈"));
-      if (st === "field_report" && synthetic) scatter.append(svgEl("text", { x: W - m.r - 4, y: m.t + 12, "text-anchor": "end", "font-size": 11, "font-weight": 700, fill: muted, "letter-spacing": "0.08em" }, "SYNTHETIC SAMPLE"));
+      scatter.append(svgEl("text", { x: m.l + 4, y: 14, "font-size": 11, fill: ink2 }, "↑ 테스트 통과율 · ← 더 쌈"));
+      if (st === "field_report" && synthetic) scatter.append(svgEl("text", { x: W - m.r - 4, y: narrow ? 30 : 14, "text-anchor": "end", "font-size": 11, "font-weight": 700, fill: muted, "letter-spacing": "0.08em" }, "SYNTHETIC SAMPLE"));
       // Pareto frontier: sorted by cost, keep points that beat every cheaper point
       const byCost = [...pts].sort((a, b) => a.x - b.x || b.y - a.y);
       const frontier = []; let bestY = -1;
@@ -927,7 +998,7 @@ tr.locked td { color: var(--muted); }
         const w = text.length * 6.4, x = X(p.x) + 9, y = Y(p.y) - 8;
         const anchorEnd = x + w > W - m.r;
         const bx = anchorEnd ? X(p.x) - 9 - w : x;
-        if (placed.some(b => bx < b.x + b.w && bx + w > b.x && Math.abs(y - b.y) < 14)) continue;
+        if (bx < m.l || bx + w > W - m.r || y < m.t || placed.some(b => bx < b.x + b.w && bx + w > b.x && Math.abs(y - b.y) < 14)) continue;
         placed.push({ x: bx, y, w });
         const t = svgEl("text", { x: anchorEnd ? X(p.x) - 9 : x, y, "text-anchor": anchorEnd ? "end" : "start", "font-size": 12, fill: ink, "paint-order": "stroke", stroke: surface, "stroke-width": 3, "stroke-linejoin": "round" }, text);
         scatter.append(t);
@@ -971,6 +1042,9 @@ tr.locked td { color: var(--muted); }
     }
 
     const renderCells = () => { renderScatter(); renderBoard(); };
+    const resetFilters = () => { fL2.value = "all"; fM.value = "all"; fS.value = "pass"; showAll = false; renderCells(); };
+    document.getElementById("reset-filters").addEventListener("click", resetFilters);
+    document.getElementById("empty-reset").addEventListener("click", () => { resetFilters(); document.getElementById("reset-filters").focus(); });
     fSrc.addEventListener("change", () => { showAll = false; fillOptions(); renderCells(); });
     [fL2, fM].forEach(s => s.addEventListener("change", () => { showAll = false; renderCells(); }));
     fS.addEventListener("change", () => { showAll = false; renderBoard(); });

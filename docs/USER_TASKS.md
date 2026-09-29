@@ -1,4 +1,4 @@
-# 사람이 해야 하는 일 (v1.0.0-rc2 기준)
+# 사람이 해야 하는 일 (v1.0.0-rc3 기준)
 
 코드로 할 수 있는 로드맵 항목은 v1.0.0-rc1에서 모두 구현했고, rc2에서 품질·보안 자체 점검을 했습니다([`QUALITY.md`](QUALITY.md)의 "남은 것"도 함께 보세요). 아래 일은 **계정, 돈, 법적 판단, 사람과의 관계**가 걸려 있어서 에이전트가 대신하지 않았습니다. 순서는 권장 순서입니다.
 
@@ -39,7 +39,7 @@
 
 ## 4. PyPI 게시
 
-- `collector/pyproject.toml`은 `1.0.0rc2`이고, 스키마를 `package-data`로 포함합니다.
+- `collector/pyproject.toml`은 `1.0.0rc3`이고, 스키마를 `package-data`로 포함합니다.
 - **할 일:**
   1. PyPI 이름 `modelreceipts`를 확보합니다.
   2. Trusted Publishing(GitHub Actions OIDC)을 설정합니다. 토큰을 저장소에 두지 않습니다.
@@ -99,6 +99,6 @@
 
 ## 9. GitHub push와 릴리스
 
-- 로컬 커밋만 있습니다. push와 태그(`v1.0.0-rc2`)는 메인 세션이나 사용자가 `gh auth login` 뒤에 합니다.
+- 로컬 커밋만 있습니다. push와 태그(`v1.0.0-rc3`)는 메인 세션이나 사용자가 `gh auth login` 뒤에 합니다.
 - CI(`.github/workflows/ci.yml`)는 push 후 처음 돕니다. Python 3.10에서 실제로 도는지 확인합니다. 로컬은 3.12에서만 실행했습니다.
 - 운영 배포 전 순수 Python Ed25519(상수 시간 아님, 보안 감사 없음)를 `cryptography` 같은 검증된 라이브러리로 교체하거나 외부 보안 검토를 받기.

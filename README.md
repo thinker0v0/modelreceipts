@@ -1,11 +1,11 @@
 # ModelReceipts
 
 [![ci](https://github.com/thinker0v0/modelreceipts/actions/workflows/ci.yml/badge.svg)](.github/workflows/ci.yml)
-![status](https://img.shields.io/badge/status-v1.0.0--rc2%20code--complete-yellowgreen)
+![status](https://img.shields.io/badge/status-v1.0.0--rc3%20code--complete-yellowgreen)
 ![python](https://img.shields.io/badge/python-3.10%2B%2C%20stdlib%20only-blue)
 ![license](https://img.shields.io/badge/license-Apache--2.0-lightgrey)
 
-> **English summary.** ModelReceipts is an open-source, vendor-neutral database of *which model × method × cost actually works for a given kind of task*, built from **verifiable outcome evidence** (tests passed, commits kept, next-prompt retries) instead of AI self-assessment. The first collector is a Claude Code `Stop` hook for coding tasks. Prompts and model outputs **never leave your machine**: tasks are mapped locally to closed category codes. **Status: v1.0.0-rc2, a code-complete candidate after a quality, security and design pass ([`docs/QUALITY.md`](docs/QUALITY.md)).** It includes:
+> **English summary.** ModelReceipts is an open-source, vendor-neutral database of *which model × method × cost actually works for a given kind of task*, built from **verifiable outcome evidence** (tests passed, commits kept, next-prompt retries) instead of AI self-assessment. The first collector is a Claude Code `Stop` hook for coding tasks. Prompts and model outputs **never leave your machine**: tasks are mapped locally to closed category codes. **Status: v1.0.0-rc3, a code-complete candidate after a quality, security and design pass ([`docs/QUALITY.md`](docs/QUALITY.md)).** It includes:
 >
 > - schema v0.2 with a migration and a validation CLI
 > - a Stop-hook collector that previews by default, and a hook installer that runs as a dry run first
@@ -128,16 +128,16 @@ flowchart LR
 - [`seeds/`](seeds/): 시드
 - [`dashboard/`](dashboard/): 대시보드
 - [`docs/USER_TASKS.md`](docs/USER_TASKS.md): 사람이 해야 할 일
-- [`docs/QUALITY.md`](docs/QUALITY.md): 품질·보안 자체 점검 결과(rc2)
+- [`docs/QUALITY.md`](docs/QUALITY.md): 품질·보안 및 대시보드 점검 결과(rc3)
 - [`docs/DESIGN_REFERENCES.md`](docs/DESIGN_REFERENCES.md): 대시보드 디자인 참고
 
 런타임 코드는 전부 Python 표준 라이브러리만 씁니다. Ed25519도 순수 Python으로 구현했고, RFC 8032 테스트 벡터와 `cryptography` 교차검증을 통과합니다. 단, 이 구현은 상수 시간(constant-time)이 아니고 보안 감사를 받지 않았습니다. 실제 운영 배포 전에는 `cryptography` 같은 검증된 라이브러리로 바꾸세요. 서버와 수집기는 같은 검증기를 씁니다. FastAPI 대신 `http.server`를 고른 이유는 [`server/README.md`](server/README.md)에 있습니다.
 
-## 현재 상태: v1.0.0-rc2 — 코드 완성 후보
+## 현재 상태: v1.0.0-rc3 — 코드 완성 후보
 
-코드로 할 수 있는 로드맵 항목은 모두 구현했습니다. rc2는 새 기능 없이 품질·보안 자체 점검과 대시보드 디자인만 바꿨습니다([`docs/QUALITY.md`](docs/QUALITY.md)). **남은 일은 사람이 해야 하는 일**입니다. 실제 배포, PyPI 게시, 데이터 라이선스 결정, 기여자 모집, 실데이터 수집이 여기에 해당하며, [`docs/USER_TASKS.md`](docs/USER_TASKS.md)에 정리했습니다. 공개 서버와 실제 사용자 데이터는 아직 없습니다.
+코드로 할 수 있는 로드맵 항목은 모두 구현했습니다. rc2의 품질·보안 점검에 이어 rc3 Codex 단계에서 모바일·빈 상태·표·차트·로딩을 다듬었습니다([`docs/QUALITY.md`](docs/QUALITY.md)). **남은 일은 사람이 해야 하는 일**입니다. 실제 배포, PyPI 게시, 데이터 라이선스 결정, 기여자 모집, 실데이터 수집이 여기에 해당하며, [`docs/USER_TASKS.md`](docs/USER_TASKS.md)에 정리했습니다. 공개 서버와 실제 사용자 데이터는 아직 없습니다.
 
-테스트(2026-09-28 실행): **160개 통과.** 런타임 의존성은 0개입니다.
+테스트(2026-09-29 실행): **160개 통과.** 런타임 의존성은 0개입니다.
 
 - collector 79개
 - server 60개
@@ -201,7 +201,7 @@ kill %1; rm -rf "$T"
 
 기준은 조사 보고서의 "20% MVP 범위 제안"입니다. MVP의 목표는 **한 개의 좁은 셀에서 "증거 기반 순위가 자기평가 기반 순위와 다르다"를 실제 데이터로 보여 주는 것**입니다. 코드는 준비됐지만 실제 데이터는 아직 없습니다.
 
-| 영역 | MVP 범위 | 상태 (v1.0.0-rc2) |
+| 영역 | MVP 범위 | 상태 (v1.0.0-rc3) |
 |---|---|---|
 | 수집 경로 | `Stop` 훅, transcript 파서, 설치 스크립트, 전송 전 미리보기와 opt-in | ✅ 파서·미리보기·opt-in `submit`<br>✅ `install-hook`/`uninstall-hook`: dry-run 기본, `--settings` 필수, `--apply`+확인, 백업, 멱등, 깨끗한 제거 |
 | 태스크 분류 | 폐쇄형 L1·L2 코드, 로컬 규칙 분류기 + 버전 기록 | ✅ `rules-v1` 기본 (`rules-v0`은 재현용으로 보존)<br>✅ 합성 평가 세트 240개와 클래스별 P/R ([`RESULTS.md`](collector/eval/RESULTS.md)) |

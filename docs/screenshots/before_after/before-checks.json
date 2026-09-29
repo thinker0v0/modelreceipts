@@ -1,0 +1,30 @@
+{
+  "phase": "before",
+  "viewports": [
+    {
+      "device": "desktop",
+      "theme": "light",
+      "width": 1440,
+      "overflow": false
+    },
+    {
+      "device": "desktop",
+      "theme": "dark",
+      "width": 1440,
+      "overflow": false
+    },
+    {
+      "device": "phone",
+      "theme": "light",
+      "width": 390,
+      "overflow": false
+    },
+    {
+      "device": "phone",
+      "theme": "dark",
+      "width": 390,
+      "overflow": false
+    }
+  ],
+  "javascriptErrors": 0
+}

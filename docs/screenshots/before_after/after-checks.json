@@ -1,0 +1,44 @@
+{
+  "phase": "after",
+  "viewports": [
+    {
+      "device": "desktop",
+      "theme": "light",
+      "width": 1440,
+      "overflow": false
+    },
+    {
+      "device": "desktop",
+      "theme": "dark",
+      "width": 1440,
+      "overflow": false
+    },
+    {
+      "device": "phone",
+      "theme": "light",
+      "width": 390,
+      "overflow": false
+    },
+    {
+      "device": "phone",
+      "theme": "dark",
+      "width": 390,
+      "overflow": false
+    }
+  ],
+  "javascriptErrors": 0,
+  "checks": [
+    "320/375/640/768/1024px no page overflow",
+    "light/dark text tokens AA >= 4.5",
+    "scatter arrows and Escape",
+    "slope Escape",
+    "keyboard scroll region focus",
+    "filter reset and source change",
+    "overview gate",
+    "empty dataset",
+    "HTTP error, retry and sample recovery",
+    "15s timeout exits loading",
+    "loading status",
+    "reduced motion"
+  ]
+}

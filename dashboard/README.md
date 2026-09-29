@@ -67,3 +67,7 @@ ${H}chrome-headless-shell --no-sandbox --headless --hide-scrollbars --virtual-ti
 # 폰: --window-size=390,3000
 kill %1   # 서버 종료
 ```
+
+## rc3 Codex 단계 검증
+
+[디자인 격차 10개](../docs/DESIGN_COMPARISON.md)와 [전후 캡처·재현 명령](../docs/screenshots/before_after/README.md)을 참고한다. 상단 섹션 이동과 스냅샷 시각, 필터 요약·초기화, 로딩·오류·빈 상태를 추가했다. `tools/check-ui.mjs`는 설치된 headless Chromium과 Node 내장 기능만 쓰며, 외부 API 없이 화면과 키보드 동작을 검사한다.

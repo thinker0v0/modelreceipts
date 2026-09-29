@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "modelreceipts"
-version = "1.0.0rc2"
+version = "1.0.0rc3"
 description = "ModelReceipts collector: evidence-first task-run records from Claude Code Stop hooks (preview by default, opt-in signed submit)."
 readme = "README.md"
 requires-python = ">=3.10"

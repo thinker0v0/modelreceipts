@@ -1,4 +1,4 @@
-# modelreceipts collector (v1.0.0rc2)
+# modelreceipts collector (v1.0.0rc3)
 
 Claude Code `Stop` 훅 payload를 받아 레코드(schema v0.2) 하나를 만들고 **로컬에서 미리보기만** 합니다(`hook`, 기본 경로). 전송은 별도 명령 `submit --endpoint URL`을 명시적으로 줄 때만 합니다.
 
